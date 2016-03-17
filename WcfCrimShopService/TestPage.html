@@ -7,31 +7,30 @@
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js" />
     <script type="text/javascript" src="http://www.json.org/json2.js"></script>
     <script type="text/javascript">
-        
+
         jQuery.support.cors = true;
         var bodyData = '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">' +
-            '<s:Header>' +
-            '<Action s:mustUnderstand="1" xmlns="http://schemas.microsoft.com/ws/2005/05/addressing/none">http://tempuri.org/IService1/InsertOrderDetails</Action>' +
-            '</s:Header>' +
             '<s:Body>' +
             '<InsertOrderDetails xmlns="http://tempuri.org/">' +
             '<orderInfo xmlns:d4p1="http://schemas.datacontract.org/2004/07/WcfCrimShopService" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">' +
-            '<d4p1:ControlNumber>321123</d4p1:ControlNumber>' +
+            '<d4p1:ContorlNumber>321123</d4p1:ControlNumber>' +
             '<d4p1:Description>testDataQueryJS</d4p1:Description>' +
             '<d4p1:PaymentResponse>success</d4p1:PaymentResponse>' +
             '</orderInfo>' +
             '</InsertOrderDetails>' +
             '</s:Body>' +
             '</s:Envelope>";';
+        //'{"control":"123"}'  application/json; charset=utf-8
         $(function () {
             $.ajax({
-                url: 'http://localhost:52946/Service1.svc',
-                type: 'post',
-                contentType: 'text/xml',
-                data: bodyData,
+                url: 'Service1.svc/InsertOrderDetails',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: '{"ControlNumber":"1333","PaymentResponse":"sucess","Description":"made it"}',
+                varProcessdata: true,
                 crossDomain: true,
                 success: function (result) {
-                    alert(result.d);
+                    alert("added");
 
                 }
             });

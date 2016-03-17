@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Web;
+using System.ServiceModel.Activation;
 using System.Text;
 
 namespace WcfCrimShopService
@@ -20,8 +21,13 @@ namespace WcfCrimShopService
         //CompositeType GetDataUsingDataContract(CompositeType composite);
 
         [OperationContract]
-        string InsertOrderDetails(OrderDetails orderInfo);
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        string InsertOrderDetails(string ControlNumber, string PaymentResponse, string Description);
         // TODO: Add your service operations here
+        [OperationContract]
+        [WebInvoke(Method = "POST", RequestFormat=WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        string InsertOrderDetails2(string control);
+
     }
 
 
@@ -29,11 +35,11 @@ namespace WcfCrimShopService
     [DataContract]
     public class OrderDetails
     {
-        int controlnumber = 0;
+        string controlnumber = string.Empty;
         string payResponse = string.Empty;
         string desc = string.Empty;
         [DataMember]
-        public int ControlNumber
+        public string ControlNumber
         {
             get { return controlnumber; }
             set { controlnumber = value; }
