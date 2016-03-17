@@ -24,9 +24,14 @@ namespace WcfCrimShopService
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         string InsertOrderDetails(string ControlNumber, string PaymentResponse, string Description);
         // TODO: Add your service operations here
+
         [OperationContract]
-        [WebInvoke(Method = "POST", RequestFormat=WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
-        string InsertOrderDetails2(string control);
+        [WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        string MakePaymentResponse(string ControlNumber, string PaymentResponse);
+
+        [OperationContract]
+        [WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        string MakePaymentResponse(string ControlNumber, string PaymentResponse);
 
     }
 
