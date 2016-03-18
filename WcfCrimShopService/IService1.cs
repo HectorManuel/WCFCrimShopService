@@ -29,9 +29,9 @@ namespace WcfCrimShopService
         [WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         string MakePaymentResponse(string ControlNumber, string PaymentResponse);
 
-        [OperationContract]
-        [WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
-        string MakePaymentResponse(string ControlNumber, string PaymentResponse);
+        //[OperationContract]
+        //[WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        //string MakePaymentResponse(string ControlNumber, string PaymentResponse);
 
     }
 
