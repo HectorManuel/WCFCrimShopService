@@ -18,14 +18,14 @@ namespace WcfCrimShopService
         string GetData(int value);
 
         //[OperationContract]
-        //CompositeType GetDataUsingDataContract(CompositeType composite);
+        //CompositeType GetDataUsingDataContract(CompositeType composite);  RequestFormat = WebMessageFormat.Json
         [OperationContract]
-        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertOrderDetails(string ControlNumber, string PaymentResponse, string Description);
         // TODO: Add your service operations here
 
         [OperationContract]
-        [WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        [WebInvoke(Method = "PUT", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string MakePaymentResponse(string ControlNumber, string PaymentResponse);
 
         //[OperationContract]
