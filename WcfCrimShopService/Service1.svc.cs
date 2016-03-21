@@ -37,14 +37,6 @@ namespace WcfCrimShopService
             cmd.Parameters.AddWithValue("@control", ControlNumber);
             cmd.Parameters.AddWithValue("@response", PaymentResponse);
             cmd.Parameters.AddWithValue("@description", Description);
-            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
-            //                    "VALUES (@control,@response,@description)";
-            ////string queryString = "INSERT into dbo.Orders (ControlNumber,PaymentRespone,Description)" +
-            ////                    "VALUES (@control,@response,@description)";
-            //SqlCommand cmd = new SqlCommand(queryString, con);
-            //cmd.Parameters.AddWithValue("@control", orderInfo.ControlNumber);
-            //cmd.Parameters.AddWithValue("@response", orderInfo.PaymentResponse);
-            //cmd.Parameters.AddWithValue("@description", orderInfo.Description);
             int result = cmd.ExecuteNonQuery();
             if(result == 1)
             {

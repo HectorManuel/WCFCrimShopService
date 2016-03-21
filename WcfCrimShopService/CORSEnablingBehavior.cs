@@ -46,7 +46,9 @@ namespace WcfCrimShopService
             private static IDictionary<string, string> _headersToInject = new Dictionary<string, string>{
                 {"Access-Control-Allow-Origin","*"},
                 {"Access-Control-Request-Method","POST,GET,PUT,DELETE,OPTIONS"},
-                {"Access-Control-Allow-Headers","X-Requested-With,Content-Type"}
+                {"Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS"},
+                {"Access-Control-Allow-Headers","X-Requested-With,Content-Type, Accept, Authorization"},
+                {"Access-Control-Max-Age", "1728000"}
             };
 
             public void BeforeSendReply(ref Message reply, object correlationState)
