@@ -25,7 +25,7 @@
         //'{"control":"123"}'  application/json; charset=utf-8
         function POSTRequest() {
             $.ajax({
-                url: 'Service1.svc/InsertOrderDetails',
+                url: '/Service1.svc/InsertOrderDetails',
                 type: 'POST',
                 contentType: 'application/json; charset=utf-8',
                 data: '{"ControlNumber":"' + document.getElementById("ControlNumberTxt").value + '","PaymentResponse":"' + document.getElementById("PaymentResponseTxt").value + '","Description":"' + document.getElementById("DescriptionTxt").value + '"}',

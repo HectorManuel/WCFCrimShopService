@@ -19,7 +19,6 @@ namespace WcfCrimShopService
 
         //[OperationContract]
         //CompositeType GetDataUsingDataContract(CompositeType composite);
-
         [OperationContract]
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         string InsertOrderDetails(string ControlNumber, string PaymentResponse, string Description);

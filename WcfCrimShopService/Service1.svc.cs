@@ -48,7 +48,7 @@ namespace WcfCrimShopService
             int result = cmd.ExecuteNonQuery();
             if(result == 1)
             {
-                Message = "Order : " + ControlNumber + " added successfully";
+                Message = "Order number: " + ControlNumber + " aAdded successfully";
             }
             else
             {
