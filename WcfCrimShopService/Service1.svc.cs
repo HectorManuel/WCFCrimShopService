@@ -22,7 +22,21 @@ namespace WcfCrimShopService
     {
         public string GetData(int value)
         {
-            return string.Format("You entered: {0}", value);
+            
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            con.Open();
+            string query = "SELECT ControlNumber,PaymentRespone,Description" +
+                           "FROM dbo.Orders" +
+                           "WHERE ControlNumber=@control";
+            
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", value);
+
+            //var result = cmd.ExecuteNonQuery();
+            SqlDataReader result = cmd.ExecuteReader();
+            return "read";
+
+
         }
 
         public string InsertOrderDetails(string ControlNumber, string PaymentResponse, string Description)
@@ -53,7 +67,43 @@ namespace WcfCrimShopService
 
         }
 
-        public string MakePaymentResponse(string ControlNumber, string PaymentResponse)
+        public string InsertClientDetails(string clientId, string name, string lName, string mName, string email, string address, string city, string zip, string tel, string fax)
+        {
+            string Message;
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString = "INSERT into dbo.Client (ClientId,Name,LastName, MiddleName, Email, Adress, City, Zip, Telephone, Fax)" +
+                                "VALUES (@clientId,@name,@lastName, @middleName, @email, @adress, @city, @zip, @telephone, @fax)";
+            
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@clientId", clientId);
+            cmd.Parameters.AddWithValue("@name", name);
+            cmd.Parameters.AddWithValue("@lastName", lName);
+            cmd.Parameters.AddWithValue("@middleName", mName);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@adress", address);
+            cmd.Parameters.AddWithValue("@city", city);
+            cmd.Parameters.AddWithValue("@zip", zip);
+            cmd.Parameters.AddWithValue("@telephone", tel);
+            cmd.Parameters.AddWithValue("@fax", fax);
+
+            int result = cmd.ExecuteNonQuery();
+            if (result == 1)
+            {
+                Message = "Client: " + clientId + " aAdded successfully";
+            }
+            else
+            {
+                Message = "Client: " + clientId + " not added";
+            }
+            con.Close();
+            return Message;
+
+        }
+        public string MakePaymentResponse(string PaymentResponse)
         {
             string Message;
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
@@ -64,32 +114,20 @@ namespace WcfCrimShopService
             string queryString = "UPDATE dbo.Orders SET PaymentRespone=@response" +
                                 " WHERE ControlNumber=@control";
             SqlCommand cmd = new SqlCommand(queryString, con);
-            cmd.Parameters.AddWithValue("@control", ControlNumber);
+            //cmd.Parameters.AddWithValue("@control", ControlNumber);
             cmd.Parameters.AddWithValue("@response", PaymentResponse);
             int result = cmd.ExecuteNonQuery();
             if (result == 1)
             {
-                Message = "Order : " + ControlNumber + " updated successfully: "+ PaymentResponse;
+                Message = "Order updated successfully: "+ PaymentResponse;
             }
             else
             {
-                Message = "Order : " + ControlNumber + " not updated: "+ PaymentResponse;
+                Message = "Order  not updated: "+ PaymentResponse;
             }
             con.Close();
             return Message;
         }
 
-        //public CompositeType GetDataUsingDataContract(CompositeType composite)
-        //{
-        //    if (composite == null)
-        //    {
-        //        throw new ArgumentNullException("composite");
-        //    }
-        //    if (composite.BoolValue)
-        //    {
-        //        composite.StringValue += "Suffix";
-        //    }
-        //    return composite;
-        //}
     }
 }
