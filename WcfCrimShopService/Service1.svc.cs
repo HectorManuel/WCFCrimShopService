@@ -39,7 +39,7 @@ namespace WcfCrimShopService
 
         }
 
-        public string InsertOrderDetails(string ControlNumber, string PaymentResponse, string Description)
+        public string InsertOrderDetails(int ControlNumber, string PaymentResponse, string Description)
         {
             string Message;
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
