@@ -8,7 +8,8 @@ using System.Text;
 using System.Data;
 using System.Data.SqlClient;
 using System.ServiceModel.Activation;
-
+using System.Web;
+using System.Collections.Specialized;
 
 namespace WcfCrimShopService
 {
@@ -39,20 +40,74 @@ namespace WcfCrimShopService
 
         }
 
-        public string InsertOrderDetails(int ControlNumber, string PaymentResponse, string Description)
+        public string InsertOrderDetails(int ControlNumber, string PaymentResponse, string Description, string clientId, decimal tx,decimal sTotal, decimal Total)
         {
             string Message;
+            DateTime OrderDate = DateTime.Now;
+
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
-            string queryString = "INSERT into dbo.Orders (ControlNumber,PaymentRespone,Description)" +
-                                "VALUES (@control,@response,@description)";
+            string queryString = "INSERT into dbo.Orders (ControlNumber,Description,ClientId,Confirmation,Tax,Subtotal,Total,OrderDate)" +
+                                "VALUES (@control,@response,@description,@clientId,@confirmation,@tax,@subtotal,@total,@orderDate)";
             SqlCommand cmd = new SqlCommand(queryString, con);
-            cmd.Parameters.AddWithValue("@control", ControlNumber);
-            cmd.Parameters.AddWithValue("@response", PaymentResponse);
-            cmd.Parameters.AddWithValue("@description", Description);
+            if (ControlNumber == null)
+            {
+                Message = "Control number needed";
+                return Message;
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@control", ControlNumber);
+            }
+            if (Description == null)
+            {
+                Message = "Description cannot be empty, send Control number in it";
+                return Message;
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@description", Description);
+            }
+            if (clientId == null)
+            {
+                cmd.Parameters.AddWithValue("@cliendId", clientId);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@cliendId", clientId);
+            }
+            if (tx == null)
+            {
+                cmd.Parameters.AddWithValue("@tax", 0);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@tax", tx);
+            }
+            if (sTotal == null)
+            {
+                cmd.Parameters.AddWithValue("@subtotal", 0);
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@subtotal", sTotal);
+            }
+            if (Total == null)
+            {
+                Message = "A total amount must be added";
+                return Message;
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@total", Total);
+            }
+
+            cmd.Parameters.AddWithValue("@confirmation", "Processing");
+            cmd.Parameters.AddWithValue("@orderDate",OrderDate);
+
             int result = cmd.ExecuteNonQuery();
             if(result == 1)
             {
@@ -103,27 +158,58 @@ namespace WcfCrimShopService
             return Message;
 
         }
-        public string MakePaymentResponse(string PaymentResponse)
+        public string PaymentResponse(string PaymentResponse)
         {
-            string Message;
+            string Message = "things";
+            NameValueCollection nvc = HttpUtility.ParseQueryString(PaymentResponse);
+
+            string val = nvc.Get("VPaymentDescription");
+            string transactionId = nvc.Get("VTransactionId");
+            string accountId = nvc.Get("VAccountId");
+            string totalAmount = nvc.Get("VTotalAmount");
+            string paymentMethod = nvc.Get("VPaymentMethod");
+            string paymentDescription = nvc.Get("VPaymentDescription");
+            string authorizationNum = nvc.Get("VAuthorizationNum");
+            string confirmationNum = nvc.Get("VConfirmationNum");
+            //string merchantTransId = nvc.Get("VMerchantTransId");
+
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
-            string queryString = "UPDATE dbo.Orders SET PaymentRespone=@response" +
+            string queryString = "UPDATE dbo.Orders SET PaymentRespone=@response, Confirmation=@confirm" +
                                 " WHERE ControlNumber=@control";
             SqlCommand cmd = new SqlCommand(queryString, con);
-            //cmd.Parameters.AddWithValue("@control", ControlNumber);
-            cmd.Parameters.AddWithValue("@response", PaymentResponse);
+            cmd.Parameters.AddWithValue("@control", paymentDescription);
+            cmd.Parameters.AddWithValue("@response", authorizationNum);
+            cmd.Parameters.AddWithValue("@confirm", confirmationNum);
             int result = cmd.ExecuteNonQuery();
-            if (result == 1)
+ 
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString2 = "INSERT into dbo.PaymentResponseLog (ControlNumber,VTransactionID,VAccountId,VTotalAmount,VPaymentMethod,VPaymentDescription,VAuthorizationNum,VConfirmationNum)" +
+                                "VALUES (@ControlNumber,@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum)";
+            SqlCommand cmd2 = new SqlCommand(queryString2, con);
+            //cmd.Parameters.AddWithValue("@control", ControlNumber);
+            cmd2.Parameters.AddWithValue("@ControlNumber", val);
+            cmd2.Parameters.AddWithValue("@VTransactionID", transactionId);
+            cmd2.Parameters.AddWithValue("@VAccountId", accountId);
+            cmd2.Parameters.AddWithValue("@VTotalAmount", totalAmount);
+            cmd2.Parameters.AddWithValue("@VPaymentMethod", paymentMethod);
+            cmd2.Parameters.AddWithValue("@VPaymentDescription", paymentDescription);
+            cmd2.Parameters.AddWithValue("@VAuthorizationNum", authorizationNum);
+            cmd2.Parameters.AddWithValue("@VConfirmationNum", confirmationNum);
+            //cmd2.Parameters.AddWithValue("@VMerchantTransId", merchantTransId);
+            int result2 = cmd2.ExecuteNonQuery();
+
+            if (result2 == 1 && result==1)
             {
-                Message = "Order updated successfully: "+ PaymentResponse;
+                Message = "Order updated successfully: " + PaymentResponse;
             }
             else
             {
-                Message = "Order  not updated: "+ PaymentResponse;
+                Message = "Order  not updated: " + PaymentResponse;
             }
             con.Close();
             return Message;
