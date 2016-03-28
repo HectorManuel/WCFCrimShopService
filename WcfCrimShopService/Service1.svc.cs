@@ -11,6 +11,8 @@ using System.ServiceModel.Activation;
 using System.Web;
 using System.Collections.Specialized;
 
+using WcfCrimShopService.entities;
+
 namespace WcfCrimShopService
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
@@ -24,8 +26,8 @@ namespace WcfCrimShopService
         public string GetData(int value)
         {
             
-            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             string query = "SELECT ControlNumber,PaymentRespone,Description" +
                            "FROM dbo.Orders" +
@@ -41,18 +43,18 @@ namespace WcfCrimShopService
 
         }
 
-        public string InsertOrderDetails(int ControlNumber, string PaymentResponse, string Description, string clientId, decimal tx,decimal sTotal, decimal Total)
+        public string InsertOrderDetails(string ControlNumber, string Description, string clientId, decimal tx,decimal sTotal, decimal Total)
         {
             string Message;
             DateTime OrderDate = DateTime.Now;
 
-            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
             string queryString = "INSERT into dbo.Orders (ControlNumber,Description,ClientId,Confirmation,Tax,Subtotal,Total,OrderDate)" +
-                                "VALUES (@control,@response,@description,@clientId,@confirmation,@tax,@subtotal,@total,@orderDate)";
+                                "VALUES (@control,@description,@clientId,@confirmation,@tax,@subtotal,@total,@orderDate)";
             SqlCommand cmd = new SqlCommand(queryString, con);
             if (ControlNumber == null)
             {
@@ -80,7 +82,7 @@ namespace WcfCrimShopService
             {
                 cmd.Parameters.AddWithValue("@cliendId", clientId);
             }
-            if (tx == null)
+            if (tx == 0)
             {
                 cmd.Parameters.AddWithValue("@tax", 0);
             }
@@ -88,7 +90,7 @@ namespace WcfCrimShopService
             {
                 cmd.Parameters.AddWithValue("@tax", tx);
             }
-            if (sTotal == null)
+            if (sTotal == 0)
             {
                 cmd.Parameters.AddWithValue("@subtotal", 0);
             }
@@ -96,7 +98,7 @@ namespace WcfCrimShopService
             {
                 cmd.Parameters.AddWithValue("@subtotal", sTotal);
             }
-            if (Total == null)
+            if (Total == 0)
             {
                 Message = "A total amount must be added";
                 return Message;
@@ -126,8 +128,8 @@ namespace WcfCrimShopService
         public string InsertClientDetails(string clientId, string name, string email, string address, string city, string zip, string tel, string fax)
         {
             string Message;
-            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
@@ -159,6 +161,8 @@ namespace WcfCrimShopService
         }
         public string PaymentResponse(string PaymentResponse)
         {
+            Geoprocessing test = new Geoprocessing();
+
             string Message = "things";
             NameValueCollection nvc = HttpUtility.ParseQueryString(PaymentResponse);
 
@@ -172,8 +176,8 @@ namespace WcfCrimShopService
             string confirmationNum = nvc.Get("VConfirmationNum");
             //string merchantTransId = nvc.Get("VMerchantTransId");
 
-            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
-            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
@@ -215,4 +219,5 @@ namespace WcfCrimShopService
         }
 
     }
+
 }
