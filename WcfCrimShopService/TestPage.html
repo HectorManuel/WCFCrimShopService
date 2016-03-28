@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" http-equiv="content-type" content="text/html" />
     <title>test</title>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js" />
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script type="text/javascript" src="http://www.json.org/json2.js"></script>
     <script type="text/javascript">
 
@@ -29,6 +29,21 @@
                 type: 'POST',
                 contentType: 'application/json; charset=utf-8',
                 data: '{"ControlNumber":"' + document.getElementById("ControlNumberTxt").value + '","PaymentResponse":"' + document.getElementById("PaymentResponseTxt").value + '","Description":"' + document.getElementById("DescriptionTxt").value + '"}',
+                varProcessdata: true,
+                crossDomain: true,
+                success: function (result) {
+                    alert("added");
+
+                }
+            });
+        }
+
+        function POSTCLientRequest() {
+            $.ajax({
+                url: '/Service1.svc/InsertClientDetails',
+                type: 'PUT',
+                contentType: 'application/json; charset=utf-8',
+                data: '{"clientId":"' + + '","Name":"' + + '","email":"' + + '","address":"' + + '","city":"' + + '","zip":"' + + '","tel":"' + + '","fax":"' + + '"}',
                 varProcessdata: true,
                 crossDomain: true,
                 success: function (result) {

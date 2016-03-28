@@ -24,7 +24,8 @@ namespace WcfCrimShopService
         public string GetData(int value)
         {
             
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             string query = "SELECT ControlNumber,PaymentRespone,Description" +
                            "FROM dbo.Orders" +
@@ -45,8 +46,8 @@ namespace WcfCrimShopService
             string Message;
             DateTime OrderDate = DateTime.Now;
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
@@ -122,22 +123,20 @@ namespace WcfCrimShopService
 
         }
 
-        public string InsertClientDetails(string clientId, string name, string lName, string mName, string email, string address, string city, string zip, string tel, string fax)
+        public string InsertClientDetails(string clientId, string name, string email, string address, string city, string zip, string tel, string fax)
         {
             string Message;
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
-            string queryString = "INSERT into dbo.Client (ClientId,Name,LastName, MiddleName, Email, Adress, City, Zip, Telephone, Fax)" +
-                                "VALUES (@clientId,@name,@lastName, @middleName, @email, @adress, @city, @zip, @telephone, @fax)";
+            string queryString = "INSERT into dbo.Client (ClientId,Name, Email, Address, City, Zip, Telephone, Fax)" +
+                                "VALUES (@clientId,@name, @email, @adress, @city, @zip, @telephone, @fax)";
             
             SqlCommand cmd = new SqlCommand(queryString, con);
             cmd.Parameters.AddWithValue("@clientId", clientId);
             cmd.Parameters.AddWithValue("@name", name);
-            cmd.Parameters.AddWithValue("@lastName", lName);
-            cmd.Parameters.AddWithValue("@middleName", mName);
             cmd.Parameters.AddWithValue("@email", email);
             cmd.Parameters.AddWithValue("@adress", address);
             cmd.Parameters.AddWithValue("@city", city);
@@ -173,8 +172,8 @@ namespace WcfCrimShopService
             string confirmationNum = nvc.Get("VConfirmationNum");
             //string merchantTransId = nvc.Get("VMerchantTransId");
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
-            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            //SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
