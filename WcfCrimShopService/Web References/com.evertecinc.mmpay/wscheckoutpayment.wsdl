@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://tempuri.org/WebMerchant/MerchantService" xmlns:s1="Evertec.MMPay.TransactionSearch" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:s2="Evertec.MMPay.ReverseTransaction" xmlns:s3="Evertec.MMPay.CardReverseTransaction" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" targetNamespace="http://tempuri.org/WebMerchant/MerchantService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">This XML Web service allows clients to log on to Multimerchant Pay System. Ver. 06012012</wsdl:documentation>
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/WebMerchant/MerchantService">
+      <s:import namespace="Evertec.MMPay.TransactionSearch" />
+      <s:import namespace="Evertec.MMPay.ReverseTransaction" />
+      <s:import namespace="Evertec.MMPay.CardReverseTransaction" />
+      <s:element name="MakePayment">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="Username" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Password" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CustomerName" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CustomerID" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="CustomerEmail" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="Total" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="DescriptionBuy" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TaxAmount1" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="address1" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="address2" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="city" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="zipcode" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="telephone" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="fax" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="ignoreValues" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="language" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TaxAmount2" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TaxAmount3" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TaxAmount4" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="TaxAmount5" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="filler1" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="filler2" type="s:string" />
+            <s:element minOccurs="0" maxOccurs="1" name="filler3" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="MakePaymentResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="MakePaymentResult" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="TransactionSearch">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" ref="s1:TransactionSearchRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="TransactionSearchResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" ref="s1:TransactionSearchResponse" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ReverseACHTransaction">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" ref="s2:ReverseTransactionRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ReverseACHTransactionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" ref="s2:ReverseTransactionResponse" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ReverseCardTransaction">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" ref="s3:CardReverseTransactionRequest" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ReverseCardTransactionResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" ref="s3:CardReverseTransactionResponse" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="string" nillable="true" type="s:string" />
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="Evertec.MMPay.TransactionSearch">
+      <s:element name="TransactionSearchRequest" type="s1:TransactionSearchRequest" />
+      <s:complexType name="TransactionSearchRequest">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Username" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Password" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="AccountID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MinProcessDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MaxProcessDate" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TotalPrice" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TaxAmount1" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="AuthorizationNum" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ConfirmationNum" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="PaymentMethod" type="s1:PaymentMethodType" />
+          <s:element minOccurs="0" maxOccurs="1" name="RequestID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="MerchantIdTransaction" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="PaymentMethodType">
+        <s:restriction base="s:string">
+          <s:enumeration value="_X" />
+          <s:enumeration value="_A" />
+          <s:enumeration value="_C" />
+          <s:enumeration value="_M" />
+          <s:enumeration value="_W" />
+          <s:enumeration value="_S" />
+          <s:enumeration value="_T" />
+          <s:enumeration value="_U" />
+          <s:enumeration value="_V" />
+          <s:enumeration value="_Unassigned" />
+          <s:enumeration value="_Unknown" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="TransactionSearchResponse" type="s1:TransactionSearchResponse" />
+      <s:complexType name="TransactionSearchResponse">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="getError" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="getMessage" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="StatusCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="FieldError" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="FieldErrorList" type="s1:ArrayOfAnyType" />
+          <s:element minOccurs="1" maxOccurs="1" name="ResponseStatus" type="s1:ResponseStatusType" />
+          <s:element minOccurs="0" maxOccurs="1" name="TransactionDetail">
+            <s:complexType>
+              <s:sequence>
+                <s:element ref="s:schema" />
+                <s:any />
+              </s:sequence>
+            </s:complexType>
+          </s:element>
+          <s:element minOccurs="1" maxOccurs="1" name="AffectedRows" type="s:int" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfAnyType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="anyType" nillable="true" />
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="ResponseStatusType">
+        <s:restriction base="s:string">
+          <s:enumeration value="_Approved" />
+          <s:enumeration value="_AuthenticationError" />
+          <s:enumeration value="_Completed" />
+          <s:enumeration value="_Declined" />
+          <s:enumeration value="_Error" />
+          <s:enumeration value="_Exception" />
+          <s:enumeration value="_Failed" />
+          <s:enumeration value="_Pending" />
+          <s:enumeration value="_Processing" />
+          <s:enumeration value="_Rejected" />
+          <s:enumeration value="_Reversed" />
+          <s:enumeration value="_Successfull" />
+          <s:enumeration value="_Unassigned" />
+          <s:enumeration value="_Unknown" />
+        </s:restriction>
+      </s:simpleType>
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="Evertec.MMPay.ReverseTransaction">
+      <s:element name="ReverseTransactionRequest" type="s2:ReverseTransactionRequest" />
+      <s:complexType name="ReverseTransactionRequest">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Username" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Password" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="RequestID" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ReverseTransactionResponse">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="getError" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="getMessage" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="StatusCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="FieldError" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="FieldErrorList" type="s2:ArrayOfAnyType" />
+          <s:element minOccurs="1" maxOccurs="1" name="ResponseStatus" type="s2:ResponseStatusType" />
+          <s:element minOccurs="0" maxOccurs="1" name="RequestID" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="Amount" type="s:decimal" />
+          <s:element minOccurs="0" maxOccurs="1" name="FullName" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfAnyType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="anyType" nillable="true" />
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="ResponseStatusType">
+        <s:restriction base="s:string">
+          <s:enumeration value="_Approved" />
+          <s:enumeration value="_AuthenticationError" />
+          <s:enumeration value="_Completed" />
+          <s:enumeration value="_Declined" />
+          <s:enumeration value="_Error" />
+          <s:enumeration value="_Exception" />
+          <s:enumeration value="_Failed" />
+          <s:enumeration value="_Pending" />
+          <s:enumeration value="_Processing" />
+          <s:enumeration value="_Rejected" />
+          <s:enumeration value="_Reversed" />
+          <s:enumeration value="_Successfull" />
+          <s:enumeration value="_Unassigned" />
+          <s:enumeration value="_Unknown" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="ReverseTransactionResponse" type="s2:ReverseTransactionResponse" />
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="Evertec.MMPay.CardReverseTransaction">
+      <s:element name="CardReverseTransactionRequest" type="s3:CardReverseTransactionRequest" />
+      <s:complexType name="CardReverseTransactionRequest">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="Username" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="Password" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="RequestID" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="CardReverseTransactionResponse">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="getError" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="getMessage" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="StatusCode" type="s:string" />
+          <s:element minOccurs="1" maxOccurs="1" name="FieldError" type="s:boolean" />
+          <s:element minOccurs="0" maxOccurs="1" name="FieldErrorList" type="s3:ArrayOfAnyType" />
+          <s:element minOccurs="1" maxOccurs="1" name="ResponseStatus" type="s3:ResponseStatusType" />
+          <s:element minOccurs="0" maxOccurs="1" name="RequestID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="TransactionID" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ApprovalCode" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="ResponseText" type="s:string" />
+        </s:sequence>
+      </s:complexType>
+      <s:complexType name="ArrayOfAnyType">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="unbounded" name="anyType" nillable="true" />
+        </s:sequence>
+      </s:complexType>
+      <s:simpleType name="ResponseStatusType">
+        <s:restriction base="s:string">
+          <s:enumeration value="_Approved" />
+          <s:enumeration value="_AuthenticationError" />
+          <s:enumeration value="_Completed" />
+          <s:enumeration value="_Declined" />
+          <s:enumeration value="_Error" />
+          <s:enumeration value="_Exception" />
+          <s:enumeration value="_Failed" />
+          <s:enumeration value="_Pending" />
+          <s:enumeration value="_Processing" />
+          <s:enumeration value="_Rejected" />
+          <s:enumeration value="_Reversed" />
+          <s:enumeration value="_Successfull" />
+          <s:enumeration value="_Unassigned" />
+          <s:enumeration value="_Unknown" />
+        </s:restriction>
+      </s:simpleType>
+      <s:element name="CardReverseTransactionResponse" type="s3:CardReverseTransactionResponse" />
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="MakePaymentSoapIn">
+    <wsdl:part name="parameters" element="tns:MakePayment" />
+  </wsdl:message>
+  <wsdl:message name="MakePaymentSoapOut">
+    <wsdl:part name="parameters" element="tns:MakePaymentResponse" />
+  </wsdl:message>
+  <wsdl:message name="TransactionSearchSoapIn">
+    <wsdl:part name="parameters" element="tns:TransactionSearch" />
+  </wsdl:message>
+  <wsdl:message name="TransactionSearchSoapOut">
+    <wsdl:part name="parameters" element="tns:TransactionSearchResponse" />
+  </wsdl:message>
+  <wsdl:message name="ReverseACHTransactionSoapIn">
+    <wsdl:part name="parameters" element="tns:ReverseACHTransaction" />
+  </wsdl:message>
+  <wsdl:message name="ReverseACHTransactionSoapOut">
+    <wsdl:part name="parameters" element="tns:ReverseACHTransactionResponse" />
+  </wsdl:message>
+  <wsdl:message name="ReverseCardTransactionSoapIn">
+    <wsdl:part name="parameters" element="tns:ReverseCardTransaction" />
+  </wsdl:message>
+  <wsdl:message name="ReverseCardTransactionSoapOut">
+    <wsdl:part name="parameters" element="tns:ReverseCardTransactionResponse" />
+  </wsdl:message>
+  <wsdl:message name="MakePaymentHttpGetIn">
+    <wsdl:part name="Username" type="s:string" />
+    <wsdl:part name="Password" type="s:string" />
+    <wsdl:part name="CustomerName" type="s:string" />
+    <wsdl:part name="CustomerID" type="s:string" />
+    <wsdl:part name="CustomerEmail" type="s:string" />
+    <wsdl:part name="Total" type="s:string" />
+    <wsdl:part name="DescriptionBuy" type="s:string" />
+    <wsdl:part name="TaxAmount1" type="s:string" />
+    <wsdl:part name="address1" type="s:string" />
+    <wsdl:part name="address2" type="s:string" />
+    <wsdl:part name="city" type="s:string" />
+    <wsdl:part name="zipcode" type="s:string" />
+    <wsdl:part name="telephone" type="s:string" />
+    <wsdl:part name="fax" type="s:string" />
+    <wsdl:part name="ignoreValues" type="s:string" />
+    <wsdl:part name="language" type="s:string" />
+    <wsdl:part name="TaxAmount2" type="s:string" />
+    <wsdl:part name="TaxAmount3" type="s:string" />
+    <wsdl:part name="TaxAmount4" type="s:string" />
+    <wsdl:part name="TaxAmount5" type="s:string" />
+    <wsdl:part name="filler1" type="s:string" />
+    <wsdl:part name="filler2" type="s:string" />
+    <wsdl:part name="filler3" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="MakePaymentHttpGetOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:message name="MakePaymentHttpPostIn">
+    <wsdl:part name="Username" type="s:string" />
+    <wsdl:part name="Password" type="s:string" />
+    <wsdl:part name="CustomerName" type="s:string" />
+    <wsdl:part name="CustomerID" type="s:string" />
+    <wsdl:part name="CustomerEmail" type="s:string" />
+    <wsdl:part name="Total" type="s:string" />
+    <wsdl:part name="DescriptionBuy" type="s:string" />
+    <wsdl:part name="TaxAmount1" type="s:string" />
+    <wsdl:part name="address1" type="s:string" />
+    <wsdl:part name="address2" type="s:string" />
+    <wsdl:part name="city" type="s:string" />
+    <wsdl:part name="zipcode" type="s:string" />
+    <wsdl:part name="telephone" type="s:string" />
+    <wsdl:part name="fax" type="s:string" />
+    <wsdl:part name="ignoreValues" type="s:string" />
+    <wsdl:part name="language" type="s:string" />
+    <wsdl:part name="TaxAmount2" type="s:string" />
+    <wsdl:part name="TaxAmount3" type="s:string" />
+    <wsdl:part name="TaxAmount4" type="s:string" />
+    <wsdl:part name="TaxAmount5" type="s:string" />
+    <wsdl:part name="filler1" type="s:string" />
+    <wsdl:part name="filler2" type="s:string" />
+    <wsdl:part name="filler3" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="MakePaymentHttpPostOut">
+    <wsdl:part name="Body" element="tns:string" />
+  </wsdl:message>
+  <wsdl:portType name="MerchantServiceSoap">
+    <wsdl:operation name="MakePayment">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">This XML Web service validates a client and redirects them to the Banco Popular Checkout Payment System</wsdl:documentation>
+      <wsdl:input message="tns:MakePaymentSoapIn" />
+      <wsdl:output message="tns:MakePaymentSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="TransactionSearch">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Transaction Search</wsdl:documentation>
+      <wsdl:input message="tns:TransactionSearchSoapIn" />
+      <wsdl:output message="tns:TransactionSearchSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="ReverseACHTransaction">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Reverse ACH Transaction</wsdl:documentation>
+      <wsdl:input message="tns:ReverseACHTransactionSoapIn" />
+      <wsdl:output message="tns:ReverseACHTransactionSoapOut" />
+    </wsdl:operation>
+    <wsdl:operation name="ReverseCardTransaction">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">Reverse Card Transaction</wsdl:documentation>
+      <wsdl:input message="tns:ReverseCardTransactionSoapIn" />
+      <wsdl:output message="tns:ReverseCardTransactionSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="MerchantServiceHttpGet">
+    <wsdl:operation name="MakePayment">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">This XML Web service validates a client and redirects them to the Banco Popular Checkout Payment System</wsdl:documentation>
+      <wsdl:input message="tns:MakePaymentHttpGetIn" />
+      <wsdl:output message="tns:MakePaymentHttpGetOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="MerchantServiceHttpPost">
+    <wsdl:operation name="MakePayment">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">This XML Web service validates a client and redirects them to the Banco Popular Checkout Payment System</wsdl:documentation>
+      <wsdl:input message="tns:MakePaymentHttpPostIn" />
+      <wsdl:output message="tns:MakePaymentHttpPostOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="MerchantServiceSoap" type="tns:MerchantServiceSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="MakePayment">
+      <soap:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/MakePayment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="TransactionSearch">
+      <soap:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/TransactionSearch" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ReverseACHTransaction">
+      <soap:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/ReverseACHTransaction" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ReverseCardTransaction">
+      <soap:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/ReverseCardTransaction" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="MerchantServiceSoap12" type="tns:MerchantServiceSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="MakePayment">
+      <soap12:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/MakePayment" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="TransactionSearch">
+      <soap12:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/TransactionSearch" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ReverseACHTransaction">
+      <soap12:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/ReverseACHTransaction" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ReverseCardTransaction">
+      <soap12:operation soapAction="http://tempuri.org/WebMerchant/MerchantService/ReverseCardTransaction" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="MerchantServiceHttpGet" type="tns:MerchantServiceHttpGet">
+    <http:binding verb="GET" />
+    <wsdl:operation name="MakePayment">
+      <http:operation location="/MakePayment" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="MerchantServiceHttpPost" type="tns:MerchantServiceHttpPost">
+    <http:binding verb="POST" />
+    <wsdl:operation name="MakePayment">
+      <http:operation location="/MakePayment" />
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded" />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:mimeXml part="Body" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="MerchantService">
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">This XML Web service allows clients to log on to Multimerchant Pay System. Ver. 06012012</wsdl:documentation>
+    <wsdl:port name="MerchantServiceSoap" binding="tns:MerchantServiceSoap">
+      <soap:address location="https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx" />
+    </wsdl:port>
+    <wsdl:port name="MerchantServiceSoap12" binding="tns:MerchantServiceSoap12">
+      <soap12:address location="https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx" />
+    </wsdl:port>
+    <wsdl:port name="MerchantServiceHttpGet" binding="tns:MerchantServiceHttpGet">
+      <http:address location="https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx" />
+    </wsdl:port>
+    <wsdl:port name="MerchantServiceHttpPost" binding="tns:MerchantServiceHttpPost">
+      <http:address location="https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
