@@ -76,11 +76,11 @@ namespace WcfCrimShopService
             }
             if (clientId == null)
             {
-                cmd.Parameters.AddWithValue("@cliendId", clientId);
+                cmd.Parameters.AddWithValue("@clientId", clientId);
             }
             else
             {
-                cmd.Parameters.AddWithValue("@cliendId", clientId);
+                cmd.Parameters.AddWithValue("@clientId", clientId);
             }
             if (tx == 0)
             {
@@ -149,7 +149,7 @@ namespace WcfCrimShopService
             int result = cmd.ExecuteNonQuery();
             if (result == 1)
             {
-                Message = "Client: " + clientId + " aAdded successfully";
+                Message = "Client: " + clientId + " Added successfully";
             }
             else
             {
@@ -159,9 +159,10 @@ namespace WcfCrimShopService
             return Message;
 
         }
+        
         public string PaymentResponse(string PaymentResponse)
         {
-            Geoprocessing test = new Geoprocessing();
+            
 
             string Message = "things";
             NameValueCollection nvc = HttpUtility.ParseQueryString(PaymentResponse);
@@ -218,6 +219,13 @@ namespace WcfCrimShopService
             return Message;
         }
 
+        public string StarGeoprocess(string jsonMap)
+        {
+            Geoprocessing geo = new Geoprocessing();
+            var result = geo.FotoAerea(jsonMap);
+            var res = result.ToString();
+            return res;
+        }
     }
 
 }

@@ -31,7 +31,10 @@ namespace WcfCrimShopService
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertClientDetails(string clientId, string name, string email, string address, string city, string zip, string tel, string fax);
-        
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
+        string StarGeoprocess(string jsonMap);
         //[OperationContract]
         //[WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         //string MakePaymentResponse(string ControlNumber, string PaymentResponse);
