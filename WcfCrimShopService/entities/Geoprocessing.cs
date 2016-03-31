@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Windows.Forms;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using Esri.ArcGISRuntime.Tasks.Geoprocessing;
+using System.Net;
+using System.IO;
+using System.IO.Compression;
+using System.Net.Mail;
 
 
 namespace WcfCrimShopService.entities
@@ -55,6 +60,89 @@ namespace WcfCrimShopService.entities
             if (result.JobStatus == GPJobStatus.Succeeded)
             {
                 var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+                if (outParam != null && outParam.Uri != null)
+                {
+                    var webClient = new WebClient();
+                    //create temp directoy for downloads
+                    string path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
+                    string zipPath = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives.zip";
+                    DirectoryInfo dir;
+                    try
+                    {
+                        //verify is the directory exists.
+                        if (Directory.Exists(path))
+                        {
+                            Debug.WriteLine("directory: " + path + "   exist");
+                        }
+                        else
+                        {
+                            //try to create the directory
+                            dir = Directory.CreateDirectory(path);
+                        }
+
+                        //var stremData = await webClient.OpenReadTaskAsync(outParam.Uri);
+
+                        //get an output file location from the user
+                        webClient.DownloadFile(outParam.Uri, path + "\\test.pdf");
+
+                        if (!File.Exists(zipPath))
+                        {
+                            ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
+                        }
+                        else
+                        {
+                            File.Delete(zipPath);
+                            ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
+                        }
+                        
+
+                        if (File.Exists(zipPath))
+                        {
+                            //dir.Delete();
+                            Directory.Delete(path, true);
+                            if (!Directory.Exists(path))
+                            {
+                                Debug.WriteLine("directory: " + path + "   deleted");
+                            }
+                            else
+                            {
+                                Debug.WriteLine(" unable to dele directory: " + path);
+                            }
+
+                            try
+                            {
+                                MailMessage mail = new MailMessage();
+                                SmtpClient smtpServer = new SmtpClient("mail.crimpr.net");
+                                mail.From = new MailAddress("cdprcasosweb@crimpr.net");
+                                mail.To.Add("hasencio@gmtgis.com");
+                                mail.Subject = "Test mail 1";
+                                mail.Body = "mail with attachment";
+
+                                Attachment attachment = new Attachment(zipPath);
+                                mail.Attachments.Add(attachment);
+
+                                smtpServer.Port = 25;
+                                smtpServer.Credentials = new System.Net.NetworkCredential("CDPRCASOSWEB", "Cc123456");
+                                smtpServer.EnableSsl = false;
+
+                                smtpServer.Send(mail);
+                                Debug.WriteLine("MailSend");
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.WriteLine(e.ToString());
+                            }
+                            finally { }
+
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine("Process failed", e.ToString());
+                    }
+                    finally { }
+                }
             }
             else
             {
