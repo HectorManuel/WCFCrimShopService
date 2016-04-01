@@ -17,8 +17,7 @@ namespace WcfCrimShopService
         [OperationContract]
         string GetData(int value);
 
-        //[OperationContract]
-        //CompositeType GetDataUsingDataContract(CompositeType composite);  RequestFormat = WebMessageFormat.Json
+
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertOrderDetails(string ControlNumber, string Description, string clientId, decimal tx, decimal sTotal, decimal Total);
@@ -28,13 +27,35 @@ namespace WcfCrimShopService
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string PaymentResponse(string PaymentResponse);
 
+
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string InsertClientDetails(string clientId, string name, string email, string address, string city, string zip, string tel, string fax);
+        string InsertClientDetails(string name, string email, string address, string city, string zip, string tel, string fax);
+
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
+        string InsertAerialPhotoItem(string controlNumber, int clientId, string itemName, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle);
+
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
+        string InsertListaColindanteItem(string controlNumber, int clientId, string itemName, int itemQty, string item);
+
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
+        string InsertCatastralItem(string controlNumber, int clientId, string itemName, int itemQty, string escala, string cuadricula, string template);
+
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string StarGeoprocess(string jsonMap);
+
+
+
+        //[OperationContract]
+        //CompositeType GetDataUsingDataContract(CompositeType composite);  RequestFormat = WebMessageFormat.Json
         //[OperationContract]
         //[WebInvoke(Method = "PUT", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         //string MakePaymentResponse(string ControlNumber, string PaymentResponse);

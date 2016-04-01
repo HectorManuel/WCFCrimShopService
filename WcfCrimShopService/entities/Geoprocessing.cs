@@ -21,8 +21,8 @@ namespace WcfCrimShopService.entities
             string testing = map;
 
             var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
-            var taskName = "AdvancedHighQualityPrinting";
-            var taskCatastro = "Mapas de Catastro";
+            var taskName = "Mapas de Fotos Aerea";
+            //var taskCatastro = "Mapas de Catastro";
             //Create geoprocessor
             var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
 
