@@ -6,12 +6,13 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.ServiceModel.Activation;
 using System.Text;
+using System.Diagnostics;
 
 namespace WcfCrimShopService
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IService1" in both code and config file together.
     [ServiceContract]
-    public interface IService1
+    public interface ICartographicProductsService
     {
 
         [OperationContract]
@@ -52,6 +53,9 @@ namespace WcfCrimShopService
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string StarGeoprocess(string jsonMap);
 
+        [OperationContract]
+        [WebInvoke(Method = "POST",RequestFormat=WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        string MakePayment(string controlNumber);
 
 
         //[OperationContract]

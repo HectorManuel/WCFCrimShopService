@@ -25,6 +25,7 @@ namespace WcfCrimShopService.entities
             string paymentDescription = nvc.Get("VPaymentDescription");
             string authorizationNum = nvc.Get("VAuthorizationNum");
             string confirmationNum = nvc.Get("VConfirmationNum");
+            string merchantTransId = nvc.Get("VMerchantTransId");
             //string merchantTransId = nvc.Get("VMerchantTransId");
 
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
@@ -42,8 +43,8 @@ namespace WcfCrimShopService.entities
 
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
-            string queryString2 = "INSERT into dbo.PaymentResponseLog (ControlNumber,VTransactionID,VAccountId,VTotalAmount,VPaymentMethod,VPaymentDescription,VAuthorizationNum,VConfirmationNum)" +
-                                "VALUES (@ControlNumber,@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum)";
+            string queryString2 = "INSERT into dbo.PaymentResponseLog (ControlNumber,VTransactionID,VAccountId,VTotalAmount,VPaymentMethod,VPaymentDescription,VAuthorizationNum,VConfirmationNum, VMerchantTransId)" +
+                                "VALUES (@ControlNumber,@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum, @VMerchantTransId)";
             SqlCommand cmd2 = new SqlCommand(queryString2, con);
             //cmd.Parameters.AddWithValue("@control", ControlNumber);
             cmd2.Parameters.AddWithValue("@ControlNumber", val);
@@ -54,6 +55,7 @@ namespace WcfCrimShopService.entities
             cmd2.Parameters.AddWithValue("@VPaymentDescription", paymentDescription);
             cmd2.Parameters.AddWithValue("@VAuthorizationNum", authorizationNum);
             cmd2.Parameters.AddWithValue("@VConfirmationNum", confirmationNum);
+            cmd2.Parameters.AddWithValue("@VMerchantTransId", merchantTransId);
             //cmd2.Parameters.AddWithValue("@VMerchantTransId", merchantTransId);
             int result2 = cmd2.ExecuteNonQuery();
 
@@ -67,6 +69,11 @@ namespace WcfCrimShopService.entities
             }
             con.Close();
             return Message;
+        }
+
+        public void GetOrder()
+        {
+
         }
 
         public string InsertAerialPhotoHandler(string controlNumber, int clientId, string itemName, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle)

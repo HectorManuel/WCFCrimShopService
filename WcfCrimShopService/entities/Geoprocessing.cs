@@ -16,8 +16,16 @@ namespace WcfCrimShopService.entities
 {
     public class Geoprocessing
     {
-        public async Task<string> FotoAerea(string map)
+        Uri PhotoPdfUri = new Uri("");
+        Uri OficialCatUri = new Uri("");
+        Uri ListaColindanteUri = new Uri("");
+        string path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
+
+        //string map, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string cNumber)
+        public async Task<string> FotoAerea(string map, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title)
         {
+            cNumber = "1234";
+
             string testing = map;
 
             var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
@@ -31,14 +39,21 @@ namespace WcfCrimShopService.entities
 
             //GPParameter creation
             var jsonMap = new GPString("Web_Map_As_JSON", map);
-            var Format = new GPString("Format", "PDF");
-            var layoutTemplate = new GPString("Layout_Template", "Peticiones-11x17");
-            var georef = new GPString("Georef_info", "False");
-            var parcel = new GPString("Parcel", "987-654-321-00");
-            var subtitle = new GPString("Subtitle", "Prueba de web service");
-            var control = new GPString("Control", "Control:1234");
+            var Format = new GPString("Format", format);
+            var layoutTemplate = new GPString("Layout_Template", template);
+            var georef = new GPString("Georef_info", geoInfo);
+            var parcel = new GPString("Parcel", parcelTitle);
+            var subtitle = new GPString("Subtitle", sub_Title);
+            var control = new GPString("Control", cNumber);
 
-            //add GPParameters to the parameter collection
+            var buffer = new GPString("Buffer", "");
+            var parcelList = new GPString("Parcelas", "");
+
+            
+ 
+            var bufferDistance = new GPLinearUnit("Buffer_Distance_Units", Esri.ArcGISRuntime.Geometry.LinearUnits.Meters, 15.0);
+
+            //add GPParameters to the parameter collection  
             parameter.GPParameters.Add(jsonMap);
             parameter.GPParameters.Add(Format);
             parameter.GPParameters.Add(layoutTemplate);
@@ -63,9 +78,11 @@ namespace WcfCrimShopService.entities
 
                 if (outParam != null && outParam.Uri != null)
                 {
+
+                    PhotoPdfUri = outParam.Uri;
                     var webClient = new WebClient();
                     //create temp directoy for downloads
-                    string path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
+                    path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
                     string zipPath = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives.zip";
                     DirectoryInfo dir;
                     try
@@ -84,7 +101,7 @@ namespace WcfCrimShopService.entities
                         //var stremData = await webClient.OpenReadTaskAsync(outParam.Uri);
 
                         //get an output file location from the user
-                        webClient.DownloadFile(outParam.Uri, path + "\\test.pdf");
+                        webClient.DownloadFile(outParam.Uri, path + @"\test.pdf");
 
                         if (!File.Exists(zipPath))
                         {
@@ -95,7 +112,7 @@ namespace WcfCrimShopService.entities
                             File.Delete(zipPath);
                             ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
                         }
-                        
+
 
                         if (File.Exists(zipPath))
                         {
@@ -151,13 +168,83 @@ namespace WcfCrimShopService.entities
                 foreach (var msg in result.Messages)
                 {
                     message += msg.Description + "\n";
-                    
+
                 }
 
                 Debug.WriteLine(message);
             }
 
             return "code completed";
+        }
+
+        public async Task<string> OficialMaps(string template, string array, string geo, string ctrl)
+        {
+            var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
+            string taskName = "Mapas de Catastro";
+            var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
+
+            //Set up the parameters
+            var parameter = new GPInputParameter();
+
+            var layoutTemplate = new GPString("Layout_Template", template);
+            var pageRange = new GPString("Page_Range", array);
+            var georef = new GPString("Georef_info", geo);
+            var control = new GPString("Control", ctrl);
+
+            parameter.GPParameters.Add(layoutTemplate);
+            parameter.GPParameters.Add(pageRange);
+            parameter.GPParameters.Add(georef);
+            parameter.GPParameters.Add(control);
+
+            //Execute task with the parameters collection defined above
+            var result = await gp.SubmitJobAsync(parameter);
+
+            while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut)
+            {
+                result = await gp.CheckJobStatusAsync(result.JobID);
+
+                Debug.WriteLine(result.JobStatus);
+                await Task.Delay(2000);
+            }
+
+            if (result.JobStatus == GPJobStatus.Succeeded)
+            {
+                var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+                if (outParam != null && outParam.Uri != null)
+                {
+                    OficialCatUri = outParam.Uri;
+                    
+                }
+
+            }
+
+            return "OficialCatastralMaps";
+        }
+
+        //Im gonna pass the path were all the folders are stored, the control number of the order
+        //to name the folder for the order with it, and the file name  that will be use for the pdf that will be created
+        public string MakeStoreFolder(string pathToSave,string cnNumber, string file)
+        {
+
+            var path = pathToSave + cnNumber;
+            var Pfile = path+file;
+            DirectoryInfo dir;
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    if (File.Exists(Pfile))
+                    {
+
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+            return "saved";
         }
     }
 }
