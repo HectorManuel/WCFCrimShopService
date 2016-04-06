@@ -18,6 +18,7 @@ using System.Xml;
 
 using WcfCrimShopService.entities;
 using WcfCrimShopService.com.evertecinc.mmpay;
+using System.Threading.Tasks;
 
 namespace WcfCrimShopService
 {
@@ -30,35 +31,53 @@ namespace WcfCrimShopService
     [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
     public class CartographicProductsService : ICartographicProductsService
     {
-        public string GetData(int value)
+        public string GetData(string value)
         {
             
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
-            string query = "SELECT ControlNumber,PaymentRespone,Description" +
-                           "FROM dbo.Orders" +
-                           "WHERE ControlNumber=@control";
+            string query = "SELECT ControlNumber, Confirmation, Description " +
+                           "FROM dbo.Orders " +
+                           "WHERE ControlNumber= @control";
             
             SqlCommand cmd = new SqlCommand(query, con);
             cmd.Parameters.AddWithValue("@control", value);
 
+            var list = new List<Objects.Order>();
             //var result = cmd.ExecuteNonQuery();
-            SqlDataReader result = cmd.ExecuteReader();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string confirm = result["Confirmation"].ToString();
+                    string desc = result["Description"].ToString();
+
+                    //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
+                }
+            }
+
+            foreach(var item in list){
+                string ds = item.ControlNumber;
+            }
+            //test array object
+            //var list = new List<KeyValuePair<string, string>>();
+
             return "read";
 
 
         }
 
         //cartographicProductsService.svc/InsertOrderDetails
-        public string InsertOrderDetails(string ControlNumber, string Description, string clientId, decimal tx,decimal sTotal, decimal Total)
+        public string InsertOrderDetails(string ControlNumber, string Description, decimal tx,decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList)
         {
             DBConnection responseHandler = new DBConnection();
 
-            var result = responseHandler.InsertOrderDetailsHandler(ControlNumber, Description, clientId, tx, sTotal, Total);
+            var result = responseHandler.InsertOrderDetailsHandler(ControlNumber, Description, tx, sTotal, Total, CustomerName, customerEmail, hasPhoto,hasCat,hasList);
 
             return result;
-
+            #region commented Code
             //string Message;
             //DateTime OrderDate = DateTime.Now;
 
@@ -136,7 +155,7 @@ namespace WcfCrimShopService
             //}
             //con.Close();
             //return Message;
-
+            #endregion
         }
 
         //cartographicProductsService.svc/InsertClientDetails
@@ -158,36 +177,70 @@ namespace WcfCrimShopService
             return result;
         }
 
-        //cartographicProductsService.svc/StarGeoprocess
-        public string StarGeoprocess(string jsonMap)
+        //cartographicProductsService.svc/StarGeoprocess string jsonMap, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit, string hasCat
+        public string StarGeoprocess(string jsonMap, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit, string hasCat, string email)
         {
+
             Geoprocessing geo = new Geoprocessing();
-            var result = geo.FotoAerea(jsonMap);
-            var res = result.ToString();
-            return res;
+            string res = string.Empty;
+            string catRes = string.Empty;
+            var result = Task.Run(async () =>
+            {
+                var test = await geo.FotoAerea(jsonMap, cNumber, format, template, geoInfo, parcelTitle, sub_Title, bf, pr, bf_distance_unit);
+                res = test.ToString();
+            });
+
+            //var result = geo.FotoAerea(jsonMap, cNumber, format, template, geoInfo, parcelTitle, sub_Title);
+            result.Wait();
+
+            if (hasCat.ToUpper() != "Y")
+            {
+                string array = "('400','402')";
+                string templated = "MapaCatastral_10k";
+                var catastral = Task.Run(async () =>
+                {
+                    var cat = await geo.OficialMaps(templated, array, geoInfo, cNumber);
+                    catRes = cat.ToString();
+                });
+                catastral.Wait();
+            }
+
+            //var catResult = geo.OficialMaps(template, array, geoInfo, cNumber);
+            //string catRes = catResult.ToString();
+            //string res = result.ToString();
+
+            string zipFilePath = string.Empty;
+            //email = "hasencio@gmtgis.com";
+            if (res == catRes)
+            {
+                zipFilePath = geo.ZipAndSendEmail(catRes, email);
+            }
+            
+
+            return zipFilePath;
         }
 
         //cartographicProductsService.svc/InsertAerialPhotoItem
-        public string InsertAerialPhotoItem(string controlNumber, int clientId, string itemName, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle)
+        public string InsertAerialPhotoItem(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
             DBConnection AerialHandler = new DBConnection();
-            var result = AerialHandler.InsertAerialPhotoHandler(controlNumber, clientId, itemName, itemQty, item, format, layoutTemplate, georefInfo, parcel, subtitle);
+            var result = AerialHandler.InsertAerialPhotoHandler(controlNumber, itemQty, item, format, layoutTemplate, georefInfo, parcel, subtitle, buffer, parcelList, bufferDistance);
             return result;
         }
 
         //cartographicProductsService.svc/InsertListaColindanteItem
-        public string InsertListaColindanteItem(string controlNumber, int clientId, string itemName, int itemQty, string item)
+        public string InsertListaColindanteItem(string controlNumber, string itemName, int itemQty, string item)
         {
             DBConnection lista = new DBConnection();
-            var result = lista.InsertListaColindanteItemHanlder(controlNumber, clientId, itemName, itemQty, item);
+            var result = lista.InsertListaColindanteItemHanlder(controlNumber, itemName, itemQty, item);
             return result;
         }
 
         //cartographicProductsService.svc/InsertCatastralItem
-        public string InsertCatastralItem(string controlNumber, int clientId, string itemName, int itemQty, string escala, string cuadricula, string template)
+        public string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string cuadricula, string template)
         {
             DBConnection catastro = new DBConnection();
-            var result = catastro.InsertCatastralesHandler(controlNumber, clientId, itemName, itemQty, escala, cuadricula, template);
+            var result = catastro.InsertCatastralesHandler(controlNumber, itemName, itemQty, escala, cuadricula, template);
             return result;
         }
 

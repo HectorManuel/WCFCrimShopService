@@ -5,13 +5,15 @@ using System.Web;
 using System.Data;
 using System.Data.SqlClient;
 using System.Collections.Specialized;
-using System.Web;
+using WcfCrimShopService.entities;
+using System.Threading.Tasks;
 
 
 namespace WcfCrimShopService.entities
 {
     public class DBConnection
     {
+        Geoprocessing geo = new Geoprocessing();
         public string PaymentResponseLogHandler(string PaymentResponse)
         {
             string Message = "things";
@@ -61,28 +63,33 @@ namespace WcfCrimShopService.entities
 
             if (result2 == 1 && result == 1)
             {
-                Message = "Order updated successfully: " + PaymentResponse;
+                Message = "ok";
+                // run task to get information for the printing service
             }
             else
             {
                 Message = "Order  not updated: " + PaymentResponse;
             }
             con.Close();
+
+            if (result2 == 1 && result == 1)
+            {
+
+                Task.Run(async () =>
+                {
+                   await GetOrderDetails(merchantTransId);
+                });
+            }
             return Message;
         }
 
-        public void GetOrder()
-        {
-
-        }
-
-        public string InsertAerialPhotoHandler(string controlNumber, int clientId, string itemName, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle)
+        public string InsertAerialPhotoHandler(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
-            string query = "INSERT into dbo.OrderItemAerialphoto (ControlNumber,ClientId,ItemName,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle)" +
-                           "VALUES (@control,@client,@itemName,@qty,@item,@format,@template,@georef,@parcel,@sub)";
+            string query = "INSERT into dbo.OrderItemAerialphoto (ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance) " +
+                           "VALUES (@control,@qty,@item,@format,@template,@georef,@parcel,@sub,@buffer,@list,@bufferDistance)";
             SqlCommand cmd = new SqlCommand(query, con);
             if (string.IsNullOrEmpty(controlNumber))
             {
@@ -93,14 +100,6 @@ namespace WcfCrimShopService.entities
                 cmd.Parameters.AddWithValue("@control", controlNumber);
             }
 
-            if (clientId == 0)
-            {
-                return "Client ID missing";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@client", clientId);
-            }
             if (string.IsNullOrEmpty(item))
             {
                 return "must include the map json on the item ";
@@ -117,10 +116,7 @@ namespace WcfCrimShopService.entities
             {
                 cmd.Parameters.AddWithValue("@template", layoutTemplate);
             }
-            if (string.IsNullOrEmpty(itemName))
-            {
-                itemName = "Foto Aérea";
-            }
+
             if (itemQty == 0)
             {
                 itemQty = 1;
@@ -135,13 +131,34 @@ namespace WcfCrimShopService.entities
             }
             if (string.IsNullOrEmpty(parcel))
             {
-                parcel = "----";
+                parcel = "printing";
             }
             if (string.IsNullOrEmpty(subtitle))
             {
                 subtitle = "zona seleccionada";
             }
-            cmd.Parameters.AddWithValue("@itemName", itemName);
+            if (buffer.ToLower() != "false")
+            {
+                cmd.Parameters.AddWithValue("@buffer", buffer.ToLower());
+                if (parcelList != string.Empty)
+                {
+                    cmd.Parameters.AddWithValue("@list", parcelList);
+                }
+                if (bufferDistance != string.Empty)
+                {
+                    cmd.Parameters.AddWithValue("@bufferDistance", bufferDistance);
+                }
+                               
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@buffer", buffer.ToLower());
+                parcelList = string.Empty;
+                cmd.Parameters.AddWithValue("@list", parcelList);
+                bufferDistance = string.Empty;
+                cmd.Parameters.AddWithValue("@bufferDistance", bufferDistance);
+            }
+            
             cmd.Parameters.AddWithValue("@qty", itemQty);
             cmd.Parameters.AddWithValue("@format", format);
             cmd.Parameters.AddWithValue("@georef", georefInfo);
@@ -162,13 +179,13 @@ namespace WcfCrimShopService.entities
             return message;
         }
 
-        public string InsertCatastralesHandler(string controlNumber, int clientId, string itemName, int itemQty, string escala, string cuadricula, string template)
+        public string InsertCatastralesHandler(string controlNumber, string itemName, int itemQty, string escala, string cuadricula, string template)
         {
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
-            string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ClientId,ItemName,ItemQty,Escala,Cuadricula,Template)" +
-                           "VALUES (@control,@client,@itemName,@qty,@escala,@cuadricula, @template";
+            string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template) " +
+                           "VALUES (@control,@itemName,@qty,@escala,@cuadricula, @template) ";
             SqlCommand cmd = new SqlCommand(query, con);
 
             if (string.IsNullOrEmpty(controlNumber))
@@ -178,15 +195,6 @@ namespace WcfCrimShopService.entities
             else
             {
                 cmd.Parameters.AddWithValue("@control", controlNumber);
-            }
-
-            if (clientId == 0)
-            {
-                return "Client ID missing";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@client", clientId);
             }
 
             if (string.IsNullOrEmpty(cuadricula))
@@ -216,8 +224,8 @@ namespace WcfCrimShopService.entities
             {
                 template = "Peticiones-11x17";
             }
-            cmd.Parameters.Add("@itemName", itemName);
-            cmd.Parameters.Add("@qty", itemQty);
+            cmd.Parameters.AddWithValue("@itemName", itemName);
+            cmd.Parameters.AddWithValue("@qty", itemQty);
             cmd.Parameters.AddWithValue("@template", template);
             cmd.Parameters.AddWithValue("@escala", escala);
 
@@ -236,13 +244,13 @@ namespace WcfCrimShopService.entities
             return message;
         }
 
-        public string InsertListaColindanteItemHanlder(string controlNumber, int clientId, string itemName, int itemQty, string item)
+        public string InsertListaColindanteItemHanlder(string controlNumber, string itemName, int itemQty, string item)
         {
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
-            string query = "INSERT into dbo.OrderItemsListaColindante (ControlNumber,ClientId,ItemName,ItemQty,Item)" +
-                           "VALUES (@control,@client,@itemName,@qty,@item";
+            string query = "INSERT into dbo.OrderItemsListaColindante (ControlNumber,ItemName,ItemQty,Item)" +
+                           "VALUES (@control,@itemName,@qty,@item";
             SqlCommand cmd = new SqlCommand(query, con);
 
             if (string.IsNullOrEmpty(controlNumber))
@@ -252,15 +260,6 @@ namespace WcfCrimShopService.entities
             else
             {
                 cmd.Parameters.AddWithValue("@control", controlNumber);
-            }
-
-            if (clientId == 0)
-            {
-                return "Client ID missing";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@client", clientId);
             }
 
             if (string.IsNullOrEmpty(item))
@@ -300,7 +299,7 @@ namespace WcfCrimShopService.entities
             return message;
         }
 
-        public string InsertOrderDetailsHandler(string ControlNumber, string Description, string clientId, decimal tx, decimal sTotal, decimal Total)
+        public string InsertOrderDetailsHandler(string ControlNumber, string Description, decimal tx, decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList)
         {
             string Message;
             DateTime OrderDate = DateTime.Now;
@@ -310,9 +309,10 @@ namespace WcfCrimShopService.entities
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
-            string queryString = "INSERT into dbo.Orders (ControlNumber,Description,ClientId,Confirmation,Tax,Subtotal,Total,OrderDate)" +
-                                " VALUES (@control,@description,@clientId,@confirmation,@tax,@subtotal,@total,@orderDate)";
+            string queryString = "INSERT into dbo.Orders (ControlNumber,Description,Confirmation,Tax,SubTotal,Total,OrderDate,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList)" +
+                                " VALUES (@control,@description,@confirmation,@tax,@subtotal,@total,@orderDate,@Name,@email,@photo,@cat,@list)";
             SqlCommand cmd = new SqlCommand(queryString, con);
+            #region validations
             if (ControlNumber == null)
             {
                 Message = "Control number needed";
@@ -322,6 +322,7 @@ namespace WcfCrimShopService.entities
             {
                 cmd.Parameters.AddWithValue("@control", ControlNumber);
             }
+
             if (Description == null)
             {
                 Message = "Description cannot be empty, send Control number in it";
@@ -331,14 +332,7 @@ namespace WcfCrimShopService.entities
             {
                 cmd.Parameters.AddWithValue("@description", Description);
             }
-            if (clientId == null)
-            {
-                cmd.Parameters.AddWithValue("@clientId", clientId);
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@clientId", clientId);
-            }
+
             if (tx == 0)
             {
                 cmd.Parameters.AddWithValue("@tax", 0);
@@ -347,6 +341,7 @@ namespace WcfCrimShopService.entities
             {
                 cmd.Parameters.AddWithValue("@tax", tx);
             }
+
             if (sTotal == 0)
             {
                 cmd.Parameters.AddWithValue("@subtotal", 0);
@@ -355,6 +350,7 @@ namespace WcfCrimShopService.entities
             {
                 cmd.Parameters.AddWithValue("@subtotal", sTotal);
             }
+
             if (Total == 0)
             {
                 Message = "A total amount must be added";
@@ -365,8 +361,54 @@ namespace WcfCrimShopService.entities
                 cmd.Parameters.AddWithValue("@total", Total);
             }
 
+            if (CustomerName == string.Empty)
+            {
+                return "Customer Name cannot be empty";
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@Name", CustomerName);
+            }
+
+            if (customerEmail == string.Empty)
+            {
+                return "email cannot be empty";
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@email", customerEmail);
+            }
+
+            if (hasPhoto == string.Empty)
+            {
+                cmd.Parameters.AddWithValue("@photo", "Y");
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@photo", hasPhoto);
+            }
+
+            if (hasCat == string.Empty)
+            {
+                cmd.Parameters.AddWithValue("@cat", "Y");
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@cat", hasCat);
+            }
+
+            if (hasList == string.Empty)
+            {
+                cmd.Parameters.AddWithValue("@list", "Y");
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@list", hasList);
+            }
+
             cmd.Parameters.AddWithValue("@confirmation", "Processing");
             cmd.Parameters.AddWithValue("@orderDate", OrderDate);
+            #endregion
 
             int result = cmd.ExecuteNonQuery();
             if (result == 1)
@@ -381,7 +423,6 @@ namespace WcfCrimShopService.entities
             return Message;
 
         }
-
 
         public string InsertClientDetailsHandler(string name, string email, string address, string city, string zip, string tel, string fax)
         {
@@ -461,5 +502,216 @@ namespace WcfCrimShopService.entities
             con.Close();
             return Message;
         }
+
+
+        //Asyncronous calls to the database to get the infromation of the order items and process it
+        public async Task GetOrderDetails(string controlNumber)
+        {
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+
+            string query = "SELECT ControlNumber,Confirmation,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList " +
+                           "FROM dbo.Orders " +
+                           "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            List<Objects.Order> orderList = new List<Objects.Order>();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string confirm = result["Confirmation"].ToString();
+                    string name = result["CostumerName"].ToString();
+                    string email = result["CustomerEmail"].ToString();
+                    string haspic = result["HasPhoto"].ToString();
+                    string hascat = result["HasCat"].ToString();
+                    string haslist = result["HasList"].ToString();
+
+                    orderList.Add(new Objects.Order
+                    {
+                        ControlNumber = cn,
+                        Confirmation = confirm,
+                        CustomerName = name,
+                        CustomerEmail = email,
+                        HasPhoto = haspic,
+                        HasCat = hascat, 
+                        HasList = haslist
+                    });
+                }
+            }
+
+            string ending = await GetItems(orderList);
+
+            con.Close();
+        }
+
+        public async Task<string> GetItems(List<Objects.Order> myOrder)
+        {
+
+            string pictureContent = string.Empty;
+            string cadastreContent = string.Empty;
+            string listContent = string.Empty;
+
+            if (myOrder[0].HasPhoto.ToUpper() == "Y")
+            {
+                pictureContent = ProcessPhotoProducts(myOrder[0].ControlNumber);
+            }
+
+            if (myOrder[0].HasCat.ToUpper() == "Y")
+            {
+                cadastreContent = ProcessCadastralProducts(myOrder[0].ControlNumber);
+            }
+
+            if (myOrder[0].HasList.ToUpper() == "Y")
+            {
+                listContent = ProcessListProducts(myOrder[0].ControlNumber);
+            }
+
+            if (cadastreContent == pictureContent)
+            {
+                cadastreContent = pictureContent;
+            }
+            if (cadastreContent == listContent)
+            {
+                cadastreContent = listContent;
+            }
+
+            return cadastreContent;
+        }
+
+        public string ProcessPhotoProducts(string controlNumber)
+        {
+
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+
+            string query = "SELECT ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance " +
+                            "FROM dbo.OrderItemAerialPhoto " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            List<Objects.OrderItemPhoto> orderList = new List<Objects.OrderItemPhoto>();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string item = result["Item"].ToString();
+                    string format = result["Format"].ToString();
+                    string template = result["LayoutTemplate"].ToString();
+                    string georef = result["GeorefInfo"].ToString();
+                    string title = result["Parcel"].ToString();
+                    string sub = result["Subtitle"].ToString();
+                    string buffer = result["Buffer"].ToString();
+                    string parcelList = result["ParcelList"].ToString();
+                    string bufferDistance = result["BufferDistance"].ToString();
+
+                    orderList.Add(new Objects.OrderItemPhoto
+                    {
+                        ControlNumber = cn,
+                        ItemQty = qty,
+                        Item = item,
+                        Format = format,
+                        LayoutTemplate = template,
+                        GeorefInfo = georef,
+                        Parcel = title,
+                        subtitle = sub,
+                        buffer = buffer,
+                        parcelList = parcelList,
+                        distance = bufferDistance
+                    });
+                }
+            }
+            string path = string.Empty;
+            var task = Task.Run(async () => {
+                var createPrinting = await geo.FotoAerea1(orderList);
+                path = createPrinting.ToString();
+            });
+            task.Wait();
+
+            return path;
+        }
+
+        public string ProcessListProducts(string controlNumber)
+        {
+
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+
+            string query = "SELECT ControlNumber,ItemName,ItemQty,Item " +
+                            "FROM dbo.OrderItemsListaColindante " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            List<Objects.OrderItemList> orderList = new List<Objects.OrderItemList>();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string name = result["ItemName"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string item = result["Item"].ToString();
+                    
+                    orderList.Add(new Objects.OrderItemList
+                    {
+                        ControlNumber = cn, 
+                        itemName = name, 
+                        itemQty = qty, 
+                        item = item
+                    });
+                }
+            }
+            
+            
+            return "string";
+        }
+
+        public string ProcessCadastralProducts(string controlNumber)
+        {
+
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+
+            string query = "SELECT ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template " +
+                            "FROM dbo.OrderItemsCatastrales " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            List<Objects.OrderItemCatastral> orderList = new List<Objects.OrderItemCatastral>();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string name = result["ItemName"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string scale = result["Escala"].ToString();
+                    string cuadro = result["Cuadricula"].ToString();
+                    string template = result["Templates"].ToString();
+
+                    orderList.Add(new Objects.OrderItemCatastral
+                    {
+                        ControlNumber = cn,
+                        itemName = name,
+                        itemQty = qty,
+                        escala = scale,
+                        cuadricula = cuadro,
+                        template = template
+                    });
+                }
+            }
+            
+            
+            return "string";
+        }
+    
+    
     }
 }

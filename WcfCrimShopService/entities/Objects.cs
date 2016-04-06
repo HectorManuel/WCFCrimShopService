@@ -1,0 +1,54 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace WcfCrimShopService.entities
+{
+    public class Objects
+    {
+        public class Order
+        {
+            public string ControlNumber { get; set; }
+            public string Confirmation { get; set; }
+            public string CustomerName { get; set; }
+            public string CustomerEmail { get; set; }
+            public string HasPhoto { get; set; }
+            public string HasCat { get; set; }
+            public string HasList { get; set; }
+        }
+
+        public class OrderItemPhoto
+        {
+            public string ControlNumber { get; set; }
+            public string ItemQty { get; set; }
+            public string Item { get; set; }
+            public string Format { get; set; }
+            public string LayoutTemplate { get; set; }
+            public string GeorefInfo { get; set; }
+            public string Parcel { get; set; }
+            public string subtitle { get; set; }
+            public string buffer { get; set; }
+            public string parcelList { get; set; }
+            public string distance { get; set; }
+        }
+
+        public class OrderItemList
+        {
+            public string ControlNumber { get; set; }
+            public string itemName { get; set; }
+            public string itemQty { get; set; }
+            public string item { get; set; }
+        }
+
+        public class OrderItemCatastral
+        {
+            public string ControlNumber { get; set; }
+            public string itemName { get; set; }
+            public string itemQty { get; set; }
+            public string escala { get; set; }
+            public string cuadricula { get; set; }
+            public string template { get; set; }
+        }
+    }
+}
