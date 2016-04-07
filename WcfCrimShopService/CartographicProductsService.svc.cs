@@ -36,6 +36,7 @@ namespace WcfCrimShopService
             
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            WebClient wb = new WebClient();
             con.Open();
             string query = "SELECT ControlNumber, Confirmation, Description " +
                            "FROM dbo.Orders " +
@@ -43,28 +44,24 @@ namespace WcfCrimShopService
             
             SqlCommand cmd = new SqlCommand(query, con);
             cmd.Parameters.AddWithValue("@control", value);
-
-            var list = new List<Objects.Order>();
+            string ds = string.Empty;
+            //var list = new List<Objects.Order>();
             //var result = cmd.ExecuteNonQuery();
             using (SqlDataReader result = cmd.ExecuteReader())
             {
                 while (result.Read())
                 {
-                    string cn = result["ControlNumber"].ToString();
-                    string confirm = result["Confirmation"].ToString();
-                    string desc = result["Description"].ToString();
-
+                    ds = result["ControlNumber"].ToString();
+                    
                     //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
                 }
             }
 
-            foreach(var item in list){
-                string ds = item.ControlNumber;
-            }
+            //string ds = string.Empty;
             //test array object
             //var list = new List<KeyValuePair<string, string>>();
-
-            return "read";
+            //wb.DownloadFile("http://localhost:9001/test1234.zip", @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives\testing.zip");
+            return ds;
 
 
         }

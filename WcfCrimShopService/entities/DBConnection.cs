@@ -19,7 +19,7 @@ namespace WcfCrimShopService.entities
             string Message = "things";
             NameValueCollection nvc = HttpUtility.ParseQueryString(PaymentResponse);
 
-            string val = nvc.Get("VPaymentDescription");
+            //string val = nvc.Get("VPaymentDescription");
             string transactionId = nvc.Get("VTransactionId");
             string accountId = nvc.Get("VAccountId");
             string totalAmount = nvc.Get("VTotalAmount");
@@ -30,16 +30,16 @@ namespace WcfCrimShopService.entities
             string merchantTransId = nvc.Get("VMerchantTransId");
             //string merchantTransId = nvc.Get("VMerchantTransId");
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
-            string queryString = "UPDATE dbo.Orders SET PaymentRespone=@response, Confirmation=@confirm" +
+            string queryString = "UPDATE dbo.Orders SET Confirmation=@confirm" +
                                 " WHERE ControlNumber=@control";
             SqlCommand cmd = new SqlCommand(queryString, con);
-            cmd.Parameters.AddWithValue("@control", paymentDescription);
-            cmd.Parameters.AddWithValue("@response", authorizationNum);
+            cmd.Parameters.AddWithValue("@control", merchantTransId);
+            
             cmd.Parameters.AddWithValue("@confirm", confirmationNum);
             int result = cmd.ExecuteNonQuery();
 
@@ -49,7 +49,7 @@ namespace WcfCrimShopService.entities
                                 "VALUES (@ControlNumber,@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum, @VMerchantTransId)";
             SqlCommand cmd2 = new SqlCommand(queryString2, con);
             //cmd.Parameters.AddWithValue("@control", ControlNumber);
-            cmd2.Parameters.AddWithValue("@ControlNumber", val);
+            cmd2.Parameters.AddWithValue("@ControlNumber", merchantTransId);
             cmd2.Parameters.AddWithValue("@VTransactionID", transactionId);
             cmd2.Parameters.AddWithValue("@VAccountId", accountId);
             cmd2.Parameters.AddWithValue("@VTotalAmount", totalAmount);
@@ -75,9 +75,9 @@ namespace WcfCrimShopService.entities
             if (result2 == 1 && result == 1)
             {
 
-                Task.Run(async () =>
+                Task.Run( () =>
                 {
-                   await GetOrderDetails(merchantTransId);
+                   GetOrderDetails(merchantTransId);
                 });
             }
             return Message;
@@ -505,9 +505,9 @@ namespace WcfCrimShopService.entities
 
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
-        public async Task GetOrderDetails(string controlNumber)
+        public void GetOrderDetails(string controlNumber)
         {
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
             string query = "SELECT ControlNumber,Confirmation,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList " +
@@ -523,7 +523,7 @@ namespace WcfCrimShopService.entities
                 {
                     string cn = result["ControlNumber"].ToString();
                     string confirm = result["Confirmation"].ToString();
-                    string name = result["CostumerName"].ToString();
+                    string name = result["CustomerName"].ToString();
                     string email = result["CustomerEmail"].ToString();
                     string haspic = result["HasPhoto"].ToString();
                     string hascat = result["HasCat"].ToString();
@@ -542,12 +542,14 @@ namespace WcfCrimShopService.entities
                 }
             }
 
-            string ending = await GetItems(orderList);
+            string ending = GetItems(orderList);
 
             con.Close();
+
+
         }
 
-        public async Task<string> GetItems(List<Objects.Order> myOrder)
+        public string GetItems(List<Objects.Order> myOrder)
         {
 
             string pictureContent = string.Empty;
@@ -569,22 +571,34 @@ namespace WcfCrimShopService.entities
                 listContent = ProcessListProducts(myOrder[0].ControlNumber);
             }
 
-            if (cadastreContent == pictureContent)
+            if (string.IsNullOrEmpty(pictureContent))
             {
-                cadastreContent = pictureContent;
-            }
-            if (cadastreContent == listContent)
-            {
-                cadastreContent = listContent;
+                if (string.IsNullOrEmpty(cadastreContent))
+                {
+                    if (string.IsNullOrEmpty(listContent))
+                    {
+                        pictureContent = "Error: no items in order";
+                    }
+                    else
+                    {
+                        pictureContent = listContent;
+                    }
+                }
+                else
+                {
+                    pictureContent = cadastreContent;
+                }
             }
 
-            return cadastreContent;
+            geo.ZipAndSendEmail(pictureContent, myOrder[0].CustomerEmail);
+            
+            return pictureContent;
         }
 
         public string ProcessPhotoProducts(string controlNumber)
         {
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
             string query = "SELECT ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance " +
@@ -639,7 +653,7 @@ namespace WcfCrimShopService.entities
         public string ProcessListProducts(string controlNumber)
         {
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
             string query = "SELECT ControlNumber,ItemName,ItemQty,Item " +
@@ -675,7 +689,7 @@ namespace WcfCrimShopService.entities
         public string ProcessCadastralProducts(string controlNumber)
         {
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
             string query = "SELECT ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template " +
@@ -694,7 +708,7 @@ namespace WcfCrimShopService.entities
                     string qty = result["ItemQty"].ToString();
                     string scale = result["Escala"].ToString();
                     string cuadro = result["Cuadricula"].ToString();
-                    string template = result["Templates"].ToString();
+                    string template = result["Template"].ToString();
 
                     orderList.Add(new Objects.OrderItemCatastral
                     {
@@ -707,9 +721,16 @@ namespace WcfCrimShopService.entities
                     });
                 }
             }
+
+            string path = string.Empty;
+            var task = Task.Run(async () =>
+            {
+                var createPrinting = await geo.OficialMaps1(orderList);
+                path = createPrinting.ToString();
+            });
+            task.Wait();
             
-            
-            return "string";
+            return path;
         }
     
     

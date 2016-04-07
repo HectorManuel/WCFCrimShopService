@@ -50,5 +50,14 @@ namespace WcfCrimShopService.entities
             public string cuadricula { get; set; }
             public string template { get; set; }
         }
+
+        public class Scale
+        {
+            public string template { get; set; }
+            public string geo { get; set; }
+            public string cuad { get; set; }
+            public string controlNum { get; set; }
+
+        }
     }
 }

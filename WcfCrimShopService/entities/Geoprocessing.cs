@@ -19,8 +19,8 @@ namespace WcfCrimShopService.entities
         //Uri OficialCatUri = new Uri("");
         //Uri ListaColindanteUri = new Uri("");
         WebClient webClient = new WebClient();
-        string path = @"S:\14_CRIM_2014-2015\Operaciones\Datos\Trabajado\Productos Cartograficos\PrintTest";
-
+        //string path = @"S:\14_CRIM_2014-2015\Operaciones\Datos\Trabajado\Productos Cartograficos\PrintTest";
+        string path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
         //string map, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string cNumber)
         public async Task<string> FotoAerea(string map, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit)
         {
@@ -249,7 +249,7 @@ namespace WcfCrimShopService.entities
             return storePath;
         }
 
-        public async Task<string> OficialMaps1(string template, string array, string geo, string ctrl)
+        public async Task<string> CallingMaps(string template, string array, string geo, string ctrl)
         {
             //List<Objects.OrderItemCatastral> allCat
             var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
@@ -287,7 +287,7 @@ namespace WcfCrimShopService.entities
                 if (outParam != null && outParam.Uri != null)
                 {
                     //OficialCatUri = outParam.Uri;
-                    string fileName = @"\MapasCatastralesOficiales.pdf";
+                    string fileName = @"\"+ template +".pdf";
                     try
                     {
                         storePath = MakeStoreFolder(ctrl, fileName);
@@ -301,6 +301,79 @@ namespace WcfCrimShopService.entities
                 }
 
             }
+            return storePath;
+        }
+        //string template, string array, string geo, string ctrl
+        public async Task<string> OficialMaps1(List<Objects.OrderItemCatastral> cadastre)
+        {
+            List<Objects.Scale> listScale10 = new List<Objects.Scale>();
+            List<Objects.Scale> listScale1 = new List<Objects.Scale>();
+
+            foreach (var cad in cadastre)
+            {
+                if (cad.template == "MapaCatastral_10k")
+                {
+                    listScale10.Add(new Objects.Scale 
+                    { 
+                        template = cad.template,
+                        geo = cad.itemName,
+                        cuad = cad.cuadricula,
+                        controlNum = cad.ControlNumber
+                    });
+                }
+                if (cad.template == "MapaCatastral_1k")
+                {
+                    listScale1.Add(new Objects.Scale
+                    {
+                        template = cad.template,
+                        geo = cad.itemName,
+                        cuad = cad.cuadricula,
+                        controlNum = cad.ControlNumber
+                    });
+                }
+            }
+            string array2 = string.Empty;
+            string array = string.Empty;
+            string storePath = string.Empty;
+            if (listScale10.Count != 0)
+            {
+                array = "(";
+                bool firstItem = true;
+                foreach (var cad in listScale10)
+                {
+                    if (!firstItem)
+                    {
+                        array += ",";
+                    }
+                    firstItem = false;
+                    array += "'" + cad.cuad + "'";
+                }
+                array += ")";
+                //array.Replace(",)", ")");
+
+                //storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+
+            }
+
+            if (listScale1.Count != 0)
+            {
+                array2 = "(";
+                bool firstItem = true;
+                foreach (var cad in listScale1)
+                {
+                    if (!firstItem)
+                    {
+                        array2 += ",";
+                    }
+                    firstItem = false;
+                    array2 += "'" + cad.cuad + "'";
+                }
+                array2 += ")";
+                //array2.Replace(",)", ")");
+
+                storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+            }
+                        
 
             return storePath;
         }
@@ -359,7 +432,7 @@ namespace WcfCrimShopService.entities
 
                     if (outParam != null && outParam.Uri != null)
                     {
-                        string fileName = "\\" + parcelTitle + ".pdf";
+                        string fileName = @"\" + parcelTitle + ".pdf";
                         try
                         {
                             zipPath = MakeStoreFolder(cNumber, fileName);
@@ -393,7 +466,7 @@ namespace WcfCrimShopService.entities
         public string MakeStoreFolder(string cnNumber, string file)
         {
 
-            var folderToSave = path + cnNumber;
+            var folderToSave = path + @"\" + cnNumber;
             var Pfile = folderToSave + file;
             DirectoryInfo dir;
             try
@@ -458,7 +531,9 @@ namespace WcfCrimShopService.entities
                 ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);
             }
 
-
+            //*****************************************************************
+            //this area goes the generator for the urls of the service to download the file
+            //*****************************************************************
             if (File.Exists(zipPath))
             {
                 //dir.Delete();
