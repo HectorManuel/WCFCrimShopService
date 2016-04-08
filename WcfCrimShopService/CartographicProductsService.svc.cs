@@ -19,6 +19,12 @@ using System.Xml;
 using WcfCrimShopService.entities;
 using WcfCrimShopService.com.evertecinc.mmpay;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Timers;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace WcfCrimShopService
 {
@@ -31,6 +37,17 @@ namespace WcfCrimShopService
     [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
     public class CartographicProductsService : ICartographicProductsService
     {
+        DBConnection responseHandler = new DBConnection();
+
+        /// <summary>
+        /// Service meant to test the GET url this function can and might be overwritten 
+        /// wiht a functionallity that we might need.
+        /// 
+        /// cartographicProductsService.svc/WebGet/{value}
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public string GetData(string value)
         {
             
@@ -51,10 +68,11 @@ namespace WcfCrimShopService
             {
                 while (result.Read())
                 {
-                    ds = result["ControlNumber"].ToString();
+                    ds = result["Confirmation"].ToString();
                     
                     //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
                 }
+                
             }
 
             //string ds = string.Empty;
@@ -66,10 +84,80 @@ namespace WcfCrimShopService
 
         }
 
-        //cartographicProductsService.svc/InsertOrderDetails
+        /// <summary>
+        /// GET function in charge of waiting for a change in the confirmation column of the order.
+        /// to wait for it to change from 'Processing' to tell the widget that the order was processed or cancelled
+        /// or an error occured based on values the call will evaluate.
+        /// 
+        /// cartographicProductsService.svc/AwaitConfirmation/{order}
+        /// 
+        /// </summary>
+        /// <param name="order"></param>
+        /// <returns></returns>
+        public string AwaitConfirmation(string order)
+        {
+            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            WebClient wb = new WebClient();
+            con.Open();
+            string query = "SELECT Confirmation " +
+                           "FROM dbo.Orders " +
+                           "WHERE ControlNumber= @control";
+
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", order);
+            string ds = "Processing";
+            //var list = new List<Objects.Order>();
+            //var result = cmd.ExecuteNonQuery();
+            int time = 0;
+
+            do
+            {
+                using (SqlDataReader result = cmd.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        ds = result["Confirmation"].ToString();
+
+                        //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
+                    }
+                    Thread.Sleep(2000); // modify to await 20min later
+                    time += 2;
+                    Debug.WriteLine(time +" "+ ds);
+
+                }
+            } while (ds == "Processing" && time != 20);
+
+            if (ds == "Processing")
+            {
+                ds = "error completing the payment";
+            }
+
+            return ds;
+        }
+
+
+        /// <summary>
+        ///  InsertORderDetails is one of the main functions of te code, this funciton is in charge os creating the order item
+        ///  and storing it in the database with all the information required.
+        ///  
+        /// cartographicProductsService.svc/InsertOrderDetails
+        /// 
+        /// </summary>
+        /// <param name="ControlNumber"></param>
+        /// <param name="Description"></param>
+        /// <param name="tx"></param>
+        /// <param name="sTotal"></param>
+        /// <param name="Total"></param>
+        /// <param name="CustomerName"></param>
+        /// <param name="customerEmail"></param>
+        /// <param name="hasPhoto"></param>
+        /// <param name="hasCat"></param>
+        /// <param name="hasList"></param>
+        /// <returns></returns>
         public string InsertOrderDetails(string ControlNumber, string Description, decimal tx,decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList)
         {
-            DBConnection responseHandler = new DBConnection();
+            //DBConnection responseHandler = new DBConnection();
 
             var result = responseHandler.InsertOrderDetailsHandler(ControlNumber, Description, tx, sTotal, Total, CustomerName, customerEmail, hasPhoto,hasCat,hasList);
 
@@ -155,27 +243,73 @@ namespace WcfCrimShopService
             #endregion
         }
 
-        //cartographicProductsService.svc/InsertClientDetails
+
+        /// <summary>
+        /// this function is no longer in use
+        /// 
+        /// cartographicProductsService.svc/InsertClientDetails
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="email"></param>
+        /// <param name="address"></param>
+        /// <param name="city"></param>
+        /// <param name="zip"></param>
+        /// <param name="tel"></param>
+        /// <param name="fax"></param>
+        /// <returns></returns>
         public string InsertClientDetails(string name, string email, string address, string city, string zip, string tel, string fax)
         {
-            DBConnection clientHandler = new DBConnection();
+            //DBConnection clientHandler = new DBConnection();
 
-            var result = clientHandler.InsertClientDetailsHandler(name, email, address, city, zip, tel, fax);
+            var result = responseHandler.InsertClientDetailsHandler(name, email, address, city, zip, tel, fax);
             return result;
         }
         
-        //cartographicProductsService.svc/PaymentResponse
+        /// <summary>
+        /// this service is in charge of retrieveing the response string from the online response
+        /// POST from Evertec and process it. extracting all the information of the order and processing every product
+        /// if the order payment was succesful
+        /// 
+        /// cartographicProductsService.svc/PaymentResponse
+        /// 
+        /// </summary>
+        /// <param name="PaymentResponse"></param>
+        /// <returns></returns>
         public string PaymentResponse(string PaymentResponse)
         {
-            DBConnection responseHandler = new DBConnection();
+            //DBConnection responseHandler = new DBConnection();
 
             var result = responseHandler.PaymentResponseLogHandler(PaymentResponse);
 
             return result;
         }
 
-        //cartographicProductsService.svc/StarGeoprocess string jsonMap, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit, string hasCat
-        public string StarGeoprocess(string jsonMap, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit, string hasCat, string email)
+        
+        /// <summary>
+        /// StarGeorpocess if a function build to test the geoprocesses to observe the way they work.
+        /// This function is later meant to work as the function to create the pdf archives and send them to the employee
+        /// wihtout having to go through paying.
+        /// 
+        /// cartographicProductsService.svc/StarGeoprocess
+        /// 
+        /// </summary>
+        /// <param name="jsonMap"></param>
+        /// <param name="cNumber"></param>
+        /// <param name="format"></param>
+        /// <param name="template"></param>
+        /// <param name="geoInfo"></param>
+        /// <param name="parcelTitle"></param>
+        /// <param name="sub_Title"></param>
+        /// <param name="bf"></param>
+        /// <param name="pr"></param>
+        /// <param name="bf_distance_unit"></param>
+        /// <param name="hasCat"></param>
+        /// <param name="hasPhoto"></param>
+        /// <param name="hasList"></param>
+        /// <param name="email"></param>
+        /// <returns></returns>
+        public string StarGeoprocess(string jsonMap, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit, string hasCat,  string hasPhoto, string hasList, string email)
         {
 
             Geoprocessing geo = new Geoprocessing();
@@ -217,27 +351,75 @@ namespace WcfCrimShopService
             return zipFilePath;
         }
 
-        //cartographicProductsService.svc/InsertAerialPhotoItem
+        
+
+        /// <summary>
+        /// Insert the data for the Aerial Photo item of the order. This information is later use
+        /// to generate the Cadastral pdf after the order has been authorize.
+        /// 
+        /// cartographicProductsService.svc/InsertAerialPhotoItem
+        /// 
+        /// </summary>
+        /// <param name="controlNumber"></param>
+        /// <param name="itemQty"></param>
+        /// <param name="item"></param>
+        /// <param name="format"></param>
+        /// <param name="layoutTemplate"></param>
+        /// <param name="georefInfo"></param>
+        /// <param name="parcel"></param>
+        /// <param name="subtitle"></param>
+        /// <param name="buffer"></param>
+        /// <param name="parcelList"></param>
+        /// <param name="bufferDistance"></param>
+        /// <returns></returns>
         public string InsertAerialPhotoItem(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
-            DBConnection AerialHandler = new DBConnection();
-            var result = AerialHandler.InsertAerialPhotoHandler(controlNumber, itemQty, item, format, layoutTemplate, georefInfo, parcel, subtitle, buffer, parcelList, bufferDistance);
+            //DBConnection AerialHandler = new DBConnection();
+            var result = responseHandler.InsertAerialPhotoHandler(controlNumber, itemQty, item, format, layoutTemplate, georefInfo, parcel, subtitle, buffer, parcelList, bufferDistance);
             return result;
         }
 
-        //cartographicProductsService.svc/InsertListaColindanteItem
+        
+
+        /// <summary>
+        /// Insert the data for the Adjacent parcel list. the data will later be use to generate
+        /// the pdf of the list to send to the user.
+        /// 
+        /// cartographicProductsService.svc/InsertListaColindanteItem
+        /// 
+        /// </summary>
+        /// <param name="controlNumber"></param>
+        /// <param name="itemName"></param>
+        /// <param name="itemQty"></param>
+        /// <param name="item"></param>
+        /// <returns></returns>
         public string InsertListaColindanteItem(string controlNumber, string itemName, int itemQty, string item)
         {
-            DBConnection lista = new DBConnection();
-            var result = lista.InsertListaColindanteItemHanlder(controlNumber, itemName, itemQty, item);
+            //DBConnection lista = new DBConnection();
+            var result = responseHandler.InsertListaColindanteItemHanlder(controlNumber, itemName, itemQty, item);
             return result;
         }
 
-        //cartographicProductsService.svc/InsertCatastralItem
+        
+
+        /// <summary>
+        /// Insert the data for the cadastral item of the order. This information is later use
+        /// to generate the Cadastral pdf after the order has been authorize.
+        /// 
+        /// cartographicProductsService.svc/InsertCatastralItem
+        /// 
+        /// </summary>
+        /// <param name="controlNumber"></param>
+        /// <param name="itemName"></param>
+        /// <param name="itemQty"></param>
+        /// <param name="escala"></param>
+        /// <param name="cuadricula"></param>
+        /// <param name="template"></param>
+        /// <returns></returns>
         public string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string cuadricula, string template)
         {
-            DBConnection catastro = new DBConnection();
-            var result = catastro.InsertCatastralesHandler(controlNumber, itemName, itemQty, escala, cuadricula, template);
+            //DBConnection catastro = new DBConnection();
+            var result = responseHandler.InsertCatastralesHandler(controlNumber, itemName, itemQty, escala, cuadricula, template);
             return result;
         }
 
@@ -339,6 +521,22 @@ namespace WcfCrimShopService
             //}
             return xmlEnvelope;
         }
+
+        public string CreatePdf(string json)
+        {
+            Document doc = new Document(PageSize.LETTER, 10, 10, 42, 35);
+            PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(@"C:\Users\hasencio\Documents\visual studio 2013\Projects\WcfCrimShopService\WcfCrimShopService\OrderFolder\Test.pdf", FileMode.Create));
+            doc.Open();
+            Paragraph par = new Paragraph("this is my first pdf \n new line");
+            doc.Add(par);
+            //completar eso, el json y el prionting del pdf
+
+            JObject obj = JObject.Parse(json);
+
+            doc.Close();
+            return "string";
+        }
+    
     }
 
 }

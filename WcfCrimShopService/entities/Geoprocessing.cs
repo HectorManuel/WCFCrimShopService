@@ -16,12 +16,13 @@ namespace WcfCrimShopService.entities
     public class Geoprocessing
     {
         string PhotoPdfUri = string.Empty;
-        //Uri OficialCatUri = new Uri("");
-        //Uri ListaColindanteUri = new Uri("");
+       
         WebClient webClient = new WebClient();
-        //string path = @"S:\14_CRIM_2014-2015\Operaciones\Datos\Trabajado\Productos Cartograficos\PrintTest";
-        string path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
-        //string map, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string cNumber)
+        
+        //string path = @"S:\14_CRIM_2014-2015\Operaciones\Datos\Trabajado\Productos Cartograficos\PrintTest"; C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives
+        string path = @"C:\Users\hasencio\Documents\visual studio 2013\Projects\WcfCrimShopService\WcfCrimShopService\OrderFolder";
+        
+        //*****Generate the pdf of Aerial Photo calling the geoprocess and passing the required arguments
         public async Task<string> FotoAerea(string map, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit)
         {
             //cNumber = "1234";
@@ -194,6 +195,7 @@ namespace WcfCrimShopService.entities
             return zipPath;
         }
 
+        //*****Generate the pdf of Oficial cadastral templates calling the geoprocess and passing the required arguments
         public async Task<string> OficialMaps(string template, string array, string geo, string ctrl)
         {
             var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
@@ -249,6 +251,14 @@ namespace WcfCrimShopService.entities
             return storePath;
         }
 
+        /// <summary>
+        /// Function Specifically designto call and generate the cadastral template pdf
+        /// </summary>
+        /// <param name="template"></param>
+        /// <param name="array"></param>
+        /// <param name="geo"></param>
+        /// <param name="ctrl"></param>
+        /// <returns></returns>
         public async Task<string> CallingMaps(string template, string array, string geo, string ctrl)
         {
             //List<Objects.OrderItemCatastral> allCat
@@ -303,7 +313,13 @@ namespace WcfCrimShopService.entities
             }
             return storePath;
         }
-        //string template, string array, string geo, string ctrl
+        
+        /// <summary>
+        /// OfficialMaps1 read the list of Cadastral maps that needs to create and separate them in 1:10000 and 1:1000
+        /// calling the CallingMaps function for each scale.
+        /// </summary>
+        /// <param name="cadastre"></param>
+        /// <returns></returns>
         public async Task<string> OficialMaps1(List<Objects.OrderItemCatastral> cadastre)
         {
             List<Objects.Scale> listScale10 = new List<Objects.Scale>();
@@ -378,6 +394,11 @@ namespace WcfCrimShopService.entities
             return storePath;
         }
 
+        /// <summary>
+        /// Retrieve the list of Aerial Photos of the order and creates a pdf for each one.
+        /// </summary>
+        /// <param name="allPics"></param>
+        /// <returns></returns>
         public async Task<string> FotoAerea1(List<Objects.OrderItemPhoto> allPics)
         {
             string zipPath = string.Empty;
@@ -460,9 +481,13 @@ namespace WcfCrimShopService.entities
         }
 
 
-        //Im gonna pass the path were all the folders are stored, the control number of the order
-        //to name the folder for the order with it, and the file name  that will be use for the pdf that will be created
-        //if the folder exist it simply uses it it does not recreate it.
+        /// <summary>
+        /// The function will create a folder with name the control number to store all the pdf of the same order
+        /// under the same folder. if check if the folder does not exist it create it.
+        /// </summary>
+        /// <param name="cnNumber"></param>
+        /// <param name="file"></param>
+        /// <returns></returns>
         public string MakeStoreFolder(string cnNumber, string file)
         {
 
@@ -491,8 +516,15 @@ namespace WcfCrimShopService.entities
             return folderToSave;
         }
 
-        //receive the uri, the folder  to save the file and the file name, verify that the file doesn't exist and 
-        //create or recreate it in the folder of the order. then return the file path.
+        /// <summary>
+        /// the function will take the uri created when the geoprocess are run and download the file to the folder
+        /// created in the MakeStoreFolder function. Storing all the pdf related to the same order under the folder with the
+        /// control number as name.
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="folder"></param>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
         public string LoadUriPdf(Uri uri, string folder, string fileName)
         {
             string file = folder + fileName;
@@ -516,6 +548,13 @@ namespace WcfCrimShopService.entities
             return file;
         }
 
+        /// <summary>
+        /// Once all files are created and downloaded, this fucntion is in charge of compressing the folder 
+        /// with the archive inside and sending the url to get the zip file via email
+        /// </summary>
+        /// <param name="orderFolderPath"></param>
+        /// <param name="clientEmail"></param>
+        /// <returns></returns>
         public string ZipAndSendEmail(string orderFolderPath, string clientEmail)
         {
             string zipPath = orderFolderPath + ".zip";

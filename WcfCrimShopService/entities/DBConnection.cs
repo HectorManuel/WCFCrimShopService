@@ -7,7 +7,7 @@ using System.Data.SqlClient;
 using System.Collections.Specialized;
 using WcfCrimShopService.entities;
 using System.Threading.Tasks;
-
+using System.Timers;
 
 namespace WcfCrimShopService.entities
 {
@@ -732,7 +732,10 @@ namespace WcfCrimShopService.entities
             
             return path;
         }
-    
-    
+
+        public string LogTransaction()
+        {
+            return "this will save the service work on the log";
+        }
     }
 }
