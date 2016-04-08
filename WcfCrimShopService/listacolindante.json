@@ -1,0 +1,23 @@
+﻿{
+
+    "ListaColindante": [
+        {
+            "ParcelaProcedencia": "064-023-187-12",
+            "Parcela": "064-023-187-12",
+            "Catastro": "064-023-187-12-001",
+            "Municipio": "CAROLINA",
+            "Dueño": "asencio medina H M",
+            "DireccionFisica": "I525 CALLE SEGOVIA URB VISTAMAR ",
+            "DireccionPostal": ""
+        },
+        {
+            "ParcelaProcedencia": "064-023-187-13",
+            "Parcela": "064-023-187-13",
+            "Catastro": "064-023-187-13-001",
+            "Municipio": "",
+            "Dueño": "CABAN RUIZ HECTOR",
+            "DireccionFisica": "I524 CALLE SEGOVIA URB VISTAMAR ",
+            "DireccionPostal": ""
+        }
+    ]
+}
