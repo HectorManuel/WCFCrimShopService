@@ -36,7 +36,6 @@ namespace WcfCrimShopService.entities
         public class OrderItemList
         {
             public string ControlNumber { get; set; }
-            public string itemName { get; set; }
             public string itemQty { get; set; }
             public string item { get; set; }
         }
@@ -58,6 +57,21 @@ namespace WcfCrimShopService.entities
             public string cuad { get; set; }
             public string controlNum { get; set; }
 
+        }
+        public class listaColindante
+        {
+            public string ParcelaProcedencia { get; set; }
+            public string Parcela { get; set; }
+            public string Catastro { get; set; }
+            public string Municipio { get; set; }
+            public string Dueno { get; set; }
+            public string DireccionFisica { get; set; }
+            public string DireccionPostal { get; set; }
+        }
+
+        public class ListaCol
+        {
+            public List<listaColindante> ListaColindante { get; set; }
         }
     }
 }

@@ -25,6 +25,7 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Web.Script.Serialization;
 
 namespace WcfCrimShopService
 {
@@ -524,16 +525,8 @@ namespace WcfCrimShopService
 
         public string CreatePdf(string json)
         {
-            Document doc = new Document(PageSize.LETTER, 10, 10, 42, 35);
-            PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(@"C:\Users\hasencio\Documents\visual studio 2013\Projects\WcfCrimShopService\WcfCrimShopService\OrderFolder\Test.pdf", FileMode.Create));
-            doc.Open();
-            Paragraph par = new Paragraph("this is my first pdf \n new line");
-            doc.Add(par);
-            //completar eso, el json y el prionting del pdf
-
-            JObject obj = JObject.Parse(json);
-
-            doc.Close();
+            Geoprocessing geo = new Geoprocessing();
+            //geo.AdyacentListGenerator(json, "041120160002", "GMT");
             return "string";
         }
     

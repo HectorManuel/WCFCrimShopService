@@ -10,6 +10,10 @@ using System.Net;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Mail;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using Newtonsoft.Json;
+
 
 namespace WcfCrimShopService.entities
 {
@@ -615,6 +619,93 @@ namespace WcfCrimShopService.entities
 
             }
             return zipPath;
+        }
+
+        public string AdyacentListGenerator(List<Objects.OrderItemList> itemsFromDb, string customerName)
+        {
+            foreach (var lista in itemsFromDb)
+            {
+                Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(lista.item);
+                using (Document doc = new Document(new RectangleReadOnly(1191, 842), 25, 25, 45, 35))//A3 (842,1191) nearest to 11x17, A4 (595,842) nearest to 8.5x11
+                {
+                    PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(path + "Test.pdf", FileMode.Create));
+
+                    ColindantePdfEventHandler e = new ColindantePdfEventHandler()
+                    {
+                        cantidad = lisCol.ListaColindante.Count.ToString(),
+                        controlNumber = "041120160001",
+                        contribuyente = "Geographic Mapping Technology"
+                    };
+
+                    wr.PageEvent = e;
+
+                    doc.Open();
+
+
+
+                    //completar eso, el json y el prionting del pdf
+                    PdfPTable table = new PdfPTable(7);
+                    table.WidthPercentage = 100;
+                    float[] widths = { 12.00F, 10.00F, 10.00F, 10.00F, 10.00F, 20.00F, 20.00F };
+                    //table.SetWidthPercentage(widths,new RectangleReadOnly(1191, 842));
+                    table.SetTotalWidth(widths);
+                    PdfPCell cell = new PdfPCell(new Phrase("Parcela de procedencia", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell.Colspan = 1;
+                    cell.HorizontalAlignment = 0;//0=left 1=center 2=right
+                    PdfPCell cell1 = new PdfPCell(new Phrase("Parcela", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell1.Colspan = 1;
+                    cell1.HorizontalAlignment = 0;//0=left 1=center 2=right
+                    PdfPCell cell2 = new PdfPCell(new Phrase("Catastro", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell2.Colspan = 1;
+                    cell2.HorizontalAlignment = 0;//0=left 1=center 2=right
+                    PdfPCell cell3 = new PdfPCell(new Phrase("Municipio", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell3.Colspan = 1;
+                    cell3.HorizontalAlignment = 0;//0=left 1=center 2=right
+                    PdfPCell cell4 = new PdfPCell(new Phrase("Dueño", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell4.Colspan = 1;
+                    cell4.HorizontalAlignment = 0;//0=left 1=center 2=right
+                    PdfPCell cell5 = new PdfPCell(new Phrase("Dirección Física", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell5.Colspan = 1;
+                    cell5.HorizontalAlignment = 0;//0=left 1=center 2=right
+                    PdfPCell cell6 = new PdfPCell(new Phrase("Dirección Postal", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell6.Colspan = 1;
+                    cell6.HorizontalAlignment = 0;//0=left 1=center 2=right
+
+                    table.AddCell(cell);
+                    table.AddCell(cell1);
+                    table.AddCell(cell2);
+                    table.AddCell(cell3);
+                    table.AddCell(cell4);
+                    table.AddCell(cell5);
+                    table.AddCell(cell6);
+
+                    foreach (var item in lisCol.ListaColindante)
+                    {
+                        table.AddCell(item.ParcelaProcedencia);
+                        table.AddCell(item.Parcela);
+                        table.AddCell(item.Catastro);
+                        table.AddCell(item.Municipio);
+                        table.AddCell(item.Dueno);
+                        table.AddCell(item.DireccionFisica);
+                        table.AddCell(item.DireccionPostal);
+
+                    }
+
+
+                    doc.Add(table);
+                    doc.NewPage();
+
+                    Paragraph par = new Paragraph("this is my first pdf new line");
+                    doc.Add(par);
+                    //JObject obj = JObject.Parse(json);
+
+                    doc.Close();
+                }
+            }
+            
+            
+            
+            return "path";
         }
     }
 }

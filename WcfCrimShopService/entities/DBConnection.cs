@@ -568,7 +568,7 @@ namespace WcfCrimShopService.entities
 
             if (myOrder[0].HasList.ToUpper() == "Y")
             {
-                listContent = ProcessListProducts(myOrder[0].ControlNumber);
+                listContent = ProcessListProducts(myOrder[0].ControlNumber, myOrder[0].CustomerName);
             }
 
             if (string.IsNullOrEmpty(pictureContent))
@@ -650,13 +650,13 @@ namespace WcfCrimShopService.entities
             return path;
         }
 
-        public string ProcessListProducts(string controlNumber)
+        public string ProcessListProducts(string controlNumber, string customerName)
         {
-
+            string path = string.Empty;
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
-            string query = "SELECT ControlNumber,ItemName,ItemQty,Item " +
+            string query = "SELECT ControlNumber,ItemQty,Item " +
                             "FROM dbo.OrderItemsListaColindante " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -668,22 +668,27 @@ namespace WcfCrimShopService.entities
                 while (result.Read())
                 {
                     string cn = result["ControlNumber"].ToString();
-                    string name = result["ItemName"].ToString();
+                    
                     string qty = result["ItemQty"].ToString();
                     string item = result["Item"].ToString();
                     
                     orderList.Add(new Objects.OrderItemList
                     {
                         ControlNumber = cn, 
-                        itemName = name, 
+                        
                         itemQty = qty, 
                         item = item
                     });
                 }
+                
+                var createPrinting = geo.AdyacentListGenerator(orderList, customerName);
+                path = createPrinting.ToString();
+
+
             }
             
             
-            return "string";
+            return path;
         }
 
         public string ProcessCadastralProducts(string controlNumber)

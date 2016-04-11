@@ -90,6 +90,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="entities\ColindantePdfEventHandler.cs" />
     <Compile Include="entities\DBConnection.cs" />
     <Compile Include="entities\Geoprocessing.cs" />
     <Compile Include="entities\Objects.cs" />
