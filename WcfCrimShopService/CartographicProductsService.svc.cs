@@ -26,6 +26,7 @@ using iTextSharp.text.pdf;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Web.Script.Serialization;
+using System.DirectoryServices.AccountManagement;
 
 namespace WcfCrimShopService
 {
@@ -424,7 +425,12 @@ namespace WcfCrimShopService
             return result;
         }
 
-        //cartographicProductsService.svc/MakePayment
+        /// <summary>
+        /// cartographicProductsService.svc/MakePayment
+        /// this service is menat to send the request to evertec for the payment.
+        /// </summary>
+        /// <param name="controlNumber"></param>
+        /// <returns></returns>
         public string MakePayment(string controlNumber)
         {
             //MerchantService web = new MerchantService();
@@ -523,13 +529,142 @@ namespace WcfCrimShopService
             return xmlEnvelope;
         }
 
-        public string CreatePdf(string json)
+        /// <summary>
+        /// Test service for the List of adyacent parcels of the selection
+        /// </summary>
+        /// <param name="json"></param>
+        /// <param name="cNumber"></param>
+        /// <param name="customer"></param>
+        /// <param name="parcela"></param>
+        /// <returns></returns>
+        public string CreatePdfListaColindante(string json, string cNumber, string customer, string parcela)
         {
+            if (string.IsNullOrEmpty(cNumber))
+            {
+                cNumber = "041120160001";
+            }
+            if (string.IsNullOrEmpty(customer))
+            {
+                customer = "Geographic Mapping Technology";
+            }
+            if (string.IsNullOrEmpty(parcela))
+            {
+                parcela = "000-000-000-00,111-111-111-11,222-222-222-22";
+            }
             Geoprocessing geo = new Geoprocessing();
-            //geo.AdyacentListGenerator(json, "041120160002", "GMT");
-            return "string";
+            //geo.AdyacentListGenerator(json, "041120160002", "GMT"); System.IO.Directory.GetCurrentDirectory()
+            string zipPath = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
+            Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(json);
+            using (Document doc = new Document(new RectangleReadOnly(1191, 842), 25, 25, 45, 35))//A3 (842,1191) nearest to 11x17, A4 (595,842) nearest to 8.5x11
+            {
+                PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(zipPath + parcela+ @"_colindantes.pdf", FileMode.Create));
+
+                ColindantePdfEventHandler e = new ColindantePdfEventHandler()
+                {
+                    cantidad = lisCol.ListaColindante.Count.ToString(),
+                    controlNumber = cNumber,
+                    contribuyente = customer,
+                    Parcela = parcela
+                };
+
+                wr.PageEvent = e;
+
+                doc.Open();
+
+
+
+                //completar eso, el json y el prionting del pdf
+                PdfPTable table = new PdfPTable(7);
+                table.WidthPercentage = 100;
+                float[] widths = { 12.00F, 8.00F, 10.00F, 10.00F, 12.00F, 20.00F, 20.00F };
+                //table.SetWidthPercentage(widths,new RectangleReadOnly(1191, 842));
+                table.SetTotalWidth(widths);
+                PdfPCell cell = new PdfPCell(new Phrase("Parcela de procedencia", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                cell.Colspan = 1;
+                cell.HorizontalAlignment = 0;//0=left 1=center 2=right
+                PdfPCell cell1 = new PdfPCell(new Phrase("Parcela", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                cell1.Colspan = 1;
+                cell1.HorizontalAlignment = 0;//0=left 1=center 2=right
+                PdfPCell cell2 = new PdfPCell(new Phrase("Catastro", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                cell2.Colspan = 1;
+                cell2.HorizontalAlignment = 0;//0=left 1=center 2=right
+                PdfPCell cell3 = new PdfPCell(new Phrase("Municipio", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                cell3.Colspan = 1;
+                cell3.HorizontalAlignment = 0;//0=left 1=center 2=right
+                PdfPCell cell4 = new PdfPCell(new Phrase("Dueño", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                cell4.Colspan = 1;
+                cell4.HorizontalAlignment = 0;//0=left 1=center 2=right
+                PdfPCell cell5 = new PdfPCell(new Phrase("Dirección Física", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                cell5.Colspan = 1;
+                cell5.HorizontalAlignment = 0;//0=left 1=center 2=right
+                PdfPCell cell6 = new PdfPCell(new Phrase("Dirección Postal", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                cell6.Colspan = 1;
+                cell6.HorizontalAlignment = 0;//0=left 1=center 2=right
+
+                table.AddCell(cell);
+                table.AddCell(cell1);
+                table.AddCell(cell2);
+                table.AddCell(cell3);
+                table.AddCell(cell4);
+                table.AddCell(cell5);
+                table.AddCell(cell6);
+
+                foreach (var item in lisCol.ListaColindante)
+                {
+                    table.AddCell(item.ParcelaProcedencia);
+                    table.AddCell(item.Parcela);
+                    table.AddCell(item.Catastro);
+                    table.AddCell(item.Municipio);
+                    table.AddCell(item.Dueno);
+                    table.AddCell(item.DireccionFisica);
+                    table.AddCell(item.DireccionPostal);
+
+                }
+
+
+                doc.Add(table);
+                doc.NewPage();
+
+                Paragraph par = new Paragraph("this is my first pdf new line");
+                doc.Add(par);
+                //JObject obj = JObject.Parse(json);
+
+                doc.Close();
+            }
+            return "complete";
         }
-    
+
+        /// <summary>
+        ///  this service is in charge os authentication the user with the active directory
+        ///  once the username and password are matched , it will evaluate the user to the required group
+        ///  or groups.
+        /// </summary>
+        /// <param name="username"> user name</param>
+        /// <param name="password"> password </param>
+        /// <returns>confirmation</returns>
+        public string Authentication(string username, string password)
+        {
+            AuthenticationClass auth = new AuthenticationClass();
+            string result = auth.IsAuthenticated(username, password);
+            return result;
+        }
+
+        public string GetItemPrice(string item, int qty)
+        {
+            string total = string.Empty;
+            List<Objects.ProductPrice> price = responseHandler.PriceProduct(item, qty);
+
+            switch (item)
+            {
+                case "Foto Aerea 1998":
+                case "Foto Aerea 2004":
+                case "Foto Aerea 2007":
+                case "Foto Aerea 2010":
+                    break;
+            }
+
+            return total;
+        }
     }
 
 }

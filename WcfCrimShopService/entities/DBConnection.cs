@@ -45,11 +45,10 @@ namespace WcfCrimShopService.entities
 
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
-            string queryString2 = "INSERT into dbo.PaymentResponseLog (ControlNumber,VTransactionID,VAccountId,VTotalAmount,VPaymentMethod,VPaymentDescription,VAuthorizationNum,VConfirmationNum, VMerchantTransId)" +
-                                "VALUES (@ControlNumber,@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum, @VMerchantTransId)";
+            string queryString2 = "INSERT into dbo.PaymentResponseLog (VTransactionID,VAccountId,VTotalAmount,VPaymentMethod,VPaymentDescription,VAuthorizationNum,VConfirmationNum, VMerchantTransId)" +
+                                "VALUES (@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum, @VMerchantTransId)";
             SqlCommand cmd2 = new SqlCommand(queryString2, con);
             //cmd.Parameters.AddWithValue("@control", ControlNumber);
-            cmd2.Parameters.AddWithValue("@ControlNumber", merchantTransId);
             cmd2.Parameters.AddWithValue("@VTransactionID", transactionId);
             cmd2.Parameters.AddWithValue("@VAccountId", accountId);
             cmd2.Parameters.AddWithValue("@VTotalAmount", totalAmount);
@@ -249,7 +248,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
-            string query = "INSERT into dbo.OrderItemsListaColindante (ControlNumber,ItemName,ItemQty,Item)" +
+            string query = "INSERT into dbo.OrderItemsListaColindante (ControlNumber,Parcelas,ItemQty,Item)" +
                            "VALUES (@control,@itemName,@qty,@item";
             SqlCommand cmd = new SqlCommand(query, con);
 
@@ -656,7 +655,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
             con.Open();
 
-            string query = "SELECT ControlNumber,ItemQty,Item " +
+            string query = "SELECT ControlNumber,Parcelas,ItemQty,Item " +
                             "FROM dbo.OrderItemsListaColindante " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -668,14 +667,14 @@ namespace WcfCrimShopService.entities
                 while (result.Read())
                 {
                     string cn = result["ControlNumber"].ToString();
-                    
+                    string itemName = result["Parcelas"].ToString();
                     string qty = result["ItemQty"].ToString();
                     string item = result["Item"].ToString();
                     
                     orderList.Add(new Objects.OrderItemList
                     {
                         ControlNumber = cn, 
-                        
+                        itemName = itemName,
                         itemQty = qty, 
                         item = item
                     });
@@ -741,6 +740,14 @@ namespace WcfCrimShopService.entities
         public string LogTransaction()
         {
             return "this will save the service work on the log";
+        }
+
+        public List<Objects.ProductPrice> PriceProduct(string product, int qty)
+        {
+            List<Objects.ProductPrice> pp = new List<Objects.ProductPrice>();
+
+
+            return pp;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace WcfCrimShopService
 
         [OperationContract] // ya cree ajax
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string InsertListaColindanteItem(string controlNumber, string itemName, int itemQty, string item);
+        string InsertListaColindanteItem(string controlNumber, string parcelas, int itemQty, string item);
 
 
         [OperationContract] // ya cree ajax
@@ -63,7 +63,15 @@ namespace WcfCrimShopService
 
         [OperationContract]
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
-        string CreatePdf(string controlNumber);
+        string CreatePdfListaColindante(string controlNumber, string cNumber, string customer, string parcela);
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        string Authentication(string username, string password);
+
+        [OperationContract]
+        [WebInvoke(Method="POST", RequestFormat= WebMessageFormat.Json, ResponseFormat= WebMessageFormat.Json, BodyStyle= WebMessageBodyStyle.WrappedRequest)]
+        string GetItemPrice(string item, int qty);
 
     }
 

@@ -24,7 +24,8 @@ namespace WcfCrimShopService.entities
         WebClient webClient = new WebClient();
         
         //string path = @"S:\14_CRIM_2014-2015\Operaciones\Datos\Trabajado\Productos Cartograficos\PrintTest"; C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives
-        string path = @"C:\Users\hasencio\Documents\visual studio 2013\Projects\WcfCrimShopService\WcfCrimShopService\OrderFolder";
+        //string path = @"C:\Users\hasencio\Documents\visual studio 2013\Projects\WcfCrimShopService\WcfCrimShopService\OrderFolder";
+        string path = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
         
         //*****Generate the pdf of Aerial Photo calling the geoprocess and passing the required arguments
         public async Task<string> FotoAerea(string map, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit)
@@ -103,7 +104,7 @@ namespace WcfCrimShopService.entities
                         //verify is the directory exists. return the order folder
                         zipPath = MakeStoreFolder(cNumber, fileName);
 
-                        #region verify the directory old
+                        #region verify the directory old commented
                         //if (Directory.Exists(path))
                         //{
                         //    Debug.WriteLine("directory: " + path + "   exist");
@@ -122,7 +123,7 @@ namespace WcfCrimShopService.entities
 
 
                         //webClient.DownloadFile(outParam.Uri, zipPath + folderName);
-                        #region zip and email
+                        #region zip and email comented
                         ////zip file creation
                         //if (!File.Exists(zipPath))
                         //{
@@ -371,7 +372,7 @@ namespace WcfCrimShopService.entities
                 array += ")";
                 //array.Replace(",)", ")");
 
-                //storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
 
             }
 
@@ -495,7 +496,7 @@ namespace WcfCrimShopService.entities
         public string MakeStoreFolder(string cnNumber, string file)
         {
 
-            var folderToSave = path + @"\" + cnNumber;
+            var folderToSave = path + cnNumber;
             var Pfile = folderToSave + file;
             DirectoryInfo dir;
             try
@@ -621,20 +622,29 @@ namespace WcfCrimShopService.entities
             return zipPath;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="itemsFromDb"></param>
+        /// <param name="customerName"></param>
+        /// <returns></returns>
         public string AdyacentListGenerator(List<Objects.OrderItemList> itemsFromDb, string customerName)
         {
+            string zipPath = string.Empty;
             foreach (var lista in itemsFromDb)
             {
+                zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + lista.itemName + "_colindante.pdf");
                 Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(lista.item);
                 using (Document doc = new Document(new RectangleReadOnly(1191, 842), 25, 25, 45, 35))//A3 (842,1191) nearest to 11x17, A4 (595,842) nearest to 8.5x11
                 {
-                    PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(path + "Test.pdf", FileMode.Create));
+                    PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(zipPath + @"\"+lista.itemName+"_colindante.pdf", FileMode.Create));
 
                     ColindantePdfEventHandler e = new ColindantePdfEventHandler()
                     {
                         cantidad = lisCol.ListaColindante.Count.ToString(),
-                        controlNumber = "041120160001",
-                        contribuyente = "Geographic Mapping Technology"
+                        controlNumber = lista.ControlNumber,
+                        contribuyente = customerName,
+                        Parcela = lista.itemName
                     };
 
                     wr.PageEvent = e;
@@ -646,7 +656,7 @@ namespace WcfCrimShopService.entities
                     //completar eso, el json y el prionting del pdf
                     PdfPTable table = new PdfPTable(7);
                     table.WidthPercentage = 100;
-                    float[] widths = { 12.00F, 10.00F, 10.00F, 10.00F, 10.00F, 20.00F, 20.00F };
+                    float[] widths = { 12.00F, 8.00F, 10.00F, 10.00F, 12.00F, 20.00F, 20.00F };
                     //table.SetWidthPercentage(widths,new RectangleReadOnly(1191, 842));
                     table.SetTotalWidth(widths);
                     PdfPCell cell = new PdfPCell(new Phrase("Parcela de procedencia", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
@@ -705,7 +715,7 @@ namespace WcfCrimShopService.entities
             
             
             
-            return "path";
+            return zipPath;
         }
     }
 }

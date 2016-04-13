@@ -36,6 +36,7 @@ namespace WcfCrimShopService.entities
         public class OrderItemList
         {
             public string ControlNumber { get; set; }
+            public string itemName { get; set; }
             public string itemQty { get; set; }
             public string item { get; set; }
         }
@@ -72,6 +73,12 @@ namespace WcfCrimShopService.entities
         public class ListaCol
         {
             public List<listaColindante> ListaColindante { get; set; }
+        }
+
+        public class ProductPrice
+        {
+            public string product { get; set; }
+            public decimal price { get; set; }
         }
     }
 }
