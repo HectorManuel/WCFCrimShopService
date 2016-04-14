@@ -8,12 +8,22 @@ using System.Collections.Specialized;
 using WcfCrimShopService.entities;
 using System.Threading.Tasks;
 using System.Timers;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace WcfCrimShopService.entities
 {
     public class DBConnection
     {
         Geoprocessing geo = new Geoprocessing();
+        Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
+
+        public SqlConnection Connection()
+        {
+            SqlConnection con = new SqlConnection("Data Source=GMTWKS13\\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            return con;
+        }
+
         public string PaymentResponseLogHandler(string PaymentResponse)
         {
             string Message = "things";
@@ -30,7 +40,7 @@ namespace WcfCrimShopService.entities
             string merchantTransId = nvc.Get("VMerchantTransId");
             //string merchantTransId = nvc.Get("VMerchantTransId");
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = Connection();
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
@@ -84,7 +94,7 @@ namespace WcfCrimShopService.entities
 
         public string InsertAerialPhotoHandler(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = Connection();
             con.Open();
 
             string query = "INSERT into dbo.OrderItemAerialphoto (ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance) " +
@@ -178,13 +188,25 @@ namespace WcfCrimShopService.entities
             return message;
         }
 
-        public string InsertCatastralesHandler(string controlNumber, string itemName, int itemQty, string escala, string cuadricula, string template)
+        public string InsertCatastralesHandler(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula1, string cuadricula10)
         {
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            
+            decimal cost = Convert.ToDecimal(geo.CalculatePrice("catastrales", itemQty));
+            SqlConnection con = Connection();
             con.Open();
-
-            string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template) " +
-                           "VALUES (@control,@itemName,@qty,@escala,@cuadricula, @template) ";
+            if (string.IsNullOrEmpty(cuadricula1))
+            {
+                string[] Cuadricula1k = cuadricula1.Split(',');
+            }
+            if (string.IsNullOrEmpty(cuadricula10))
+            {
+                string[] Cuadricula10k = cuadricula10.Split(',');
+            }
+            //*****************************************************
+            //FALTA MODIFICAR ESTA FUNCTION CON UN FOR LOOP PARA LAS LISTAS Y TOMAR ESTA FUNCION Y COLOCARLA AFUERA
+            //PARA EVITAR REPETIR CODIGO
+            string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template,Price) " +
+                           "VALUES (@control,@itemName,@qty,@escala,@cuadricula, @template,@price) ";
             SqlCommand cmd = new SqlCommand(query, con);
 
             if (string.IsNullOrEmpty(controlNumber))
@@ -196,18 +218,18 @@ namespace WcfCrimShopService.entities
                 cmd.Parameters.AddWithValue("@control", controlNumber);
             }
 
-            if (string.IsNullOrEmpty(cuadricula))
+            if (string.IsNullOrEmpty(cuadricula1))
             {
                 return "must include the map json on the item ";
             }
             else
             {
-                cmd.Parameters.AddWithValue("@cuadricula", cuadricula);
+                cmd.Parameters.AddWithValue("@cuadricula", cuadricula1);
             }
-
+            
             if (string.IsNullOrEmpty(itemName))
             {
-                itemName = cuadricula;
+                itemName = cuadricula1;
             }
 
             if (itemQty == 0)
@@ -239,61 +261,72 @@ namespace WcfCrimShopService.entities
             {
                 message = "error inserting Item Catastral into DB";
             }
-
+            con.Close();
             return message;
         }
 
         public string InsertListaColindanteItemHanlder(string controlNumber, string itemName, int itemQty, string item)
         {
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            con.Open();
-
-            string query = "INSERT into dbo.OrderItemsListaColindante (ControlNumber,Parcelas,ItemQty,Item)" +
-                           "VALUES (@control,@itemName,@qty,@item";
-            SqlCommand cmd = new SqlCommand(query, con);
-
-            if (string.IsNullOrEmpty(controlNumber))
-            {
-                return "Control Number Needed";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@control", controlNumber);
-            }
-
-            if (string.IsNullOrEmpty(item))
-            {
-                return "must include the json for the item ";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@item", item);
-            }
-
-            if (string.IsNullOrEmpty(itemName))
-            {
-                itemName = "Lista De Colindante";
-            }
-
-            if (itemQty == 0)
-            {
-                itemQty = 1;
-            }
-
-            cmd.Parameters.AddWithValue("@itemName", itemName);
-            cmd.Parameters.AddWithValue("@qty", itemQty);
-
-
-            var result = cmd.ExecuteNonQuery();
             string message;
-            if (result == 1)
+            try
             {
-                message = controlNumber;
+                decimal cost = Convert.ToDecimal(geo.CalculatePrice("colindante", itemQty));
+                SqlConnection con = Connection();
+                con.Open();
+
+                string query = "INSERT into dbo.OrderItemsListaColindante (ControlNumber,Parcelas,ItemQty,Item,Price) " +
+                               "VALUES (@control,@itemName,@qty,@item,@cost ";
+                SqlCommand cmd = new SqlCommand(query, con);
+
+                if (string.IsNullOrEmpty(controlNumber))
+                {
+                    return "Control Number Needed";
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@control", controlNumber);
+                }
+
+                if (string.IsNullOrEmpty(item))
+                {
+                    return "must include the json for the item ";
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@item", item);
+                }
+
+                if (string.IsNullOrEmpty(itemName))
+                {
+                    itemName = "Lista De Colindante";
+                }
+
+                if (itemQty == 0)
+                {
+                    itemQty = 1;
+                }
+
+                cmd.Parameters.AddWithValue("@itemName", itemName);
+                cmd.Parameters.AddWithValue("@qty", itemQty);
+
+                cmd.Parameters.AddWithValue("@cost", cost);
+
+                var result = cmd.ExecuteNonQuery();
+                
+                if (result == 1)
+                {
+                    message = controlNumber;
+                }
+                else
+                {
+                    message = "error inserting Lista de colindante into DB";
+                }
             }
-            else
+            catch (Exception e)
             {
-                message = "error inserting Lista de colindante into DB";
+                return e.Message;
             }
+            
 
             return message;
         }
@@ -303,7 +336,7 @@ namespace WcfCrimShopService.entities
             string Message;
             DateTime OrderDate = DateTime.Now;
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = Connection();
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             con.Open();
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
@@ -423,90 +456,11 @@ namespace WcfCrimShopService.entities
 
         }
 
-        public string InsertClientDetailsHandler(string name, string email, string address, string city, string zip, string tel, string fax)
-        {
-            string Message;
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
-            con.Open();
-            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
-            //        "VALUES (@control,@response,@description)";
-            string queryString = "INSERT into dbo.Client (Name, Email, Address, City, Zip, Telephone, Fax)" +
-                                "VALUES (@name, @email, @adress, @city, @zip, @telephone, @fax)";
-
-            SqlCommand cmd = new SqlCommand(queryString, con);
-            //if (string.IsNullOrEmpty(clientId))
-            //{
-            //    return "client Id cannot be empty";
-            //}
-            //else
-            //{
-            //    cmd.Parameters.AddWithValue("@clientId", clientId);
-            //}
-            if (string.IsNullOrEmpty(name))
-            {
-                return "name cannot be empty";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@name", name);
-            }
-
-            if (string.IsNullOrEmpty(email))
-            {
-                return "email cannot be empty";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@email", email);
-            }
-            if (string.IsNullOrEmpty(address))
-            {
-                address = string.Empty;
-            }
-            
-            if (string.IsNullOrEmpty(city))
-            {
-                city = string.Empty;
-            }
-            
-            if (string.IsNullOrEmpty(tel))
-            {
-                tel = string.Empty;
-            }
-            if (string.IsNullOrEmpty(fax))
-            {
-                fax = string.Empty;
-            }
-            if (string.IsNullOrEmpty(zip))
-            {
-                zip = "00000";
-            }
-            cmd.Parameters.AddWithValue("@city", city);
-            cmd.Parameters.AddWithValue("@zip", zip);
-            cmd.Parameters.AddWithValue("@adress", address);
-            cmd.Parameters.AddWithValue("@telephone", tel);
-            cmd.Parameters.AddWithValue("@fax", fax);
-
-            int result = cmd.ExecuteNonQuery();
-
-            if (result == 1)
-            {
-                Message = "Client: " + name + " Added successfully";
-            }
-            else
-            {
-                Message = "Client: " + name + " not added";
-            }
-            con.Close();
-            return Message;
-        }
-
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
         public void GetOrderDetails(string controlNumber)
         {
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = Connection();
             con.Open();
 
             string query = "SELECT ControlNumber,Confirmation,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList " +
@@ -514,7 +468,7 @@ namespace WcfCrimShopService.entities
                            "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
             cmd.Parameters.AddWithValue("@control", controlNumber);
-
+            
             List<Objects.Order> orderList = new List<Objects.Order>();
             using (SqlDataReader result = cmd.ExecuteReader())
             {
@@ -597,7 +551,7 @@ namespace WcfCrimShopService.entities
         public string ProcessPhotoProducts(string controlNumber)
         {
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = Connection();
             con.Open();
 
             string query = "SELECT ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance " +
@@ -641,7 +595,7 @@ namespace WcfCrimShopService.entities
             }
             string path = string.Empty;
             var task = Task.Run(async () => {
-                var createPrinting = await geo.FotoAerea1(orderList);
+                var createPrinting = await geo.FotoAerea(orderList);
                 path = createPrinting.ToString();
             });
             task.Wait();
@@ -652,7 +606,7 @@ namespace WcfCrimShopService.entities
         public string ProcessListProducts(string controlNumber, string customerName)
         {
             string path = string.Empty;
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = Connection();
             con.Open();
 
             string query = "SELECT ControlNumber,Parcelas,ItemQty,Item " +
@@ -693,7 +647,7 @@ namespace WcfCrimShopService.entities
         public string ProcessCadastralProducts(string controlNumber)
         {
 
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            SqlConnection con = Connection();
             con.Open();
 
             string query = "SELECT ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template " +
@@ -729,7 +683,7 @@ namespace WcfCrimShopService.entities
             string path = string.Empty;
             var task = Task.Run(async () =>
             {
-                var createPrinting = await geo.OficialMaps1(orderList);
+                var createPrinting = await geo.OficialMaps(orderList);
                 path = createPrinting.ToString();
             });
             task.Wait();
@@ -742,10 +696,32 @@ namespace WcfCrimShopService.entities
             return "this will save the service work on the log";
         }
 
-        public List<Objects.ProductPrice> PriceProduct(string product, int qty)
+        public Objects.ProductPrice PriceProduct(string product, int qty)
         {
-            List<Objects.ProductPrice> pp = new List<Objects.ProductPrice>();
+            Objects.ProductPrice pp = new Objects.ProductPrice();
+            SqlConnection con = Connection();//new SqlConnection("Data Source=GMTWKS13\\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            con.Open();
 
+            string query = "SELECT Product,Price " +
+                           "FROM dbo.ProductPrice " +
+                           "WHERE Product=@product ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@product", product);
+
+            
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["Product"].ToString();
+                    decimal confirm = Convert.ToDecimal(result["Price"].ToString());
+
+                    pp.price = confirm;
+                    pp.product = cn;
+                }
+            }
+
+            con.Close();
 
             return pp;
         }

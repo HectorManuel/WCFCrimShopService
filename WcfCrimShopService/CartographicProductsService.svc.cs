@@ -245,28 +245,6 @@ namespace WcfCrimShopService
             #endregion
         }
 
-
-        /// <summary>
-        /// this function is no longer in use
-        /// 
-        /// cartographicProductsService.svc/InsertClientDetails
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="email"></param>
-        /// <param name="address"></param>
-        /// <param name="city"></param>
-        /// <param name="zip"></param>
-        /// <param name="tel"></param>
-        /// <param name="fax"></param>
-        /// <returns></returns>
-        public string InsertClientDetails(string name, string email, string address, string city, string zip, string tel, string fax)
-        {
-            //DBConnection clientHandler = new DBConnection();
-
-            var result = responseHandler.InsertClientDetailsHandler(name, email, address, city, zip, tel, fax);
-            return result;
-        }
         
         /// <summary>
         /// this service is in charge of retrieveing the response string from the online response
@@ -319,8 +297,8 @@ namespace WcfCrimShopService
             string catRes = string.Empty;
             var result = Task.Run(async () =>
             {
-                var test = await geo.FotoAerea(jsonMap, cNumber, format, template, geoInfo, parcelTitle, sub_Title, bf, pr, bf_distance_unit);
-                res = test.ToString();
+                //var test = await geo.FotoAerea(jsonMap, cNumber, format, template, geoInfo, parcelTitle, sub_Title, bf, pr, bf_distance_unit);
+                //res = test.ToString();
             });
 
             //var result = geo.FotoAerea(jsonMap, cNumber, format, template, geoInfo, parcelTitle, sub_Title);
@@ -332,8 +310,8 @@ namespace WcfCrimShopService
                 string templated = "MapaCatastral_10k";
                 var catastral = Task.Run(async () =>
                 {
-                    var cat = await geo.OficialMaps(templated, array, geoInfo, cNumber);
-                    catRes = cat.ToString();
+                    //var cat = await geo.OficialMaps(templated, array, geoInfo, cNumber);
+                    //catRes = cat.ToString();
                 });
                 catastral.Wait();
             }
@@ -418,10 +396,10 @@ namespace WcfCrimShopService
         /// <param name="cuadricula"></param>
         /// <param name="template"></param>
         /// <returns></returns>
-        public string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string cuadricula, string template)
+        public string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula1, string cuadricula10)
         {
             //DBConnection catastro = new DBConnection();
-            var result = responseHandler.InsertCatastralesHandler(controlNumber, itemName, itemQty, escala, cuadricula, template);
+            var result = responseHandler.InsertCatastralesHandler(controlNumber, itemName, itemQty, escala, template, cuadricula1, cuadricula10);
             return result;
         }
 
@@ -649,20 +627,21 @@ namespace WcfCrimShopService
             return result;
         }
 
+        /// <summary>
+        /// This function is in charge of getting the price per item from the DB and 
+        /// calculate the price for the interface and later to save in the db
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="qty"></param>
+        /// <returns></returns>
         public string GetItemPrice(string item, int qty)
         {
             string total = string.Empty;
-            List<Objects.ProductPrice> price = responseHandler.PriceProduct(item, qty);
 
-            switch (item)
-            {
-                case "Foto Aerea 1998":
-                case "Foto Aerea 2004":
-                case "Foto Aerea 2007":
-                case "Foto Aerea 2010":
-                    break;
-            }
-
+            //Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText( System.AppDomain.CurrentDomain.BaseDirectory+ @"Config.json"));
+            Geoprocessing gp = new Geoprocessing();
+            total = gp.CalculatePrice(item, qty);
+            
             return total;
         }
     }

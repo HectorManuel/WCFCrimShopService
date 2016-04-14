@@ -80,5 +80,12 @@ namespace WcfCrimShopService.entities
             public string product { get; set; }
             public decimal price { get; set; }
         }
+
+        public class ConfigObject
+        {
+            public string source { get; set; }
+            public string catalog { get; set; }
+            public string id { get; set; }
+        }
     }
 }

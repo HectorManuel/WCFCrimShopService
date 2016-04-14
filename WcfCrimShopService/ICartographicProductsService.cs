@@ -33,10 +33,6 @@ namespace WcfCrimShopService
         string PaymentResponse(string PaymentResponse);
 
 
-        [OperationContract]
-        [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string InsertClientDetails(string name, string email, string address, string city, string zip, string tel, string fax);
-
 
         [OperationContract] //ya cree ajax
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
@@ -50,7 +46,7 @@ namespace WcfCrimShopService
 
         [OperationContract] // ya cree ajax
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string cuadricula, string template);
+        string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula1, string cuadricula10);
 
 
         [OperationContract] // ya cree ajax en espera a ver que otras variables le agrego

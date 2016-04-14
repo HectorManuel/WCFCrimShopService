@@ -27,234 +27,237 @@ namespace WcfCrimShopService.entities
         //string path = @"C:\Users\hasencio\Documents\visual studio 2013\Projects\WcfCrimShopService\WcfCrimShopService\OrderFolder";
         string path = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
         
-        //*****Generate the pdf of Aerial Photo calling the geoprocess and passing the required arguments
-        public async Task<string> FotoAerea(string map, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit)
-        {
-            //cNumber = "1234";
+        ////*****Generate the pdf of Aerial Photo calling the geoprocess and passing the required arguments
+        //public async Task<string> FotoAerea(string map, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit)
+        //{
+        //    //cNumber = "1234";
 
-            string testing = map;
+        //    string testing = map;
 
-            var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
-            var taskName = "Mapas de Fotos Aerea";
-            //var taskCatastro = "Mapas de Catastro";
-            //Create geoprocessor
-            var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
+        //    var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
+        //    var taskName = "Mapas de Fotos Aerea";
+        //    //var taskCatastro = "Mapas de Catastro";
+        //    //Create geoprocessor
+        //    var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
 
-            //Set up the parameters
-            var parameter = new GPInputParameter();
+        //    //Set up the parameters
+        //    var parameter = new GPInputParameter();
 
-            //GPParameter creation
-            var jsonMap = new GPString("Web_Map_As_JSON", map);
-            var Format = new GPString("Format", format);
-            var layoutTemplate = new GPString("Layout_Template", template);
-            var georef = new GPString("Georef_info", geoInfo);
-            var parcel = new GPString("Parcel", parcelTitle);
-            var subtitle = new GPString("Subtitle", sub_Title);
-            var control = new GPString("Control", cNumber);
+        //    //GPParameter creation
+        //    var jsonMap = new GPString("Web_Map_As_JSON", map);
+        //    var Format = new GPString("Format", format);
+        //    var layoutTemplate = new GPString("Layout_Template", template);
+        //    var georef = new GPString("Georef_info", geoInfo);
+        //    var parcel = new GPString("Parcel", parcelTitle);
+        //    var subtitle = new GPString("Subtitle", sub_Title);
+        //    var control = new GPString("Control", cNumber);
 
-            var buffer = new GPString("Buffer", bf);
-            var parcelList = new GPString("Parcelas", pr);
+        //    var buffer = new GPString("Buffer", bf);
+        //    var parcelList = new GPString("Parcelas", pr);
 
-            var bufferDistance = new GPString("Buffer_Distance_Units", bf_distance_unit);
+        //    var bufferDistance = new GPString("Buffer_Distance_Units", bf_distance_unit);
            
-            //Esri.ArcGISRuntime.Geometry.LinearUnit esriMeters = Esri.ArcGISRuntime.Geometry.LinearUnits.Meters;
+        //    //Esri.ArcGISRuntime.Geometry.LinearUnit esriMeters = Esri.ArcGISRuntime.Geometry.LinearUnits.Meters;
             
-            //var bufferDistance = new GPLinearUnit("Buffer_Distance_Units", esriMeters, 10);
+        //    //var bufferDistance = new GPLinearUnit("Buffer_Distance_Units", esriMeters, 10);
 
 
-            //add GPParameters to the parameter collection  
-            parameter.GPParameters.Add(jsonMap);
-            parameter.GPParameters.Add(Format);
-            parameter.GPParameters.Add(layoutTemplate);
-            parameter.GPParameters.Add(georef);
-            parameter.GPParameters.Add(parcel);
-            parameter.GPParameters.Add(subtitle);
-            parameter.GPParameters.Add(control);
-            //buffer parameters
-            parameter.GPParameters.Add(buffer);
-            parameter.GPParameters.Add(parcelList);
-            parameter.GPParameters.Add(bufferDistance);
+        //    //add GPParameters to the parameter collection  
+        //    parameter.GPParameters.Add(jsonMap);
+        //    parameter.GPParameters.Add(Format);
+        //    parameter.GPParameters.Add(layoutTemplate);
+        //    parameter.GPParameters.Add(georef);
+        //    parameter.GPParameters.Add(parcel);
+        //    parameter.GPParameters.Add(subtitle);
+        //    parameter.GPParameters.Add(control);
+        //    //buffer parameters
+        //    parameter.GPParameters.Add(buffer);
+        //    parameter.GPParameters.Add(parcelList);
+        //    parameter.GPParameters.Add(bufferDistance);
 
-            ////executeTask with the parameter collection defgined above, await the result.
-            var result = await gp.SubmitJobAsync(parameter);
+        //    ////executeTask with the parameter collection defgined above, await the result.
+        //    var result = await gp.SubmitJobAsync(parameter);
 
-            while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
-            {
-                result = await gp.CheckJobStatusAsync(result.JobID);
-                Debug.WriteLine(result.JobStatus);
-                await Task.Delay(1000);
-            }
-            string zipPath = string.Empty;
-            if (result.JobStatus == GPJobStatus.Succeeded)
-            {
-                var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+        //    while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+        //    {
+        //        result = await gp.CheckJobStatusAsync(result.JobID);
+        //        Debug.WriteLine(result.JobStatus);
+        //        await Task.Delay(1000);
+        //    }
+        //    string zipPath = string.Empty;
+        //    if (result.JobStatus == GPJobStatus.Succeeded)
+        //    {
+        //        var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
 
-                if (outParam != null && outParam.Uri != null)
-                {
+        //        if (outParam != null && outParam.Uri != null)
+        //        {
 
-                    //PhotoPdfUri = outParam.Uri;
-                    //create temp directoy for downloads
-                    //path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
-                    //string zipPath = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives.zip";
+        //            //PhotoPdfUri = outParam.Uri;
+        //            //create temp directoy for downloads
+        //            //path = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives";
+        //            //string zipPath = @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives.zip";
 
-                    string fileName = "\\" + parcelTitle + ".pdf";
-                    //DirectoryInfo dir;
-                    try
-                    {
-                        //verify is the directory exists. return the order folder
-                        zipPath = MakeStoreFolder(cNumber, fileName);
+        //            string fileName = "\\" + parcelTitle + ".pdf";
+        //            //DirectoryInfo dir;
+        //            try
+        //            {
+        //                //verify is the directory exists. return the order folder
+        //                zipPath = MakeStoreFolder(cNumber, fileName);
 
-                        #region verify the directory old commented
-                        //if (Directory.Exists(path))
-                        //{
-                        //    Debug.WriteLine("directory: " + path + "   exist");
-                        //}
-                        //else
-                        //{
-                        //    //try to create the directory
-                        //    dir = Directory.CreateDirectory(path);
-                        //}
+        //                #region verify the directory old commented
+        //                //if (Directory.Exists(path))
+        //                //{
+        //                //    Debug.WriteLine("directory: " + path + "   exist");
+        //                //}
+        //                //else
+        //                //{
+        //                //    //try to create the directory
+        //                //    dir = Directory.CreateDirectory(path);
+        //                //}
 
-                        //var stremData = await webClient.OpenReadTaskAsync(outParam.Uri);
-                        #endregion
+        //                //var stremData = await webClient.OpenReadTaskAsync(outParam.Uri);
+        //                #endregion
 
-                        //return the file path if it was created
-                        string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
-
-
-                        //webClient.DownloadFile(outParam.Uri, zipPath + folderName);
-                        #region zip and email comented
-                        ////zip file creation
-                        //if (!File.Exists(zipPath))
-                        //{
-                        //    ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
-                        //}
-                        //else
-                        //{
-                        //    File.Delete(zipPath);
-                        //    ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
-                        //}
+        //                //return the file path if it was created
+        //                string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
 
 
-                        //if (File.Exists(zipPath))
-                        //{
-                        //    //dir.Delete();
-                        //    Directory.Delete(path, true);
-                        //    if (!Directory.Exists(path))
-                        //    {
-                        //        Debug.WriteLine("directory: " + path + "   deleted");
-                        //    }
-                        //    else
-                        //    {
-                        //        Debug.WriteLine(" unable to dele directory: " + path);
-                        //    }
+        //                //webClient.DownloadFile(outParam.Uri, zipPath + folderName);
+        //                #region zip and email comented
+        //                ////zip file creation
+        //                //if (!File.Exists(zipPath))
+        //                //{
+        //                //    ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
+        //                //}
+        //                //else
+        //                //{
+        //                //    File.Delete(zipPath);
+        //                //    ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
+        //                //}
 
-                        //    try
-                        //    {
-                        //        MailMessage mail = new MailMessage();
-                        //        SmtpClient smtpServer = new SmtpClient("mail.crimpr.net");
-                        //        mail.From = new MailAddress("cdprcasosweb@crimpr.net");
-                        //        mail.To.Add("hasencio@gmtgis.com");
-                        //        mail.Subject = "Test mail 1";
-                        //        mail.Body = "mail with attachment";
 
-                        //        Attachment attachment = new Attachment(zipPath);
-                        //        mail.Attachments.Add(attachment);
+        //                //if (File.Exists(zipPath))
+        //                //{
+        //                //    //dir.Delete();
+        //                //    Directory.Delete(path, true);
+        //                //    if (!Directory.Exists(path))
+        //                //    {
+        //                //        Debug.WriteLine("directory: " + path + "   deleted");
+        //                //    }
+        //                //    else
+        //                //    {
+        //                //        Debug.WriteLine(" unable to dele directory: " + path);
+        //                //    }
 
-                        //        smtpServer.Port = 25;
-                        //        smtpServer.Credentials = new System.Net.NetworkCredential("CDPRCASOSWEB", "Cc123456");
-                        //        smtpServer.EnableSsl = false;
+        //                //    try
+        //                //    {
+        //                //        MailMessage mail = new MailMessage();
+        //                //        SmtpClient smtpServer = new SmtpClient("mail.crimpr.net");
+        //                //        mail.From = new MailAddress("cdprcasosweb@crimpr.net");
+        //                //        mail.To.Add("hasencio@gmtgis.com");
+        //                //        mail.Subject = "Test mail 1";
+        //                //        mail.Body = "mail with attachment";
 
-                        //        smtpServer.Send(mail);
-                        //        Debug.WriteLine("MailSend");
-                        //    }
-                        //    catch (Exception e)
-                        //    {
-                        //        Debug.WriteLine(e.ToString());
-                        //    }
-                        //    finally { }
+        //                //        Attachment attachment = new Attachment(zipPath);
+        //                //        mail.Attachments.Add(attachment);
 
-                        //}
-                        #endregion
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine("Process failed", e.ToString());
-                    }
-                    finally { }
-                }
-            }
-            else
-            {
-                var message = string.Empty;
+        //                //        smtpServer.Port = 25;
+        //                //        smtpServer.Credentials = new System.Net.NetworkCredential("CDPRCASOSWEB", "Cc123456");
+        //                //        smtpServer.EnableSsl = false;
 
-                foreach (var msg in result.Messages)
-                {
-                    message += msg.Description + "\n";
+        //                //        smtpServer.Send(mail);
+        //                //        Debug.WriteLine("MailSend");
+        //                //    }
+        //                //    catch (Exception e)
+        //                //    {
+        //                //        Debug.WriteLine(e.ToString());
+        //                //    }
+        //                //    finally { }
 
-                }
+        //                //}
+        //                #endregion
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                Debug.WriteLine("Process failed", e.ToString());
+        //            }
+        //            finally { }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        var message = string.Empty;
 
-                Debug.WriteLine(message);
-            }
+        //        foreach (var msg in result.Messages)
+        //        {
+        //            message += msg.Description + "\n";
 
-            return zipPath;
-        }
+        //        }
 
-        //*****Generate the pdf of Oficial cadastral templates calling the geoprocess and passing the required arguments
-        public async Task<string> OficialMaps(string template, string array, string geo, string ctrl)
-        {
-            var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
-            string taskName = "Mapas de Catastro";
-            var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
+        //        Debug.WriteLine(message);
+        //    }
 
-            //Set up the parameters
-            var parameter = new GPInputParameter();
+        //    return zipPath;
+        //}
 
-            var layoutTemplate = new GPString("Layout_Template", template);
-            var pageRange = new GPString("Page_Range", array);
-            var georef = new GPString("Georef_info", geo);
-            var control = new GPString("Control", ctrl);
+        ////*****Generate the pdf of Oficial cadastral templates calling the geoprocess and passing the required arguments
+        //public async Task<string> OficialMaps(string template, string array, string geo, string ctrl)
+        //{
+        //    var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
+        //    string taskName = "Mapas de Catastro";
+        //    var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
 
-            parameter.GPParameters.Add(layoutTemplate);
-            parameter.GPParameters.Add(pageRange);
-            parameter.GPParameters.Add(georef);
-            parameter.GPParameters.Add(control);
+        //    //Set up the parameters
+        //    var parameter = new GPInputParameter();
 
-            //Execute task with the parameters collection defined above
-            var result = await gp.SubmitJobAsync(parameter);
+        //    var layoutTemplate = new GPString("Layout_Template", template);
+        //    var pageRange = new GPString("Page_Range", array);
+        //    var georef = new GPString("Georef_info", geo);
+        //    var control = new GPString("Control", ctrl);
 
-            while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut)
-            {
-                result = await gp.CheckJobStatusAsync(result.JobID);
+        //    parameter.GPParameters.Add(layoutTemplate);
+        //    parameter.GPParameters.Add(pageRange);
+        //    parameter.GPParameters.Add(georef);
+        //    parameter.GPParameters.Add(control);
 
-                Debug.WriteLine(result.JobStatus);
-                await Task.Delay(2000);
-            }
-            string storePath = string.Empty;
-            if (result.JobStatus == GPJobStatus.Succeeded)
-            {
-                var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+        //    //Execute task with the parameters collection defined above
+        //    var result = await gp.SubmitJobAsync(parameter);
 
-                if (outParam != null && outParam.Uri != null)
-                {
-                    //OficialCatUri = outParam.Uri;
-                    string fileName = @"\MapasCatastralesOficiales.pdf";
-                    try
-                    {
-                        storePath = MakeStoreFolder(ctrl, fileName);
-                        string save = LoadUriPdf(outParam.Uri, storePath, fileName);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine("Error: ", e.ToString());
-                    }
+        //    while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut)
+        //    {
+        //        result = await gp.CheckJobStatusAsync(result.JobID);
+
+        //        Debug.WriteLine(result.JobStatus);
+        //        await Task.Delay(2000);
+        //    }
+        //    string storePath = string.Empty;
+        //    if (result.JobStatus == GPJobStatus.Succeeded)
+        //    {
+        //        var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+        //        if (outParam != null && outParam.Uri != null)
+        //        {
+        //            //OficialCatUri = outParam.Uri;
+        //            string fileName = @"\MapasCatastralesOficiales.pdf";
+        //            try
+        //            {
+        //                storePath = MakeStoreFolder(ctrl, fileName);
+        //                string save = LoadUriPdf(outParam.Uri, storePath, fileName);
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                Debug.WriteLine("Error: ", e.ToString());
+        //            }
                     
-                }
+        //        }
 
-            }
+        //    }
 
-            return storePath;
-        }
+        //    return storePath;
+        //}
+
+
+
 
         /// <summary>
         /// Function Specifically designto call and generate the cadastral template pdf
@@ -325,7 +328,7 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="cadastre"></param>
         /// <returns></returns>
-        public async Task<string> OficialMaps1(List<Objects.OrderItemCatastral> cadastre)
+        public async Task<string> OficialMaps(List<Objects.OrderItemCatastral> cadastre)
         {
             List<Objects.Scale> listScale10 = new List<Objects.Scale>();
             List<Objects.Scale> listScale1 = new List<Objects.Scale>();
@@ -404,7 +407,7 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="allPics"></param>
         /// <returns></returns>
-        public async Task<string> FotoAerea1(List<Objects.OrderItemPhoto> allPics)
+        public async Task<string> FotoAerea(List<Objects.OrderItemPhoto> allPics)
         {
             string zipPath = string.Empty;
             foreach (var pic in allPics)
@@ -716,6 +719,31 @@ namespace WcfCrimShopService.entities
             
             
             return zipPath;
+        }
+
+        public string CalculatePrice(string item,int qty)
+        {
+            string total = string.Empty;
+            DBConnection responseHandler = new DBConnection();
+            //Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText( System.AppDomain.CurrentDomain.BaseDirectory+ @"Config.json"));
+
+
+            Objects.ProductPrice price = responseHandler.PriceProduct(item.ToUpper(), qty);
+
+            total =Convert.ToString(qty * price.price);
+
+            switch (item)
+            {
+                case "Foto Aerea 1998":
+                case "oficiales":
+                case "catastrales":
+                    break;
+                case "colindante":
+                    break;
+            }
+
+            
+            return total;
         }
     }
 }

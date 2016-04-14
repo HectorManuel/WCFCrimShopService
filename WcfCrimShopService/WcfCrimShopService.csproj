@@ -120,7 +120,7 @@
     <Folder Include="App_Data\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="json1.json" />
+    <Content Include="Config.json" />
     <Content Include="packages.config" />
     <Content Include="listacolindante.json" />
     <None Include="Properties\PublishProfiles\MyProfile.pubxml" />
