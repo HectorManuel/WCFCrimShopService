@@ -1,5 +1,14 @@
 ﻿{
-    "source": "GMTWKS13\\GMTWKS13DB",
-    "catalog": "CRIMShopManagement",
-    "id": "User"
+    "ServerConnection": {
+
+        "source": "GMTWKS13\\GMTWKS13DB",
+        "catalog": "CRIMShopManagement",
+        "id": "User",
+        "password": "user123"
+    },
+    "ActiveDirectoryInformation": {
+        "domain": "gmt.domaingis.com",
+        "group": "Developers"
+    },
+    "OrderDownloadStorage": "OrderFolder\\"
 }

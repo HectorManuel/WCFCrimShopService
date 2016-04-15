@@ -31,6 +31,7 @@ namespace WcfCrimShopService.entities
             public string buffer { get; set; }
             public string parcelList { get; set; }
             public string distance { get; set; }
+            public decimal cost { get; set; }
         }
 
         public class OrderItemList
@@ -39,6 +40,7 @@ namespace WcfCrimShopService.entities
             public string itemName { get; set; }
             public string itemQty { get; set; }
             public string item { get; set; }
+            public decimal cost { get; set; }
         }
 
         public class OrderItemCatastral
@@ -49,6 +51,7 @@ namespace WcfCrimShopService.entities
             public string escala { get; set; }
             public string cuadricula { get; set; }
             public string template { get; set; }
+            public decimal cost { get; set; }
         }
 
         public class Scale
@@ -83,9 +86,24 @@ namespace WcfCrimShopService.entities
 
         public class ConfigObject
         {
+            public ServerConnection ServerConnection { get; set; }
+            public ActiveDirectoryInformation ActiveDirectoryInformation { get; set; }
+            public string OrderDownloadStorage { get; set; }
+        }
+
+        public class ActiveDirectoryInformation
+        {
+            public string domain { get; set; }
+            public string group { get; set; }
+
+        }
+
+        public class ServerConnection
+        {
             public string source { get; set; }
             public string catalog { get; set; }
             public string id { get; set; }
+            public string password { get; set; }
         }
     }
 }

@@ -46,7 +46,7 @@ namespace WcfCrimShopService
 
         [OperationContract] // ya cree ajax
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula1, string cuadricula10);
+        string InsertCatastralItem(string controlNumber, int itemQty, string cuadricula1, string cuadricula10);
 
 
         [OperationContract] // ya cree ajax en espera a ver que otras variables le agrego
@@ -69,6 +69,9 @@ namespace WcfCrimShopService
         [WebInvoke(Method="POST", RequestFormat= WebMessageFormat.Json, ResponseFormat= WebMessageFormat.Json, BodyStyle= WebMessageBodyStyle.WrappedRequest)]
         string GetItemPrice(string item, int qty);
 
+        [OperationContract]
+        [WebGet(UriTemplate = "WebGet", ResponseFormat = WebMessageFormat.Json)]
+        decimal GetTax();
     }
 
 

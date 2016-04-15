@@ -5,16 +5,21 @@ using System.Web;
 using System.Text;
 using System.Collections;
 using System.DirectoryServices.AccountManagement;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace WcfCrimShopService.entities
 {
     public class AuthenticationClass
     {
-
+        Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
         public string IsAuthenticated(string username, string pwd)
         {
             string isValidMember = string.Empty;
-            using (PrincipalContext pc = new PrincipalContext(ContextType.Domain, "gmt.domaingis.com"))
+
+            
+
+            using (PrincipalContext pc = new PrincipalContext(ContextType.Domain, config.ActiveDirectoryInformation.domain))
             {
                 // validate credentials
                 bool isValid = pc.ValidateCredentials(username, pwd);
@@ -26,7 +31,7 @@ namespace WcfCrimShopService.entities
                     src.ToList().ForEach(sr => result.Add(sr.SamAccountName));
 
                     UserPrincipal user = UserPrincipal.FindByIdentity(pc, username);
-                    GroupPrincipal group = GroupPrincipal.FindByIdentity(pc, "Developers");
+                    GroupPrincipal group = GroupPrincipal.FindByIdentity(pc, config.ActiveDirectoryInformation.group);
 
                     if (user.IsMemberOf(group))
                     {

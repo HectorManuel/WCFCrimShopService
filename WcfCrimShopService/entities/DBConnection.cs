@@ -20,7 +20,8 @@ namespace WcfCrimShopService.entities
 
         public SqlConnection Connection()
         {
-            SqlConnection con = new SqlConnection("Data Source=GMTWKS13\\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+            var configInfo = config.ServerConnection;
+            SqlConnection con = new SqlConnection("Data Source="+configInfo.source+";Initial Catalog="+configInfo.catalog+";User ID="+configInfo.id+";Password="+configInfo.password+";");
             return con;
         }
 
@@ -94,11 +95,12 @@ namespace WcfCrimShopService.entities
 
         public string InsertAerialPhotoHandler(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
+            decimal cost = Convert.ToDecimal(geo.CalculatePrice("fotoAerea", itemQty));
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "INSERT into dbo.OrderItemAerialphoto (ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance) " +
-                           "VALUES (@control,@qty,@item,@format,@template,@georef,@parcel,@sub,@buffer,@list,@bufferDistance)";
+            string query = "INSERT into dbo.OrderItemAerialphoto (ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price) " +
+                           "VALUES (@control,@qty,@item,@format,@template,@georef,@parcel,@sub,@buffer,@list,@bufferDistance,@price)";
             SqlCommand cmd = new SqlCommand(query, con);
             if (string.IsNullOrEmpty(controlNumber))
             {
@@ -188,80 +190,126 @@ namespace WcfCrimShopService.entities
             return message;
         }
 
-        public string InsertCatastralesHandler(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula1, string cuadricula10)
+        public string InsertCatastralesHandler(string controlNumber, int itemQty, string cuadricula1, string cuadricula10)
         {
             
-            decimal cost = Convert.ToDecimal(geo.CalculatePrice("catastrales", itemQty));
-            SqlConnection con = Connection();
-            con.Open();
-            if (string.IsNullOrEmpty(cuadricula1))
+            //decimal cost = Convert.ToDecimal(geo.CalculatePrice("catastrales", itemQty));
+            List<string> Cuadricula1k = new List<string>();
+            List<string> Cuadricula10k = new List<string>();
+            string message = string.Empty;
+            if (!string.IsNullOrEmpty(cuadricula1))
             {
-                string[] Cuadricula1k = cuadricula1.Split(',');
+                var splitting = cuadricula1.Split(',');
+                foreach(var cuad in splitting){
+                    Cuadricula1k.Add(cuad);
+                }
             }
-            if (string.IsNullOrEmpty(cuadricula10))
+            if (!string.IsNullOrEmpty(cuadricula10))
             {
-                string[] Cuadricula10k = cuadricula10.Split(',');
-            }
-            //*****************************************************
-            //FALTA MODIFICAR ESTA FUNCTION CON UN FOR LOOP PARA LAS LISTAS Y TOMAR ESTA FUNCION Y COLOCARLA AFUERA
-            //PARA EVITAR REPETIR CODIGO
-            string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template,Price) " +
-                           "VALUES (@control,@itemName,@qty,@escala,@cuadricula, @template,@price) ";
-            SqlCommand cmd = new SqlCommand(query, con);
-
-            if (string.IsNullOrEmpty(controlNumber))
-            {
-                return "Control Number Needed";
-            }
-            else
-            {
-                cmd.Parameters.AddWithValue("@control", controlNumber);
+                var splitting = cuadricula10.Split(',');
+                foreach(var cuad in splitting){
+                    Cuadricula10k.Add(cuad);
+                }
             }
 
-            if (string.IsNullOrEmpty(cuadricula1))
+            if (Cuadricula10k.Count() != 0)
             {
-                return "must include the map json on the item ";
+                foreach (var cad in Cuadricula10k)
+                {
+                    message = CadastreHandler(controlNumber, cad, 1, "1:10000", "MapaCatastral_10k", cad);
+                   if (message != "sucess")
+                   {
+                       return message;
+                   }
+                }
             }
-            else
+            if (Cuadricula1k.Count() != 0)
             {
-                cmd.Parameters.AddWithValue("@cuadricula", cuadricula1);
+                foreach (var cad in Cuadricula1k)
+                {
+                    message = CadastreHandler(controlNumber, cad, 1, "1:1000", "MapaCatastral_1k", cad);
+                    if (message != "sucess")
+                    {
+                        return message;
+                    }
+                }
             }
             
-            if (string.IsNullOrEmpty(itemName))
-            {
-                itemName = cuadricula1;
-            }
+            return message;
+        }
 
-            if (itemQty == 0)
+        public string CadastreHandler(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula)
+        {
+            string message = string.Empty;
+            try
             {
-                itemQty = 1;
-            }
+                SqlConnection con = Connection();
+                con.Open();
+                string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template,Price) " +
+                               "VALUES (@control,@itemName,@qty,@escala,@cuadricula, @template,@price) ";
+                SqlCommand cmd = new SqlCommand(query, con);
 
-            if (string.IsNullOrEmpty(escala))
-            {
-                escala = "unknown";
-            }
-            if (string.IsNullOrEmpty(template))
-            {
-                template = "Peticiones-11x17";
-            }
-            cmd.Parameters.AddWithValue("@itemName", itemName);
-            cmd.Parameters.AddWithValue("@qty", itemQty);
-            cmd.Parameters.AddWithValue("@template", template);
-            cmd.Parameters.AddWithValue("@escala", escala);
+                if (string.IsNullOrEmpty(controlNumber))
+                {
+                    return "Control Number Needed";
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@control", controlNumber);
+                }
 
+                if (string.IsNullOrEmpty(cuadricula))
+                {
+                    return "must include the map json on the item ";
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@cuadricula", cuadricula);
+                }
 
-            var result = cmd.ExecuteNonQuery();
-            string message;
-            if (result == 1)
-            {
-                message = controlNumber;
+                if (string.IsNullOrEmpty(itemName))
+                {
+                    itemName = cuadricula;
+                }
+
+                if (itemQty == 0)
+                {
+                    itemQty = 1;
+                }
+
+                if (string.IsNullOrEmpty(escala))
+                {
+                    escala = "unknown";
+                }
+                if (string.IsNullOrEmpty(template))
+                {
+                    template = "Peticiones-11x17";
+                }
+                cmd.Parameters.AddWithValue("@itemName", itemName);
+                cmd.Parameters.AddWithValue("@qty", itemQty);
+                cmd.Parameters.AddWithValue("@template", template);
+                cmd.Parameters.AddWithValue("@escala", escala);
+
+                decimal cost = Convert.ToDecimal(geo.CalculatePrice("catastrales", itemQty));
+                cmd.Parameters.AddWithValue("@price", cost);
+
+                var result = cmd.ExecuteNonQuery();
+
+                if (result == 1)
+                {
+                    message = "sucess";
+                }
+                else
+                {
+                    message = "error inserting Item Catastral into DB";
+                }
+                con.Close();
             }
-            else
+            catch (Exception e)
             {
-                message = "error inserting Item Catastral into DB";
+                message = e.Message;
             }
-            con.Close();
+            
             return message;
         }
 
@@ -275,7 +323,7 @@ namespace WcfCrimShopService.entities
                 con.Open();
 
                 string query = "INSERT into dbo.OrderItemsListaColindante (ControlNumber,Parcelas,ItemQty,Item,Price) " +
-                               "VALUES (@control,@itemName,@qty,@item,@cost ";
+                               "VALUES (@control,@itemName,@qty,@item,@cost) ";
                 SqlCommand cmd = new SqlCommand(query, con);
 
                 if (string.IsNullOrEmpty(controlNumber))
@@ -299,11 +347,6 @@ namespace WcfCrimShopService.entities
                 if (string.IsNullOrEmpty(itemName))
                 {
                     itemName = "Lista De Colindante";
-                }
-
-                if (itemQty == 0)
-                {
-                    itemQty = 1;
                 }
 
                 cmd.Parameters.AddWithValue("@itemName", itemName);
@@ -554,7 +597,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "SELECT ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance " +
+            string query = "SELECT ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price " +
                             "FROM dbo.OrderItemAerialPhoto " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -576,6 +619,7 @@ namespace WcfCrimShopService.entities
                     string buffer = result["Buffer"].ToString();
                     string parcelList = result["ParcelList"].ToString();
                     string bufferDistance = result["BufferDistance"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
 
                     orderList.Add(new Objects.OrderItemPhoto
                     {
@@ -589,7 +633,8 @@ namespace WcfCrimShopService.entities
                         subtitle = sub,
                         buffer = buffer,
                         parcelList = parcelList,
-                        distance = bufferDistance
+                        distance = bufferDistance,
+                        cost = cost
                     });
                 }
             }
@@ -609,7 +654,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "SELECT ControlNumber,Parcelas,ItemQty,Item " +
+            string query = "SELECT ControlNumber,Parcelas,ItemQty,Item,Price " +
                             "FROM dbo.OrderItemsListaColindante " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -624,13 +669,15 @@ namespace WcfCrimShopService.entities
                     string itemName = result["Parcelas"].ToString();
                     string qty = result["ItemQty"].ToString();
                     string item = result["Item"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
                     
                     orderList.Add(new Objects.OrderItemList
                     {
                         ControlNumber = cn, 
                         itemName = itemName,
                         itemQty = qty, 
-                        item = item
+                        item = item,
+                        cost = cost
                     });
                 }
                 
@@ -650,7 +697,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "SELECT ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template " +
+            string query = "SELECT ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template,Price " +
                             "FROM dbo.OrderItemsCatastrales " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -667,6 +714,7 @@ namespace WcfCrimShopService.entities
                     string scale = result["Escala"].ToString();
                     string cuadro = result["Cuadricula"].ToString();
                     string template = result["Template"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
 
                     orderList.Add(new Objects.OrderItemCatastral
                     {
@@ -675,7 +723,8 @@ namespace WcfCrimShopService.entities
                         itemQty = qty,
                         escala = scale,
                         cuadricula = cuadro,
-                        template = template
+                        template = template,
+                        cost = cost
                     });
                 }
             }
@@ -691,8 +740,18 @@ namespace WcfCrimShopService.entities
             return path;
         }
 
-        public string LogTransaction()
+        public string LogTransaction(string controlNumber, string email, string description)
         {
+            DateTime date = DateTime.Now;            
+            SqlConnection con = Connection();
+            string query = "INSERT into dbo.ProductosCartograficosOrderLog (ControlNumber, ClientEmail, Description, Date)" +
+                           "VALUES (@control,@email,@description,@date";
+            SqlCommand cmd = new SqlCommand(query, con);
+
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@description", description);
+            cmd.Parameters.AddWithValue("@date", date);
             return "this will save the service work on the log";
         }
 
@@ -725,5 +784,145 @@ namespace WcfCrimShopService.entities
 
             return pp;
         }
+
+        public string PriceSubTotal(string controlNumber)
+        {
+            string message = string.Empty;
+            List<Decimal> prices = new List<Decimal>();
+            SqlConnection con = Connection();
+            try
+            {
+                
+                con.Open();
+
+                string queryPhoto = "SELECT Price FROM dbo.OrderItemAerialphoto WHERE ControlNumber = @control";
+                string queryCad = "SELECT Price FROM dbo.OrderItemsCatastrales WHERE ControlNumber = @control";
+                string queryList = "SELECT Price FROM dbo.OrderItemsListaColindante WHERE ControlNumber = @control";
+
+                SqlCommand cmd = new SqlCommand(queryPhoto, con);
+                cmd.Parameters.AddWithValue("@control", controlNumber);
+
+                using (SqlDataReader result = cmd.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+
+                        prices.Add(price);
+
+                    }
+                }
+
+                SqlCommand cmd2 = new SqlCommand(queryCad, con);
+                cmd2.Parameters.AddWithValue("@control", controlNumber);
+
+                using (SqlDataReader result = cmd2.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+
+                        prices.Add(price);
+
+                    }
+                }
+
+                SqlCommand cmd3 = new SqlCommand(queryList, con);
+                cmd3.Parameters.AddWithValue("@control", controlNumber);
+
+                using (SqlDataReader result = cmd3.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+
+                        prices.Add(price);
+
+                    }
+                }
+
+                decimal total = 0;
+                foreach (decimal pr in prices)
+                {
+                    total += pr;
+                }
+
+                if (total != 0)
+                {
+                    message = Convert.ToString(total);
+                }
+                else
+                {
+                    message = "no items found";
+                }
+            }
+            catch (Exception e)
+            {
+                message = e.Message;
+            }
+            con.Close();
+            return message;
+        }
+
+        public string UpdateCost(string sub, string controlNumber)
+        {
+            string total=string.Empty;
+            decimal tax = GetTax();
+            decimal subTotal = Convert.ToDecimal(sub);
+
+            SqlConnection con = Connection();
+            try
+            {
+                con.Open();
+                string query = "UPDATE dbo.Orders SET Tax=@tax,SubTotal=@sub,Total=@Total" +
+                                " WHERE ControlNumber=@control";
+                SqlCommand command = new SqlCommand(query, con);
+
+                command.Parameters.AddWithValue("@control", controlNumber);
+                command.Parameters.AddWithValue("@sub", subTotal);
+                command.Parameters.AddWithValue("@tax", tax);
+
+                decimal t = System.Math.Round(subTotal + (subTotal * (tax / 100)), 2);
+                command.Parameters.AddWithValue("@Total", t);
+
+                int result = command.ExecuteNonQuery();
+
+                if (result == 1)
+                {
+                    total = t.ToString();
+                }
+                else
+                {
+                    total = "error updating the order total";
+                }
+            }
+            catch (Exception e)
+            {
+                total = e.Message;
+            }
+            con.Close();
+            return total;
+        }
+
+        public decimal GetTax()
+        {
+            decimal tax = 0;
+            SqlConnection con = Connection();
+            con.Open();
+            string query = "SELECT Price FROM dbo.ProductPrice WHERE Product = 'Tax'";
+            SqlCommand command = new SqlCommand(query, con);
+
+            using (SqlDataReader read = command.ExecuteReader())
+            {
+                while (read.Read())
+                {
+                    tax = Convert.ToDecimal(read["Price"].ToString());
+                }
+            }
+            con.Close();
+            return tax;
+        }
+
+
     }
 }

@@ -40,6 +40,7 @@ namespace WcfCrimShopService
     public class CartographicProductsService : ICartographicProductsService
     {
         DBConnection responseHandler = new DBConnection();
+        Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
 
         /// <summary>
         /// Service meant to test the GET url this function can and might be overwritten 
@@ -396,10 +397,10 @@ namespace WcfCrimShopService
         /// <param name="cuadricula"></param>
         /// <param name="template"></param>
         /// <returns></returns>
-        public string InsertCatastralItem(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula1, string cuadricula10)
+        public string InsertCatastralItem(string controlNumber, int itemQty, string cuadricula1, string cuadricula10)
         {
             //DBConnection catastro = new DBConnection();
-            var result = responseHandler.InsertCatastralesHandler(controlNumber, itemName, itemQty, escala, template, cuadricula1, cuadricula10);
+            var result = responseHandler.InsertCatastralesHandler(controlNumber, itemQty, cuadricula1, cuadricula10);
             return result;
         }
 
@@ -411,6 +412,10 @@ namespace WcfCrimShopService
         /// <returns></returns>
         public string MakePayment(string controlNumber)
         {
+            string subtotal = responseHandler.PriceSubTotal(controlNumber);
+            string TotalCost = responseHandler.UpdateCost(subtotal, controlNumber);
+            string tax = responseHandler.GetTax().ToString();
+
             //MerchantService web = new MerchantService();
             string Username ="required"; 
             string Password = "required"; 
@@ -617,7 +622,7 @@ namespace WcfCrimShopService
         ///  once the username and password are matched , it will evaluate the user to the required group
         ///  or groups.
         /// </summary>
-        /// <param name="username"> user name</param>
+        /// <param name="username"> username</param>
         /// <param name="password"> password </param>
         /// <returns>confirmation</returns>
         public string Authentication(string username, string password)
@@ -636,6 +641,7 @@ namespace WcfCrimShopService
         /// <returns></returns>
         public string GetItemPrice(string item, int qty)
         {
+            
             string total = string.Empty;
 
             //Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText( System.AppDomain.CurrentDomain.BaseDirectory+ @"Config.json"));
@@ -643,6 +649,12 @@ namespace WcfCrimShopService
             total = gp.CalculatePrice(item, qty);
             
             return total;
+        }
+
+        public decimal GetTax()
+        {
+            decimal tax = responseHandler.GetTax();
+            return tax;
         }
     }
 
