@@ -21,7 +21,8 @@ namespace WcfCrimShopService.entities
         public SqlConnection Connection()
         {
             var configInfo = config.ServerConnection;
-            SqlConnection con = new SqlConnection("Data Source="+configInfo.source+";Initial Catalog="+configInfo.catalog+";User ID="+configInfo.id+";Password="+configInfo.password+";");
+            //SqlConnection con = new SqlConnection("Data Source="+configInfo.source+";Initial Catalog="+configInfo.catalog+";User ID="+configInfo.id+";Password="+configInfo.password+";");
+            SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             return con;
         }
 

@@ -653,7 +653,8 @@ namespace WcfCrimShopService
 
         public decimal GetTax()
         {
-            decimal tax = responseHandler.GetTax();
+            //decimal tax = responseHandler.GetTax();
+            decimal tax = 25.15M;
             return tax;
         }
     }
