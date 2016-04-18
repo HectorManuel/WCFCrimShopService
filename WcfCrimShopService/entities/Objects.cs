@@ -94,7 +94,7 @@ namespace WcfCrimShopService.entities
         public class ActiveDirectoryInformation
         {
             public string domain { get; set; }
-            public string group { get; set; }
+            public string[] group { get; set; }
 
         }
 

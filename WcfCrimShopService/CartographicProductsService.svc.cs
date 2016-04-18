@@ -28,6 +28,7 @@ using Newtonsoft.Json.Linq;
 using System.Web.Script.Serialization;
 using System.DirectoryServices.AccountManagement;
 
+
 namespace WcfCrimShopService
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Service1" in code, svc and config file together.
@@ -250,7 +251,7 @@ namespace WcfCrimShopService
         /// <summary>
         /// this service is in charge of retrieveing the response string from the online response
         /// POST from Evertec and process it. extracting all the information of the order and processing every product
-        /// if the order payment was succesful
+        /// if the order payment was succesful. this service is for the use of evertec response
         /// 
         /// cartographicProductsService.svc/PaymentResponse
         /// 
@@ -266,7 +267,6 @@ namespace WcfCrimShopService
             return result;
         }
 
-        
         /// <summary>
         /// StarGeorpocess if a function build to test the geoprocesses to observe the way they work.
         /// This function is later meant to work as the function to create the pdf archives and send them to the employee
@@ -275,61 +275,23 @@ namespace WcfCrimShopService
         /// cartographicProductsService.svc/StarGeoprocess
         /// 
         /// </summary>
-        /// <param name="jsonMap"></param>
         /// <param name="cNumber"></param>
-        /// <param name="format"></param>
-        /// <param name="template"></param>
-        /// <param name="geoInfo"></param>
-        /// <param name="parcelTitle"></param>
-        /// <param name="sub_Title"></param>
-        /// <param name="bf"></param>
-        /// <param name="pr"></param>
-        /// <param name="bf_distance_unit"></param>
-        /// <param name="hasCat"></param>
-        /// <param name="hasPhoto"></param>
-        /// <param name="hasList"></param>
-        /// <param name="email"></param>
         /// <returns></returns>
-        public string StarGeoprocess(string jsonMap, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit, string hasCat,  string hasPhoto, string hasList, string email)
+        public string StarGeoprocess(string cNumber)
         {
+            string response = string.Empty;
 
-            Geoprocessing geo = new Geoprocessing();
-            string res = string.Empty;
-            string catRes = string.Empty;
-            var result = Task.Run(async () =>
+            if (string.IsNullOrEmpty(cNumber))
             {
-                //var test = await geo.FotoAerea(jsonMap, cNumber, format, template, geoInfo, parcelTitle, sub_Title, bf, pr, bf_distance_unit);
-                //res = test.ToString();
-            });
-
-            //var result = geo.FotoAerea(jsonMap, cNumber, format, template, geoInfo, parcelTitle, sub_Title);
-            result.Wait();
-
-            if (hasCat.ToUpper() != "Y")
-            {
-                string array = "('400','402')";
-                string templated = "MapaCatastral_10k";
-                var catastral = Task.Run(async () =>
-                {
-                    //var cat = await geo.OficialMaps(templated, array, geoInfo, cNumber);
-                    //catRes = cat.ToString();
-                });
-                catastral.Wait();
+                response = responseHandler.PaymentResponseLogHandlerEmployee(cNumber);
             }
-
-            //var catResult = geo.OficialMaps(template, array, geoInfo, cNumber);
-            //string catRes = catResult.ToString();
-            //string res = result.ToString();
-
-            string zipFilePath = string.Empty;
-            //email = "hasencio@gmtgis.com";
-            if (res == catRes)
+            else
             {
-                zipFilePath = geo.ZipAndSendEmail(catRes, email);
+                response = "no control number";
             }
-            
+           
 
-            return zipFilePath;
+            return response;
         }
 
         
@@ -391,11 +353,10 @@ namespace WcfCrimShopService
         /// 
         /// </summary>
         /// <param name="controlNumber"></param>
-        /// <param name="itemName"></param>
         /// <param name="itemQty"></param>
         /// <param name="escala"></param>
-        /// <param name="cuadricula"></param>
-        /// <param name="template"></param>
+        /// <param name="cuadricula1"></param>
+        /// <param name="cuadricula10"></param>
         /// <returns></returns>
         public string InsertCatastralItem(string controlNumber, int itemQty, string cuadricula1, string cuadricula10)
         {
@@ -406,7 +367,7 @@ namespace WcfCrimShopService
 
         /// <summary>
         /// cartographicProductsService.svc/MakePayment
-        /// this service is menat to send the request to evertec for the payment.
+        /// this service is meant to send the request to evertec for the payment.
         /// </summary>
         /// <param name="controlNumber"></param>
         /// <returns></returns>
@@ -537,6 +498,20 @@ namespace WcfCrimShopService
             Geoprocessing geo = new Geoprocessing();
             //geo.AdyacentListGenerator(json, "041120160002", "GMT"); System.IO.Directory.GetCurrentDirectory()
             string zipPath = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
+
+
+            string csvPath = Path.Combine(zipPath, parcela + "_colindante.csv");
+            if (!File.Exists(csvPath))
+            {
+                File.Create(csvPath).Dispose();
+            }
+            else
+            {
+                File.Delete(csvPath);
+            }
+
+            StringBuilder csvContent = new StringBuilder();
+            
             Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(json);
             using (Document doc = new Document(new RectangleReadOnly(1191, 842), 25, 25, 45, 35))//A3 (842,1191) nearest to 11x17, A4 (595,842) nearest to 8.5x11
             {
@@ -562,7 +537,7 @@ namespace WcfCrimShopService
                 float[] widths = { 12.00F, 8.00F, 10.00F, 10.00F, 12.00F, 20.00F, 20.00F };
                 //table.SetWidthPercentage(widths,new RectangleReadOnly(1191, 842));
                 table.SetTotalWidth(widths);
-                PdfPCell cell = new PdfPCell(new Phrase("Parcela de procedencia", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                PdfPCell cell = new PdfPCell(new Phrase("Parcela de Procedencia", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
                 cell.Colspan = 1;
                 cell.HorizontalAlignment = 0;//0=left 1=center 2=right
                 PdfPCell cell1 = new PdfPCell(new Phrase("Parcela", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
@@ -592,6 +567,9 @@ namespace WcfCrimShopService
                 table.AddCell(cell5);
                 table.AddCell(cell6);
 
+                string headers = "Parcela de Procedencia" + "," + "Parcela" + "," + "Catastro" + "," + "Municipio" + "," + "Dueño" + "," + "Dirección Física" + "," + "Dirección Postal";
+                csvContent.AppendLine(headers);
+
                 foreach (var item in lisCol.ListaColindante)
                 {
                     table.AddCell(item.ParcelaProcedencia);
@@ -602,14 +580,22 @@ namespace WcfCrimShopService
                     table.AddCell(item.DireccionFisica);
                     table.AddCell(item.DireccionPostal);
 
+                    string row = item.ParcelaProcedencia + "," + item.Parcela + "," + item.Catastro + "," + item.Municipio + "," + item.Dueno + "," + item.DireccionFisica + "," + item.DireccionPostal;
+                    csvContent.AppendLine(row);
+
                 }
 
 
                 doc.Add(table);
-                doc.NewPage();
 
-                Paragraph par = new Paragraph("this is my first pdf new line");
-                doc.Add(par);
+                using (StreamWriter file = new StreamWriter(new FileStream(csvPath, FileMode.Create),Encoding.UTF8))
+                {
+                    file.Write(csvContent.ToString());
+                }
+                
+
+               
+               
                 //JObject obj = JObject.Parse(json);
 
                 doc.Close();

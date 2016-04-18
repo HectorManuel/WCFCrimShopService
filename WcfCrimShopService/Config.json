@@ -8,7 +8,7 @@
     },
     "ActiveDirectoryInformation": {
         "domain": "gmt.domaingis.com",
-        "group": "Developers"
+        "group": ["Developers","PR_Professional_Services"]
     },
     "OrderDownloadStorage": "OrderFolder\\"
 }

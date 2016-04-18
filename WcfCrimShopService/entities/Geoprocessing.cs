@@ -13,7 +13,7 @@ using System.Net.Mail;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Newtonsoft.Json;
-
+using System.Text;
 
 namespace WcfCrimShopService.entities
 {
@@ -407,10 +407,22 @@ namespace WcfCrimShopService.entities
             {
                 zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + lista.itemName + "_colindante.pdf");
                 Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(lista.item);
+                //create csv file
+                string csvPath = Path.Combine(zipPath, lista.itemName + "_colindante.csv");
+                if (!File.Exists(csvPath))
+                {
+                    File.Create(csvPath);
+                }
+                else
+                {
+                    File.Delete(csvPath);
+                }
+                StringBuilder csvContent = new StringBuilder();
+
                 using (Document doc = new Document(new RectangleReadOnly(1191, 842), 25, 25, 45, 35))//A3 (842,1191) nearest to 11x17, A4 (595,842) nearest to 8.5x11
                 {
-                    PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(zipPath + @"\"+lista.itemName+"_colindante.pdf", FileMode.Create));
-
+                    PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(zipPath + @"\"+ lista.itemName+"_colindante.pdf", FileMode.Create));
+                    
                     ColindantePdfEventHandler e = new ColindantePdfEventHandler()
                     {
                         cantidad = lisCol.ListaColindante.Count.ToString(),
@@ -461,6 +473,11 @@ namespace WcfCrimShopService.entities
                     table.AddCell(cell5);
                     table.AddCell(cell6);
 
+                    //csv headers
+                    string headers = "Parcela de Procedencia" + "," + "Parcela" + "," + "Catastro" + "," + "Municipio" + "," + "Dueño" + "," + "Dirección Física" + "," + "Dirección Postal";
+                    csvContent.AppendLine(headers);
+
+
                     foreach (var item in lisCol.ListaColindante)
                     {
                         table.AddCell(item.ParcelaProcedencia);
@@ -471,22 +488,26 @@ namespace WcfCrimShopService.entities
                         table.AddCell(item.DireccionFisica);
                         table.AddCell(item.DireccionPostal);
 
+                        //string for the csv rows
+                        string row = item.ParcelaProcedencia + "," + item.Parcela + "," + item.Catastro + "," + item.Municipio + "," + item.Dueno + "," + item.DireccionFisica + "," + item.DireccionPostal;
+                        csvContent.AppendLine(row);
+
                     }
 
 
                     doc.Add(table);
-                    doc.NewPage();
 
-                    Paragraph par = new Paragraph("this is my first pdf new line");
-                    doc.Add(par);
-                    //JObject obj = JObject.Parse(json);
+                    //enter data in csv 
+                    using (StreamWriter file = new StreamWriter(new FileStream(csvPath, FileMode.Create), Encoding.UTF8))
+                    {
+                        file.Write(csvContent.ToString());
+                    }
 
                     doc.Close();
+
+                    
                 }
             }
-            
-            
-            
             return zipPath;
         }
 

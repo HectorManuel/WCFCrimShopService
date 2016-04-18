@@ -26,21 +26,28 @@ namespace WcfCrimShopService.entities
 
                 if (isValid)
                 {
+                    //get the groups of the user
                     var src = UserPrincipal.FindByIdentity(pc, username).GetGroups(pc);
                     var result = new List<string>();
                     src.ToList().ForEach(sr => result.Add(sr.SamAccountName));
+                    //*************************
 
                     UserPrincipal user = UserPrincipal.FindByIdentity(pc, username);
-                    GroupPrincipal group = GroupPrincipal.FindByIdentity(pc, config.ActiveDirectoryInformation.group);
-
-                    if (user.IsMemberOf(group))
+                    string[] groups = config.ActiveDirectoryInformation.group;
+                    foreach (string group in groups)
                     {
-                        isValidMember = "authorized";
+                        GroupPrincipal gp = GroupPrincipal.FindByIdentity(pc, group);
+                        if (user.IsMemberOf(gp))
+                        {
+                            isValidMember = "authorized";
+                            return isValidMember;
+                        }
+                        else
+                        {
+                            isValidMember = "notAuthorized";
+                        }
                     }
-                    else
-                    {
-                        isValidMember = "notAuthorized";
-                    }
+                    
                 }
                 else { isValidMember = "Username or password incorrect"; }
 

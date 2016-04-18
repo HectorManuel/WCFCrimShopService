@@ -51,7 +51,7 @@ namespace WcfCrimShopService
 
         [OperationContract] // ya cree ajax en espera a ver que otras variables le agrego
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string StarGeoprocess(string jsonMap, string cNumber, string format, string template, string geoInfo, string parcelTitle, string sub_Title, string bf, string pr, string bf_distance_unit, string hasCat, string hasPhoto, string hasList, string email);
+        string StarGeoprocess(string cNumber);
 
         [OperationContract]
         [WebInvoke(Method = "POST",RequestFormat=WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
@@ -59,7 +59,7 @@ namespace WcfCrimShopService
 
         [OperationContract]
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
-        string CreatePdfListaColindante(string controlNumber, string cNumber, string customer, string parcela);
+        string CreatePdfListaColindante(string json, string cNumber, string customer, string parcela);
 
         [OperationContract]
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
