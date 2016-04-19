@@ -47,14 +47,9 @@
     <Reference Include="Esri.ArcGISRuntime">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ArcGIS SDKs\DotNet10.2.7\WindowsDesktop\bin\Esri.ArcGISRuntime.dll</HintPath>
     </Reference>
-    <Reference Include="itextsharp">
-      <HintPath>.\itextsharp.dll</HintPath>
-    </Reference>
-    <Reference Include="itextsharp.pdfa">
-      <HintPath>.\itextsharp.pdfa.dll</HintPath>
-    </Reference>
-    <Reference Include="itextsharp.xtra">
-      <HintPath>.\itextsharp.xtra.dll</HintPath>
+    <Reference Include="itextsharp, Version=5.5.9.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.9\lib\itextsharp.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -86,7 +81,6 @@
   <ItemGroup>
     <Content Include="Global.asax" />
     <Content Include="CartographicProductsService.svc" />
-    <Content Include="TestPage.html" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -94,6 +88,7 @@
   <ItemGroup>
     <Compile Include="entities\AuthenticationClass.cs" />
     <Compile Include="entities\ColindantePdfEventHandler.cs" />
+    <Compile Include="entities\Configuration.cs" />
     <Compile Include="entities\DBConnection.cs" />
     <Compile Include="entities\Geoprocessing.cs" />
     <Compile Include="entities\Objects.cs" />
@@ -123,6 +118,7 @@
     <Content Include="Config.json" />
     <Content Include="packages.config" />
     <Content Include="listacolindante.json" />
+    <None Include="Properties\PublishProfiles\GMTProfile.pubxml" />
     <None Include="Properties\PublishProfiles\MyProfile.pubxml" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

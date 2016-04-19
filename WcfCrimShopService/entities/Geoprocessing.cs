@@ -2,6 +2,7 @@
 using System.Windows.Forms;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
@@ -21,10 +22,10 @@ namespace WcfCrimShopService.entities
     {
         string PhotoPdfUri = string.Empty;
         Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
+        DBConnection connection = new DBConnection();
         WebClient webClient = new WebClient();
         
-        //string path = @"S:\14_CRIM_2014-2015\Operaciones\Datos\Trabajado\Productos Cartograficos\PrintTest"; C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives
-        //string path = @"C:\Users\hasencio\Documents\visual studio 2013\Projects\WcfCrimShopService\WcfCrimShopService\OrderFolder";
+        
         string path = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
         //string path = config.OrderDownloadStorage;
 
@@ -38,56 +39,66 @@ namespace WcfCrimShopService.entities
         /// <returns></returns>
         public async Task<string> CallingMaps(string template, string array, string geo, string ctrl)
         {
-            //List<Objects.OrderItemCatastral> allCat
-            var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
-            string taskName = "Mapas de Catastro";
-            var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
-
-            //Set up the parameters
-            var parameter = new GPInputParameter();
-
-            var layoutTemplate = new GPString("Layout_Template", template);
-            var pageRange = new GPString("Page_Range", array);
-            var georef = new GPString("Georef_info", geo);
-            var control = new GPString("Control", ctrl);
-
-            parameter.GPParameters.Add(layoutTemplate);
-            parameter.GPParameters.Add(pageRange);
-            parameter.GPParameters.Add(georef);
-            parameter.GPParameters.Add(control);
-
-            //Execute task with the parameters collection defined above
-            var result = await gp.SubmitJobAsync(parameter);
-
-            while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut)
-            {
-                result = await gp.CheckJobStatusAsync(result.JobID);
-
-                Debug.WriteLine(result.JobStatus);
-                await Task.Delay(2000);
-            }
             string storePath = string.Empty;
-            if (result.JobStatus == GPJobStatus.Succeeded)
+            try
             {
-                var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+                //List<Objects.OrderItemCatastral> allCat
+                var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
+                string taskName = "Mapas de Catastro";
+                var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
 
-                if (outParam != null && outParam.Uri != null)
+                //Set up the parameters
+                var parameter = new GPInputParameter();
+
+                var layoutTemplate = new GPString("Layout_Template", template);
+                var pageRange = new GPString("Page_Range", array);
+                var georef = new GPString("Georef_info", geo);
+                var control = new GPString("Control", ctrl);
+
+                parameter.GPParameters.Add(layoutTemplate);
+                parameter.GPParameters.Add(pageRange);
+                parameter.GPParameters.Add(georef);
+                parameter.GPParameters.Add(control);
+
+                //Execute task with the parameters collection defined above
+                var result = await gp.SubmitJobAsync(parameter);
+
+                while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut)
                 {
-                    //OficialCatUri = outParam.Uri;
-                    string fileName = @"\"+ template +".pdf";
-                    try
+                    result = await gp.CheckJobStatusAsync(result.JobID);
+
+                    Debug.WriteLine(result.JobStatus);
+                    await Task.Delay(2000);
+                }
+                
+                if (result.JobStatus == GPJobStatus.Succeeded)
+                {
+                    var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+                    if (outParam != null && outParam.Uri != null)
                     {
-                        storePath = MakeStoreFolder(ctrl, fileName);
-                        string save = LoadUriPdf(outParam.Uri, storePath, fileName);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine("Error: ", e.ToString());
+                        //OficialCatUri = outParam.Uri;
+                        string fileName = @"\" + template + ".pdf";
+                        try
+                        {
+                            storePath = MakeStoreFolder(ctrl, fileName);
+                            string save = LoadUriPdf(outParam.Uri, storePath, fileName);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.WriteLine("Error: ", e.ToString());
+                            connection.LogTransaction(ctrl, e.Message);
+                        }
+
                     }
 
                 }
-
             }
+            catch (Exception e)
+            {
+                connection.LogTransaction(ctrl, e.Message);
+            }
+            
             return storePath;
         }
         
@@ -145,7 +156,7 @@ namespace WcfCrimShopService.entities
                 //array.Replace(",)", ")");
 
                 storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
-
+                connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
             }
 
             if (listScale1.Count != 0)
@@ -165,6 +176,8 @@ namespace WcfCrimShopService.entities
                 //array2.Replace(",)", ")");
 
                 storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+
+                connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k creado");
             }
                         
 
@@ -235,10 +248,12 @@ namespace WcfCrimShopService.entities
                         {
                             zipPath = MakeStoreFolder(cNumber, fileName);
                             string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
+                            connection.LogTransaction(cNumber, "Foto Aerea Creada");
                         }
                         catch (Exception e)
                         {
                             Debug.WriteLine("Process failed", e.ToString());
+                            connection.LogTransaction(cNumber, "Foto Aerea No Creada");
                         }
                         finally { }
                     }
@@ -251,9 +266,11 @@ namespace WcfCrimShopService.entities
                         message += msg.Description + "\n";
 
                     }
+                    connection.LogTransaction(cNumber, "Foto Aerea No Creada");
                     Debug.WriteLine(message);
                 }
             }
+
             return zipPath;
         }
 
