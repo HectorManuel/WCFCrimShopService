@@ -22,13 +22,17 @@ namespace WcfCrimShopService.entities
     {
         string PhotoPdfUri = string.Empty;
         Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
-        DBConnection connection = new DBConnection();
+       
         WebClient webClient = new WebClient();
         
         
-        string path = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
-        //string path = config.OrderDownloadStorage;
-
+        //string path = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
+        
+        public string GetPath()
+        {
+            
+            return config.OrderDownloadStorage;
+        }
         /// <summary>
         /// Function Specifically designto call and generate the cadastral template pdf
         /// </summary>
@@ -39,6 +43,7 @@ namespace WcfCrimShopService.entities
         /// <returns></returns>
         public async Task<string> CallingMaps(string template, string array, string geo, string ctrl)
         {
+            DBConnection connection = new DBConnection();
             string storePath = string.Empty;
             try
             {
@@ -112,7 +117,7 @@ namespace WcfCrimShopService.entities
         {
             List<Objects.Scale> listScale10 = new List<Objects.Scale>();
             List<Objects.Scale> listScale1 = new List<Objects.Scale>();
-
+            DBConnection connection = new DBConnection();
             foreach (var cad in cadastre)
             {
                 if (cad.template == "MapaCatastral_10k")
@@ -120,7 +125,7 @@ namespace WcfCrimShopService.entities
                     listScale10.Add(new Objects.Scale 
                     { 
                         template = cad.template,
-                        geo = cad.itemName,
+                        geo = "true",
                         cuad = cad.cuadricula,
                         controlNum = cad.ControlNumber
                     });
@@ -130,7 +135,7 @@ namespace WcfCrimShopService.entities
                     listScale1.Add(new Objects.Scale
                     {
                         template = cad.template,
-                        geo = cad.itemName,
+                        geo = "true",
                         cuad = cad.cuadricula,
                         controlNum = cad.ControlNumber
                     });
@@ -192,6 +197,7 @@ namespace WcfCrimShopService.entities
         public async Task<string> FotoAerea(List<Objects.OrderItemPhoto> allPics)
         {
             string zipPath = string.Empty;
+            DBConnection connection = new DBConnection();
             foreach (var pic in allPics)
             {
                 string map = pic.Item;
@@ -284,7 +290,7 @@ namespace WcfCrimShopService.entities
         /// <returns></returns>
         public string MakeStoreFolder(string cnNumber, string file)
         {
-
+            string path = GetPath();
             var folderToSave = path + cnNumber;
             var Pfile = folderToSave + file;
             DirectoryInfo dir;
@@ -349,8 +355,9 @@ namespace WcfCrimShopService.entities
         /// <param name="orderFolderPath"></param>
         /// <param name="clientEmail"></param>
         /// <returns></returns>
-        public string ZipAndSendEmail(string orderFolderPath, string clientEmail)
+        public string ZipAndSendEmail(string orderFolderPath, string clientEmail, string control)
         {
+            DBConnection conForLog = new DBConnection();
             string zipPath = orderFolderPath + ".zip";
             //zip file creation
             //verify that the zip file doesnt exist
@@ -369,18 +376,7 @@ namespace WcfCrimShopService.entities
             //*****************************************************************
             if (File.Exists(zipPath))
             {
-                //dir.Delete();
-                #region delete unzip directory
-                //Directory.Delete(path, true);
-                //if (!Directory.Exists(path))
-                //{
-                //    Debug.WriteLine("directory: " + path + "   deleted");
-                //}
-                //else
-                //{
-                //    Debug.WriteLine(" unable to dele directory: " + path);
-                //}
-                #endregion
+
                 try
                 {
                     MailMessage mail = new MailMessage();
@@ -389,20 +385,26 @@ namespace WcfCrimShopService.entities
                     mail.To.Add(clientEmail);
                     mail.Subject = "Test mail 1";
                     //como body voy a enviar un url para llamar el zipPath file;
-                    mail.Body = zipPath;
-
-                    //Attachment attachment = new Attachment(zipPath);
-                    //mail.Attachments.Add(attachment);
+                    if (string.IsNullOrEmpty(config.MailDownloadPath))
+                    {
+                        mail.Body = zipPath;
+                    }
+                    else
+                    {
+                        mail.Body = config.MailDownloadPath + control + ".zip";
+                    }
 
                     smtpServer.Port = 25;
                     smtpServer.Credentials = new System.Net.NetworkCredential("CDPRCASOSWEB", "Cc123456");
                     smtpServer.EnableSsl = false;
 
                     smtpServer.Send(mail);
+                    conForLog.LogTransaction(control, "Email send");
                     Debug.WriteLine("MailSend");
                 }
                 catch (Exception e)
                 {
+                    conForLog.LogTransaction(control, e.Message);
                     Debug.WriteLine(e.ToString());
                 }
                 finally { }
@@ -412,27 +414,38 @@ namespace WcfCrimShopService.entities
         }
 
         /// <summary>
-        /// 
+        /// this function is in charge of generating the list of adjacent parcels in both pdf and csv.
         /// </summary>
         /// <param name="itemsFromDb"></param>
         /// <param name="customerName"></param>
-        /// <returns></returns>
+        /// <returns>the location where it is stored</returns>
         public string AdyacentListGenerator(List<Objects.OrderItemList> itemsFromDb, string customerName)
         {
             string zipPath = string.Empty;
             foreach (var lista in itemsFromDb)
             {
+                DBConnection conect = new DBConnection();
                 zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + lista.itemName + "_colindante.pdf");
                 Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(lista.item);
                 //create csv file
                 string csvPath = Path.Combine(zipPath, lista.itemName + "_colindante.csv");
+                try
+                {
+
+                }
+                catch (Exception e)
+                {
+                    conect.LogTransaction(itemsFromDb[0].ControlNumber, e.Message);
+                }
+
                 if (!File.Exists(csvPath))
                 {
-                    File.Create(csvPath);
+                    File.Create(csvPath).Dispose();
                 }
                 else
                 {
                     File.Delete(csvPath);
+                    File.Create(csvPath).Dispose();
                 }
                 StringBuilder csvContent = new StringBuilder();
 
@@ -452,9 +465,7 @@ namespace WcfCrimShopService.entities
 
                     doc.Open();
 
-
-
-                    //completar eso, el json y el prionting del pdf
+                    
                     PdfPTable table = new PdfPTable(7);
                     table.WidthPercentage = 100;
                     float[] widths = { 12.00F, 8.00F, 10.00F, 10.00F, 12.00F, 20.00F, 20.00F };
@@ -522,7 +533,6 @@ namespace WcfCrimShopService.entities
 
                     doc.Close();
 
-                    
                 }
             }
             return zipPath;
@@ -538,16 +548,6 @@ namespace WcfCrimShopService.entities
             Objects.ProductPrice price = responseHandler.PriceProduct(item.ToUpper(), qty);
 
             total =Convert.ToString(qty * price.price);
-
-            switch (item)
-            {
-                case "Foto Aerea 1998":
-                case "oficiales":
-                case "catastrales":
-                    break;
-                case "colindante":
-                    break;
-            }
 
             
             return total;

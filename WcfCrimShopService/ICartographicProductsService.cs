@@ -23,33 +23,32 @@ namespace WcfCrimShopService
         [WebGet(UriTemplate = "AwaitConfirmation/{order}", ResponseFormat = WebMessageFormat.Json)]
         string AwaitConfirmation(string order); 
 
-        [OperationContract] //ya cree ajax
+        [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertOrderDetails(string ControlNumber, string Description, decimal tx, decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList);
-        // TODO: Add your service operations here
+        
 
-        [OperationContract] // ya cree ajax pa pruebas
+        [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string PaymentResponse(string PaymentResponse);
 
 
-
-        [OperationContract] //ya cree ajax
+        [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertAerialPhotoItem(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance);
 
 
-        [OperationContract] // ya cree ajax
+        [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertListaColindanteItem(string controlNumber, string parcelas, int itemQty, string item);
 
 
-        [OperationContract] // ya cree ajax
+        [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertCatastralItem(string controlNumber, int itemQty, string cuadricula1, string cuadricula10);
 
 
-        [OperationContract] // ya cree ajax en espera a ver que otras variables le agrego
+        [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string StarGeoprocess(string cNumber);
 
@@ -70,37 +69,8 @@ namespace WcfCrimShopService
         string GetItemPrice(string item, int qty);
 
         [OperationContract]
-        [WebGet(UriTemplate = "WebGet", ResponseFormat = WebMessageFormat.Json)]
+        [WebGet(UriTemplate = "GetTax", ResponseFormat = WebMessageFormat.Json)]
         decimal GetTax();
     }
 
-
-    // Use a data contract as illustrated in the sample below to add composite types to service operations.
-    //[DataContract]
-    //public class OrderDetails
-    //{
-    //    string controlnumber = string.Empty;
-    //    string payResponse = string.Empty;
-    //    string desc = string.Empty;
-    //    [DataMember]
-    //    public string ControlNumber
-    //    {
-    //        get { return controlnumber; }
-    //        set { controlnumber = value; }
-    //    }
-
-    //    [DataMember]
-    //    public string PaymentResponse
-    //    {
-    //        get { return payResponse; }
-    //        set { payResponse = value; }
-    //    }
-
-    //    [DataMember]
-    //    public string Description
-    //    {
-    //        get { return desc; }
-    //        set { desc = value; }
-    //    }
-    //}
 }

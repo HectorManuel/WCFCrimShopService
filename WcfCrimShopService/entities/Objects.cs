@@ -46,7 +46,6 @@ namespace WcfCrimShopService.entities
         public class OrderItemCatastral
         {
             public string ControlNumber { get; set; }
-            public string itemName { get; set; }
             public string itemQty { get; set; }
             public string escala { get; set; }
             public string cuadricula { get; set; }
@@ -89,6 +88,7 @@ namespace WcfCrimShopService.entities
             public ServerConnection ServerConnection { get; set; }
             public ActiveDirectoryInformation ActiveDirectoryInformation { get; set; }
             public string OrderDownloadStorage { get; set; }
+            public string MailDownloadPath { get; set; }
         }
 
         public class ActiveDirectoryInformation

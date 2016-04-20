@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json;
 using System.IO;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
 
 namespace WcfCrimShopService.entities
 {
@@ -20,9 +23,51 @@ namespace WcfCrimShopService.entities
 
         public SqlConnection Connection()
         {
+            
             var configInfo = config.ServerConnection;
             SqlConnection con = new SqlConnection("Data Source="+configInfo.source+";Initial Catalog="+configInfo.catalog+";User ID="+configInfo.id+";Password="+configInfo.password+";");
             return con;
+        }
+
+        public string AwaitForResponse(string order)
+        {
+            SqlConnection con = Connection();
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            string query = "SELECT Confirmation " +
+                           "FROM dbo.Orders " +
+                           "WHERE ControlNumber= @control";
+
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", order);
+            string ds = "Processing";
+            //var list = new List<Objects.Order>();
+            //var result = cmd.ExecuteNonQuery();
+            int time = 0;
+
+            do
+            {
+                using (SqlDataReader result = cmd.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        ds = result["Confirmation"].ToString();
+
+                        //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
+                    }
+                    Thread.Sleep(2000); // modify to await 20min later
+                    time += 2;
+                    Debug.WriteLine(time + " " + ds);
+
+                }
+            } while (ds == "Processing" && time != 20);
+
+            if (ds == "Processing")
+            {
+                ds = "error completing the payment";
+            }
+
+            return ds;
         }
 
         public string PaymentResponseLogHandler(string PaymentResponse)
@@ -118,7 +163,7 @@ namespace WcfCrimShopService.entities
             }
             else
             {
-                Message = "Order  not updated: " + controlNumber;
+                Message = "Order  not submitted: #order - " + controlNumber;
             }
             con.Close();
 
@@ -137,6 +182,7 @@ namespace WcfCrimShopService.entities
         {
             decimal cost = Convert.ToDecimal(geo.CalculatePrice("fotoAerea", itemQty));
             SqlConnection con = Connection();
+
             con.Open();
 
             string query = "INSERT into dbo.OrderItemAerialphoto (ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price) " +
@@ -635,7 +681,7 @@ namespace WcfCrimShopService.entities
                 }
             }
 
-            geo.ZipAndSendEmail(pictureContent, myOrder[0].CustomerEmail);
+            geo.ZipAndSendEmail(pictureContent, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
             
             return pictureContent;
         }
@@ -746,7 +792,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "SELECT ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template,Price " +
+            string query = "SELECT ControlNumber,ItemQty,Escala,Cuadricula,Template,Price " +
                             "FROM dbo.OrderItemsCatastrales " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -758,7 +804,6 @@ namespace WcfCrimShopService.entities
                 while (result.Read())
                 {
                     string cn = result["ControlNumber"].ToString();
-                    string name = result["ItemName"].ToString();
                     string qty = result["ItemQty"].ToString();
                     string scale = result["Escala"].ToString();
                     string cuadro = result["Cuadricula"].ToString();
@@ -768,7 +813,6 @@ namespace WcfCrimShopService.entities
                     orderList.Add(new Objects.OrderItemCatastral
                     {
                         ControlNumber = cn,
-                        itemName = name,
                         itemQty = qty,
                         escala = scale,
                         cuadricula = cuadro,
@@ -793,8 +837,9 @@ namespace WcfCrimShopService.entities
         {
             DateTime date = DateTime.Now;            
             SqlConnection con = Connection();
-            string query = "INSERT into dbo.ProductosCartograficosOrderLog (ControlNumber, Description, Date)" +
-                           "VALUES (@control,@description,@date";
+            con.Open();
+            string query = "INSERT into dbo.ProductosCartograficosOrderLog (ControlNumber, Description, Date) " +
+                           "VALUES (@control,@description,@date) ";
             SqlCommand cmd = new SqlCommand(query, con);
 
             cmd.Parameters.AddWithValue("@control", controlNumber);
@@ -808,6 +853,7 @@ namespace WcfCrimShopService.entities
             {
                 return "Log not processed";
             }
+            con.Close();
             return "ok";
         }
 

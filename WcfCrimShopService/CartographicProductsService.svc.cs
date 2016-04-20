@@ -100,43 +100,7 @@ namespace WcfCrimShopService
         /// <returns></returns>
         public string AwaitConfirmation(string order)
         {
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
-            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
-            WebClient wb = new WebClient();
-            con.Open();
-            string query = "SELECT Confirmation " +
-                           "FROM dbo.Orders " +
-                           "WHERE ControlNumber= @control";
-
-            SqlCommand cmd = new SqlCommand(query, con);
-            cmd.Parameters.AddWithValue("@control", order);
-            string ds = "Processing";
-            //var list = new List<Objects.Order>();
-            //var result = cmd.ExecuteNonQuery();
-            int time = 0;
-
-            do
-            {
-                using (SqlDataReader result = cmd.ExecuteReader())
-                {
-                    while (result.Read())
-                    {
-                        ds = result["Confirmation"].ToString();
-
-                        //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
-                    }
-                    Thread.Sleep(2000); // modify to await 20min later
-                    time += 2;
-                    Debug.WriteLine(time +" "+ ds);
-
-                }
-            } while (ds == "Processing" && time != 20);
-
-            if (ds == "Processing")
-            {
-                ds = "error completing the payment";
-            }
-
+            string ds = responseHandler.AwaitForResponse(order);
             return ds;
         }
 
@@ -281,9 +245,14 @@ namespace WcfCrimShopService
         {
             string response = string.Empty;
 
-            if (string.IsNullOrEmpty(cNumber))
+            if (!string.IsNullOrEmpty(cNumber))
             {
                 response = responseHandler.PaymentResponseLogHandlerEmployee(cNumber);
+                if (response == "ok")
+                {
+                    responseHandler.LogTransaction(cNumber, "Order Submitted");
+                }
+                
             }
             else
             {
