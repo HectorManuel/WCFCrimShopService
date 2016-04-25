@@ -16,6 +16,7 @@ namespace WcfCrimShopService.entities
         public string IsAuthenticated(string username, string pwd)
         {
             string isValidMember = string.Empty;
+            string emailAddress = string.Empty;
 
             
 
@@ -23,11 +24,13 @@ namespace WcfCrimShopService.entities
             {
                 // validate credentials
                 bool isValid = pc.ValidateCredentials(username, pwd);
-
+                
                 if (isValid)
                 {
                     //get the groups of the user
                     var src = UserPrincipal.FindByIdentity(pc, username).GetGroups(pc);
+                    var usesr = UserPrincipal.FindByIdentity(pc, username);
+                    
                     var result = new List<string>();
                     src.ToList().ForEach(sr => result.Add(sr.SamAccountName));
                     //*************************
@@ -39,21 +42,22 @@ namespace WcfCrimShopService.entities
                         GroupPrincipal gp = GroupPrincipal.FindByIdentity(pc, group);
                         if (user.IsMemberOf(gp))
                         {
-                            isValidMember = "authorized";
-                            return isValidMember;
+                            //isValidMember = "authorized";
+                            emailAddress = usesr.EmailAddress;
+                            return emailAddress;
                         }
                         else
                         {
-                            isValidMember = "notAuthorized";
+                            emailAddress = "0";
                         }
                     }
                     
                 }
-                else { isValidMember = "Username or password incorrect"; }
+                else { emailAddress = "00"; }
 
             }
 
-            return isValidMember;
+            return emailAddress;
         }
     }
 }

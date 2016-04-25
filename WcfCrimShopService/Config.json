@@ -8,8 +8,11 @@
     },
     "ActiveDirectoryInformation": {
         "domain": "gmt.domaingis.com",
-        "group": ["Developers","PR_Professional_Services"]
+        "group": [
+            "Developers",
+            "PR_Professional_Services"
+        ]
     },
     "OrderDownloadStorage": "c:\\users\\hasencio\\documents\\visual studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
     "MailDownloadPath": "c:\\users\\hasencio\\documents\\visual studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\"
-}
+} 

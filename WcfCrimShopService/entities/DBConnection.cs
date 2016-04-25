@@ -256,6 +256,8 @@ namespace WcfCrimShopService.entities
                 cmd.Parameters.AddWithValue("@bufferDistance", bufferDistance);
             }
             
+            cmd.Parameters.AddWithValue("@price", cost);
+
             cmd.Parameters.AddWithValue("@qty", itemQty);
             cmd.Parameters.AddWithValue("@format", format);
             cmd.Parameters.AddWithValue("@georef", georefInfo);
@@ -266,7 +268,8 @@ namespace WcfCrimShopService.entities
             string message;
             if (result == 1)
             {
-                message = controlNumber;
+                message = "OK";
+                LogTransaction(controlNumber, "Order Photo Added To DB");
             }
             else
             {
@@ -302,7 +305,7 @@ namespace WcfCrimShopService.entities
             {
                 foreach (var cad in Cuadricula10k)
                 {
-                    message = CadastreHandler(controlNumber, cad, 1, "1:10000", "MapaCatastral_10k", cad);
+                    message = CadastreHandler(controlNumber, 1, "1:10000", "MapaCatastral_10k", cad);
                    if (message != "sucess")
                    {
                        return message;
@@ -313,7 +316,7 @@ namespace WcfCrimShopService.entities
             {
                 foreach (var cad in Cuadricula1k)
                 {
-                    message = CadastreHandler(controlNumber, cad, 1, "1:1000", "MapaCatastral_1k", cad);
+                    message = CadastreHandler(controlNumber, 1, "1:1000", "MapaCatastral_1k", cad);
                     if (message != "sucess")
                     {
                         return message;
@@ -324,15 +327,15 @@ namespace WcfCrimShopService.entities
             return message;
         }
 
-        public string CadastreHandler(string controlNumber, string itemName, int itemQty, string escala, string template, string cuadricula)
+        public string CadastreHandler(string controlNumber, int itemQty, string escala, string template, string cuadricula)
         {
             string message = string.Empty;
             try
             {
                 SqlConnection con = Connection();
                 con.Open();
-                string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ItemName,ItemQty,Escala,Cuadricula,Template,Price) " +
-                               "VALUES (@control,@itemName,@qty,@escala,@cuadricula, @template,@price) ";
+                string query = "INSERT into dbo.OrderItemsCatastrales (ControlNumber,ItemQty,Escala,Cuadricula,Template,Price) " +
+                               "VALUES (@control,@qty,@escala,@cuadricula, @template,@price) ";
                 SqlCommand cmd = new SqlCommand(query, con);
 
                 if (string.IsNullOrEmpty(controlNumber))
@@ -353,10 +356,7 @@ namespace WcfCrimShopService.entities
                     cmd.Parameters.AddWithValue("@cuadricula", cuadricula);
                 }
 
-                if (string.IsNullOrEmpty(itemName))
-                {
-                    itemName = cuadricula;
-                }
+                
 
                 if (itemQty == 0)
                 {
@@ -371,7 +371,7 @@ namespace WcfCrimShopService.entities
                 {
                     template = "Peticiones-11x17";
                 }
-                cmd.Parameters.AddWithValue("@itemName", itemName);
+                
                 cmd.Parameters.AddWithValue("@qty", itemQty);
                 cmd.Parameters.AddWithValue("@template", template);
                 cmd.Parameters.AddWithValue("@escala", escala);
@@ -384,6 +384,7 @@ namespace WcfCrimShopService.entities
                 if (result == 1)
                 {
                     message = "sucess";
+                    LogTransaction(controlNumber, "Order Cadastre Added To DB");
                 }
                 else
                 {
@@ -444,7 +445,8 @@ namespace WcfCrimShopService.entities
                 
                 if (result == 1)
                 {
-                    message = controlNumber;
+                    message = "OK";
+                    LogTransaction(controlNumber, "Order ListaColindante Added To DB");
                 }
                 else
                 {
@@ -498,7 +500,7 @@ namespace WcfCrimShopService.entities
 
                 if (tx == 0)
                 {
-                    cmd.Parameters.AddWithValue("@tax", 11.5);
+                    cmd.Parameters.AddWithValue("@tax", GetTax());
                 }
                 else
                 {
@@ -516,8 +518,7 @@ namespace WcfCrimShopService.entities
 
                 if (Total == 0)
                 {
-                    Message = "A total amount must be added";
-                    return Message;
+                    cmd.Parameters.AddWithValue("@total", Total);
                 }
                 else
                 {
@@ -576,7 +577,7 @@ namespace WcfCrimShopService.entities
                 int result = cmd.ExecuteNonQuery();
                 if (result == 1)
                 {
-                    Message = "Order number: " + ControlNumber + " Added successfully";
+                    Message = "ok";
                     LogTransaction(ControlNumber, "Order Added To DB");
                 }
                 else
@@ -681,7 +682,11 @@ namespace WcfCrimShopService.entities
                 }
             }
 
-            geo.ZipAndSendEmail(pictureContent, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
+            if (pictureContent != "Error: no items in order")
+            {
+                geo.ZipAndSendEmail(pictureContent, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
+            }
+            
             
             return pictureContent;
         }

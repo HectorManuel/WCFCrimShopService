@@ -68,7 +68,7 @@ namespace WcfCrimShopService.entities
                 //Execute task with the parameters collection defined above
                 var result = await gp.SubmitJobAsync(parameter);
 
-                while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut)
+                while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                 {
                     result = await gp.CheckJobStatusAsync(result.JobID);
 
@@ -91,10 +91,21 @@ namespace WcfCrimShopService.entities
                         }
                         catch (Exception e)
                         {
-                            Debug.WriteLine("Error: ", e.ToString());
+                            //Debug.WriteLine("Error: ", e.ToString());
                             connection.LogTransaction(ctrl, e.Message);
                         }
 
+                    }
+
+                }
+                else
+                {
+                    switch (result.JobStatus)
+                    {
+                        case GPJobStatus.Failed:
+                            return "failed";
+                        case GPJobStatus.TimedOut:
+                            return "time out";
                     }
 
                 }
@@ -159,9 +170,28 @@ namespace WcfCrimShopService.entities
                 }
                 array += ")";
                 //array.Replace(",)", ")");
-
-                storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
-                connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                try
+                {
+                    storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                }
+                catch (Exception e)
+                {
+                    storePath = "failed";
+                    Debug.WriteLine(e.Message);
+                }
+                
+                switch (storePath){
+                    case "failed":
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
+                        break;
+                    case "time out":
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
+                        break;
+                    default:
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                        break;
+                }
+                    
             }
 
             if (listScale1.Count != 0)
@@ -181,8 +211,18 @@ namespace WcfCrimShopService.entities
                 //array2.Replace(",)", ")");
 
                 storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
-
-                connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                switch (storePath)
+                {
+                    case "failed":
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k" + storePath);
+                        break;
+                    case "time out":
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k" + storePath);
+                        break;
+                    default:
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                        break;
+                }
             }
                         
 
