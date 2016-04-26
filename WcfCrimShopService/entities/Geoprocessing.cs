@@ -250,6 +250,7 @@ namespace WcfCrimShopService.entities
                 string bf = pic.buffer;
                 string pr = pic.parcelList;
                 string bf_distance_unit = pic.distance;
+                string title = pic.title;
 
                 var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
                 var taskName = "Mapas de Fotos Aerea";
@@ -265,6 +266,8 @@ namespace WcfCrimShopService.entities
                 var buffer = new GPString("Buffer", bf);
                 var parcelList = new GPString("Parcelas", pr);
                 var bufferDistance = new GPString("Buffer_Distance_Units", bf_distance_unit);
+                var _title = new GPString("Title",title);
+
                 parameter.GPParameters.Add(jsonMap);
                 parameter.GPParameters.Add(Format);
                 parameter.GPParameters.Add(layoutTemplate);
@@ -275,6 +278,8 @@ namespace WcfCrimShopService.entities
                 parameter.GPParameters.Add(buffer);
                 parameter.GPParameters.Add(parcelList);
                 parameter.GPParameters.Add(bufferDistance);
+                parameter.GPParameters.Add(_title);
+
                 var result = await gp.SubmitJobAsync(parameter);
                 while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                 {
@@ -434,6 +439,8 @@ namespace WcfCrimShopService.entities
                         mail.Body = config.MailDownloadPath + control + ".zip";
                     }
 
+                    string updatingPath = conForLog.UpdateFolderPath(control, mail.Body.ToString());
+
                     smtpServer.Port = 25;
                     smtpServer.Credentials = new System.Net.NetworkCredential("CDPRCASOSWEB", "Cc123456");
                     smtpServer.EnableSsl = false;
@@ -447,7 +454,6 @@ namespace WcfCrimShopService.entities
                     conForLog.LogTransaction(control, e.Message);
                     Debug.WriteLine(e.ToString());
                 }
-                finally { }
 
             }
             return zipPath;
@@ -465,10 +471,10 @@ namespace WcfCrimShopService.entities
             foreach (var lista in itemsFromDb)
             {
                 DBConnection conect = new DBConnection();
-                zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + lista.itemName + "_colindante.pdf");
+                zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + lista.itemName + ".pdf");
                 Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(lista.item);
                 //create csv file
-                string csvPath = Path.Combine(zipPath, lista.itemName + "_colindante.csv");
+                string csvPath = Path.Combine(zipPath, lista.itemName + ".csv");
                 try
                 {
 

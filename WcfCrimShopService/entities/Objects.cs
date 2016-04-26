@@ -32,6 +32,7 @@ namespace WcfCrimShopService.entities
             public string parcelList { get; set; }
             public string distance { get; set; }
             public decimal cost { get; set; }
+            public string title { get; set; }
         }
 
         public class OrderItemList

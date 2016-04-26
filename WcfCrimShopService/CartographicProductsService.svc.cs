@@ -54,8 +54,8 @@ namespace WcfCrimShopService
         /// <returns></returns>
         public string GetData(string value)
         {
-            
-            SqlConnection con = new SqlConnection(@"Data Source=GMTWKS13\GMTWKS13DB;Initial Catalog=CRIMShopManagement;User ID=User;Password=user123;");
+
+            SqlConnection con = new SqlConnection(@"Data Source=" + config.ServerConnection.source + ";Initial Catalog=" + config.ServerConnection.catalog + ";User ID=" + config.ServerConnection.id + ";Password=" + config.ServerConnection.password + ";");
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
             WebClient wb = new WebClient();
             con.Open();
@@ -284,10 +284,10 @@ namespace WcfCrimShopService
         /// <param name="parcelList"></param>
         /// <param name="bufferDistance"></param>
         /// <returns></returns>
-        public string InsertAerialPhotoItem(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
+        public string InsertAerialPhotoItem(string title, string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
             //DBConnection AerialHandler = new DBConnection();
-            var result = responseHandler.InsertAerialPhotoHandler(controlNumber, itemQty, item, format, layoutTemplate, georefInfo, parcel, subtitle, buffer, parcelList, bufferDistance);
+            var result = responseHandler.InsertAerialPhotoHandler(title, controlNumber, itemQty, item, format, layoutTemplate, georefInfo, parcel, subtitle, buffer, parcelList, bufferDistance);
             return result;
         }
 

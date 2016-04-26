@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json;
 using System.IO;
-using System.Threading.Tasks;
+
 using System.Threading;
 using System.Diagnostics;
 
@@ -178,16 +178,25 @@ namespace WcfCrimShopService.entities
             return Message;
         }
 
-        public string InsertAerialPhotoHandler(string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
+        public string InsertAerialPhotoHandler(string title, string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
             decimal cost = Convert.ToDecimal(geo.CalculatePrice("fotoAerea", itemQty));
             SqlConnection con = Connection();
 
             con.Open();
 
-            string query = "INSERT into dbo.OrderItemAerialphoto (ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price) " +
-                           "VALUES (@control,@qty,@item,@format,@template,@georef,@parcel,@sub,@buffer,@list,@bufferDistance,@price)";
+            string query = "INSERT into dbo.OrderItemAerialphoto (Title,ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price) " +
+                           "VALUES (@title,@control,@qty,@item,@format,@template,@georef,@parcel,@sub,@buffer,@list,@bufferDistance,@price)";
             SqlCommand cmd = new SqlCommand(query, con);
+
+            if (string.IsNullOrEmpty(title))
+            {
+                cmd.Parameters.AddWithValue("@title", "Foto Aérea y Mapa De Catastro");
+            }
+            else
+            {
+                cmd.Parameters.AddWithValue("@title", title);
+            }
             if (string.IsNullOrEmpty(controlNumber))
             {
                 return "Control Number Needed";
@@ -653,14 +662,14 @@ namespace WcfCrimShopService.entities
                 pictureContent = ProcessPhotoProducts(myOrder[0].ControlNumber);
             }
 
-            if (myOrder[0].HasCat.ToUpper() == "Y")
-            {
-                cadastreContent = ProcessCadastralProducts(myOrder[0].ControlNumber);
-            }
-
             if (myOrder[0].HasList.ToUpper() == "Y")
             {
                 listContent = ProcessListProducts(myOrder[0].ControlNumber, myOrder[0].CustomerName);
+            }
+
+            if (myOrder[0].HasCat.ToUpper() == "Y")
+            {
+                cadastreContent = ProcessCadastralProducts(myOrder[0].ControlNumber);
             }
 
             if (string.IsNullOrEmpty(pictureContent))
@@ -697,7 +706,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "SELECT ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price " +
+            string query = "SELECT Title,ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price " +
                             "FROM dbo.OrderItemAerialPhoto " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -708,13 +717,14 @@ namespace WcfCrimShopService.entities
             {
                 while (result.Read())
                 {
+                    string title = result["Title"].ToString();
                     string cn = result["ControlNumber"].ToString();
                     string qty = result["ItemQty"].ToString();
                     string item = result["Item"].ToString();
                     string format = result["Format"].ToString();
                     string template = result["LayoutTemplate"].ToString();
                     string georef = result["GeorefInfo"].ToString();
-                    string title = result["Parcel"].ToString();
+                    string parcel = result["Parcel"].ToString();
                     string sub = result["Subtitle"].ToString();
                     string buffer = result["Buffer"].ToString();
                     string parcelList = result["ParcelList"].ToString();
@@ -729,12 +739,13 @@ namespace WcfCrimShopService.entities
                         Format = format,
                         LayoutTemplate = template,
                         GeorefInfo = georef,
-                        Parcel = title,
+                        Parcel = parcel,
                         subtitle = sub,
                         buffer = buffer,
                         parcelList = parcelList,
                         distance = bufferDistance,
-                        cost = cost
+                        cost = cost,
+                        title = title
                     });
                 }
             }
@@ -1029,6 +1040,32 @@ namespace WcfCrimShopService.entities
             return tax;
         }
 
+        public string UpdateFolderPath(string controlNumber, string path)
+        {
+            string Message = string.Empty;
+            SqlConnection con = Connection();
+            
+            con.Open();
 
+            string queryString = "UPDATE dbo.Orders SET OrderFilePath=@confirm" +
+                                " WHERE ControlNumber=@control";
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            cmd.Parameters.AddWithValue("@confirm", path);
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                Message = "ok";
+                
+            }
+            else
+            {
+                Message = "Order  not submitted: #order - " + controlNumber;
+            }
+            con.Close();
+            return Message;
+        }
     }
 }
