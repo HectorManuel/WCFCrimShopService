@@ -1,7 +1,7 @@
 ﻿{
     "ServerConnection": {
 
-        "source": "GMTWKS13\\GMTWKS13DB",
+        "source": "192.168.1.34\\GMTWKS13DB",
         "catalog": "CRIMShopManagement",
         "id": "User",
         "password": "user123"
@@ -13,6 +13,6 @@
             "PR_Professional_Services"
         ]
     },
-    "OrderDownloadStorage": "c:\\users\\hasencio\\documents\\visual studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
-    "MailDownloadPath": "c:\\users\\hasencio\\documents\\visual studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\"
+    "OrderDownloadStorage": "E:\\OrderDownload\\",
+    "MailDownloadPath": "https://gmtws01/Orders/"
 } 

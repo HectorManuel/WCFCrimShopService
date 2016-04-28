@@ -44,8 +44,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Esri.ArcGISRuntime">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ArcGIS SDKs\DotNet10.2.7\WindowsDesktop\bin\Esri.ArcGISRuntime.dll</HintPath>
+    <Reference Include="Esri.ArcGISRuntime, Version=10.2.7.0, Culture=neutral, PublicKeyToken=8fc3cc631e44ad86, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\Esri.ArcGISRuntime.dll</HintPath>
     </Reference>
     <Reference Include="itextsharp, Version=5.5.9.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
       <HintPath>..\packages\iTextSharp.5.5.9\lib\itextsharp.dll</HintPath>
@@ -79,6 +80,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Esri.ArcGISRuntime.dll" />
+    <Content Include="Esri.ArcGISRuntime.xml" />
     <Content Include="Global.asax" />
     <Content Include="CartographicProductsService.svc" />
     <Content Include="Web.config">

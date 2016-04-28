@@ -238,89 +238,98 @@ namespace WcfCrimShopService.entities
         {
             string zipPath = string.Empty;
             DBConnection connection = new DBConnection();
-            foreach (var pic in allPics)
+            string number = string.Empty;
+            try
             {
-                string map = pic.Item;
-                string cNumber = pic.ControlNumber;
-                string format = pic.Format;
-                string template = pic.LayoutTemplate;
-                string geoInfo = pic.GeorefInfo;
-                string parcelTitle = pic.Parcel;
-                string sub_Title = pic.subtitle;
-                string bf = pic.buffer;
-                string pr = pic.parcelList;
-                string bf_distance_unit = pic.distance;
-                string title = pic.title;
-
-                var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
-                var taskName = "Mapas de Fotos Aerea";
-                var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
-                var parameter = new GPInputParameter();
-                var jsonMap = new GPString("Web_Map_As_JSON", map);
-                var Format = new GPString("Format", format);
-                var layoutTemplate = new GPString("Layout_Template", template);
-                var georef = new GPString("Georef_info", geoInfo);
-                var parcel = new GPString("Parcel", parcelTitle);
-                var subtitle = new GPString("Subtitle", sub_Title);
-                var control = new GPString("Control", cNumber);
-                var buffer = new GPString("Buffer", bf);
-                var parcelList = new GPString("Parcelas", pr);
-                var bufferDistance = new GPString("Buffer_Distance_Units", bf_distance_unit);
-                var _title = new GPString("Title",title);
-
-                parameter.GPParameters.Add(jsonMap);
-                parameter.GPParameters.Add(Format);
-                parameter.GPParameters.Add(layoutTemplate);
-                parameter.GPParameters.Add(georef);
-                parameter.GPParameters.Add(parcel);
-                parameter.GPParameters.Add(subtitle);
-                parameter.GPParameters.Add(control);
-                parameter.GPParameters.Add(buffer);
-                parameter.GPParameters.Add(parcelList);
-                parameter.GPParameters.Add(bufferDistance);
-                parameter.GPParameters.Add(_title);
-
-                var result = await gp.SubmitJobAsync(parameter);
-                while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+                foreach (var pic in allPics)
                 {
-                    result = await gp.CheckJobStatusAsync(result.JobID);
-                    Debug.WriteLine(result.JobStatus);
-                    await Task.Delay(1000);
-                }
-                
-                if (result.JobStatus == GPJobStatus.Succeeded)
-                {
-                    var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+                    string map = pic.Item;
+                    string cNumber = pic.ControlNumber;
+                    string format = pic.Format;
+                    string template = pic.LayoutTemplate;
+                    string geoInfo = pic.GeorefInfo;
+                    string parcelTitle = pic.Parcel;
+                    string sub_Title = pic.subtitle;
+                    string bf = pic.buffer;
+                    string pr = pic.parcelList;
+                    string bf_distance_unit = pic.distance;
+                    string title = pic.title;
 
-                    if (outParam != null && outParam.Uri != null)
+                    var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
+                    var taskName = "Mapas de Fotos Aerea";
+                    var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
+                    var parameter = new GPInputParameter();
+                    var jsonMap = new GPString("Web_Map_As_JSON", map);
+                    var Format = new GPString("Format", format);
+                    var layoutTemplate = new GPString("Layout_Template", template);
+                    var georef = new GPString("Georef_info", geoInfo);
+                    var parcel = new GPString("Parcel", parcelTitle);
+                    var subtitle = new GPString("Subtitle", sub_Title);
+                    var control = new GPString("Control", cNumber);
+                    var buffer = new GPString("Buffer", bf);
+                    var parcelList = new GPString("Parcelas", pr);
+                    var bufferDistance = new GPString("Buffer_Distance_Units", bf_distance_unit);
+                    var _title = new GPString("Title", title);
+
+                    parameter.GPParameters.Add(jsonMap);
+                    parameter.GPParameters.Add(Format);
+                    parameter.GPParameters.Add(layoutTemplate);
+                    parameter.GPParameters.Add(georef);
+                    parameter.GPParameters.Add(parcel);
+                    parameter.GPParameters.Add(subtitle);
+                    parameter.GPParameters.Add(control);
+                    parameter.GPParameters.Add(buffer);
+                    parameter.GPParameters.Add(parcelList);
+                    parameter.GPParameters.Add(bufferDistance);
+                    parameter.GPParameters.Add(_title);
+
+                    var result = await gp.SubmitJobAsync(parameter);
+                    while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                     {
-                        string fileName = @"\" + parcelTitle + ".pdf";
-                        try
-                        {
-                            zipPath = MakeStoreFolder(cNumber, fileName);
-                            string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
-                            connection.LogTransaction(cNumber, "Foto Aerea Creada");
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.WriteLine("Process failed", e.ToString());
-                            connection.LogTransaction(cNumber, "Foto Aerea No Creada");
-                        }
-                        finally { }
+                        result = await gp.CheckJobStatusAsync(result.JobID);
+                        Debug.WriteLine(result.JobStatus);
+                        await Task.Delay(1000);
                     }
-                }
-                else
-                {
-                    var message = string.Empty;
-                    foreach (var msg in result.Messages)
-                    {
-                        message += msg.Description + "\n";
 
+                    if (result.JobStatus == GPJobStatus.Succeeded)
+                    {
+                        var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+                        if (outParam != null && outParam.Uri != null)
+                        {
+                            string fileName = @"\" + parcelTitle + ".pdf";
+                            try
+                            {
+                                zipPath = MakeStoreFolder(cNumber, fileName);
+                                string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
+                                connection.LogTransaction(cNumber, "Foto Aerea Creada");
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.WriteLine("Process failed", e.ToString());
+                                connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                            }
+                            finally { }
+                        }
                     }
-                    connection.LogTransaction(cNumber, "Foto Aerea No Creada");
-                    Debug.WriteLine(message);
+                    else
+                    {
+                        var message = string.Empty;
+                        foreach (var msg in result.Messages)
+                        {
+                            message += msg.Description + "\n";
+
+                        }
+                        connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                        Debug.WriteLine(message);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                connection.LogTransaction(number, ex.Message + " error con arcgis llamados");
+            }
+            
 
             return zipPath;
         }
