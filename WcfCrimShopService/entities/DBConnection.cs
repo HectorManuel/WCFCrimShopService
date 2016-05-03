@@ -1067,5 +1067,35 @@ namespace WcfCrimShopService.entities
             con.Close();
             return Message;
         }
+        
+        public string GetControlNumberHandler()
+        {
+            string number = string.Empty;
+            SqlConnection con = Connection();
+            SqlCommand cmd = new SqlCommand();
+            SqlDataReader data;
+
+            cmd.CommandText = "ControlNumberHandler";
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = con;
+            cmd.Parameters.AddWithValue("@result", "");
+
+            con.Open();
+            data = cmd.ExecuteReader();
+            con.Close();
+            con.Open();
+            string getNumber = "SELECT TOP 1 * FROM dbo.ControlNumberTemp ORDER BY createDate DESC";
+            SqlCommand cmd2 = new SqlCommand(getNumber, con);
+
+            using (SqlDataReader read = cmd2.ExecuteReader())
+            {
+                while (read.Read())
+                {
+                    number = read["controlNumber"].ToString();
+                }
+            }
+            con.Close();
+            return number;
+        }
     }
 }

@@ -88,6 +88,12 @@ namespace WcfCrimShopService
 
         }
 
+
+        public string GetControlNumber()
+        {
+            string controlNumber = responseHandler.GetControlNumberHandler();
+            return controlNumber;
+        }
         /// <summary>
         /// GET function in charge of waiting for a change in the confirmation column of the order.
         /// to wait for it to change from 'Processing' to tell the widget that the order was processed or cancelled
@@ -454,15 +460,15 @@ namespace WcfCrimShopService
         {
             if (string.IsNullOrEmpty(cNumber))
             {
-                cNumber = "041120160001";
+                cNumber = "No Asignado";
             }
             if (string.IsNullOrEmpty(customer))
             {
-                customer = "Geographic Mapping Technology";
+                customer = "N/A";
             }
             if (string.IsNullOrEmpty(parcela))
             {
-                parcela = "000-000-000-00,111-111-111-11,222-222-222-22";
+                parcela = "N_A";
             }
             Geoprocessing geo = new Geoprocessing();
             //geo.AdyacentListGenerator(json, "041120160002", "GMT"); System.IO.Directory.GetCurrentDirectory()

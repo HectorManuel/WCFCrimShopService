@@ -21,7 +21,11 @@ namespace WcfCrimShopService
 
         [OperationContract]
         [WebGet(UriTemplate = "AwaitConfirmation/{order}", ResponseFormat = WebMessageFormat.Json)]
-        string AwaitConfirmation(string order); 
+        string AwaitConfirmation(string order);
+
+        [OperationContract]
+        [WebGet(UriTemplate = "GetControlNumber", ResponseFormat = WebMessageFormat.Json)]
+        string GetControlNumber();
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]

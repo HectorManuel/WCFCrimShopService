@@ -15,6 +15,7 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Newtonsoft.Json;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace WcfCrimShopService.entities
 {
@@ -209,8 +210,15 @@ namespace WcfCrimShopService.entities
                 }
                 array2 += ")";
                 //array2.Replace(",)", ")");
-
-                storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+                try
+                {
+                    storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+                }
+                catch (Exception e)
+                {
+                    connection.LogTransaction(listScale10[0].controlNum, e.Message + " 1:1000");
+                }
+                
                 switch (storePath)
                 {
                     case "failed":
@@ -243,6 +251,7 @@ namespace WcfCrimShopService.entities
             {
                 foreach (var pic in allPics)
                 {
+                    
                     string map = pic.Item;
                     string cNumber = pic.ControlNumber;
                     string format = pic.Format;
@@ -297,6 +306,7 @@ namespace WcfCrimShopService.entities
 
                         if (outParam != null && outParam.Uri != null)
                         {
+                            parcelTitle = FileNameValidation(pic.Parcel);
                             string fileName = @"\" + parcelTitle + ".pdf";
                             try
                             {
@@ -382,6 +392,7 @@ namespace WcfCrimShopService.entities
         public string LoadUriPdf(Uri uri, string folder, string fileName)
         {
             string file = folder + fileName;
+            int duplicate = 0;
             try
             {
                 if (!File.Exists(file))
@@ -390,7 +401,14 @@ namespace WcfCrimShopService.entities
                 }
                 else
                 {
-                    File.Delete(file);
+                    //File.Delete(file);
+                    while (File.Exists(file))
+                    {
+                        duplicate++;
+                        fileName = fileName.Replace(".pdf", "(" + duplicate + ").pdf");
+                        file = folder + fileName;
+                    }
+                    
                     webClient.DownloadFile(uri, file);
                 }
             }
@@ -479,115 +497,128 @@ namespace WcfCrimShopService.entities
             string zipPath = string.Empty;
             foreach (var lista in itemsFromDb)
             {
+                string name = FileNameValidation(lista.itemName);
+                string pdfName = Path.Combine(zipPath, name + "_colindante.pdf");
                 DBConnection conect = new DBConnection();
-                zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + lista.itemName + ".pdf");
+                zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + name + ".pdf");
                 Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(lista.item);
                 //create csv file
-                string csvPath = Path.Combine(zipPath, lista.itemName + ".csv");
+                string csvPath = Path.Combine(zipPath, name + ".csv");
                 try
                 {
+                    int dup = 0;
+                    if (File.Exists(pdfName))
+                    {
+                        while (File.Exists(pdfName))
+                        {
+                            dup++;
+                            pdfName = Path.Combine(zipPath, name + "_colindante(" + dup + ").pdf");
+                            csvPath = Path.Combine(zipPath, name +"("+ dup + ").csv");
+                        }
 
+                    }
+
+                    if (!File.Exists(csvPath))
+                    {
+                        File.Create(csvPath).Dispose();
+                    }
+                    else
+                    {
+                        File.Delete(csvPath);
+                        File.Create(csvPath).Dispose();
+                    }
+                    StringBuilder csvContent = new StringBuilder();
+
+                    using (Document doc = new Document(new RectangleReadOnly(1191, 842), 25, 25, 45, 35))//A3 (842,1191) nearest to 11x17, A4 (595,842) nearest to 8.5x11
+                    {
+                        
+                        PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(pdfName, FileMode.Create));
+
+                        ColindantePdfEventHandler e = new ColindantePdfEventHandler()
+                        {
+                            cantidad = lisCol.ListaColindante.Count.ToString(),
+                            controlNumber = lista.ControlNumber,
+                            contribuyente = customerName,
+                            Parcela = name
+                        };
+
+                        wr.PageEvent = e;
+
+                        doc.Open();
+
+
+                        PdfPTable table = new PdfPTable(7);
+                        table.WidthPercentage = 100;
+                        float[] widths = { 12.00F, 8.00F, 10.00F, 10.00F, 12.00F, 20.00F, 20.00F };
+                        //table.SetWidthPercentage(widths,new RectangleReadOnly(1191, 842));
+                        table.SetTotalWidth(widths);
+                        PdfPCell cell = new PdfPCell(new Phrase("Parcela de procedencia", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                        cell.Colspan = 1;
+                        cell.HorizontalAlignment = 0;//0=left 1=center 2=right
+                        PdfPCell cell1 = new PdfPCell(new Phrase("Parcela", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                        cell1.Colspan = 1;
+                        cell1.HorizontalAlignment = 0;//0=left 1=center 2=right
+                        PdfPCell cell2 = new PdfPCell(new Phrase("Catastro", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                        cell2.Colspan = 1;
+                        cell2.HorizontalAlignment = 0;//0=left 1=center 2=right
+                        PdfPCell cell3 = new PdfPCell(new Phrase("Municipio", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                        cell3.Colspan = 1;
+                        cell3.HorizontalAlignment = 0;//0=left 1=center 2=right
+                        PdfPCell cell4 = new PdfPCell(new Phrase("Dueño", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                        cell4.Colspan = 1;
+                        cell4.HorizontalAlignment = 0;//0=left 1=center 2=right
+                        PdfPCell cell5 = new PdfPCell(new Phrase("Dirección Física", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                        cell5.Colspan = 1;
+                        cell5.HorizontalAlignment = 0;//0=left 1=center 2=right
+                        PdfPCell cell6 = new PdfPCell(new Phrase("Dirección Postal", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                        cell6.Colspan = 1;
+                        cell6.HorizontalAlignment = 0;//0=left 1=center 2=right
+
+                        table.AddCell(cell);
+                        table.AddCell(cell1);
+                        table.AddCell(cell2);
+                        table.AddCell(cell3);
+                        table.AddCell(cell4);
+                        table.AddCell(cell5);
+                        table.AddCell(cell6);
+
+                        //csv headers
+                        string headers = "Parcela de Procedencia" + "," + "Parcela" + "," + "Catastro" + "," + "Municipio" + "," + "Dueño" + "," + "Dirección Física" + "," + "Dirección Postal";
+                        csvContent.AppendLine(headers);
+
+
+                        foreach (var item in lisCol.ListaColindante)
+                        {
+                            table.AddCell(item.ParcelaProcedencia);
+                            table.AddCell(item.Parcela);
+                            table.AddCell(item.Catastro);
+                            table.AddCell(item.Municipio);
+                            table.AddCell(item.Dueno);
+                            table.AddCell(item.DireccionFisica);
+                            table.AddCell(item.DireccionPostal);
+
+                            //string for the csv rows
+                            string row = item.ParcelaProcedencia + "," + item.Parcela + "," + item.Catastro + "," + item.Municipio + "," + item.Dueno + "," + item.DireccionFisica + "," + item.DireccionPostal;
+                            csvContent.AppendLine(row);
+
+                        }
+
+
+                        doc.Add(table);
+
+                        //enter data in csv 
+                        using (StreamWriter file = new StreamWriter(new FileStream(csvPath, FileMode.Create), Encoding.UTF8))
+                        {
+                            file.Write(csvContent.ToString());
+                        }
+
+                        doc.Close();
+                        conect.LogTransaction(lista.ControlNumber, "Lista Colindante Creada");
+                    }
                 }
                 catch (Exception e)
                 {
                     conect.LogTransaction(itemsFromDb[0].ControlNumber, e.Message);
-                }
-
-                if (!File.Exists(csvPath))
-                {
-                    File.Create(csvPath).Dispose();
-                }
-                else
-                {
-                    File.Delete(csvPath);
-                    File.Create(csvPath).Dispose();
-                }
-                StringBuilder csvContent = new StringBuilder();
-
-                using (Document doc = new Document(new RectangleReadOnly(1191, 842), 25, 25, 45, 35))//A3 (842,1191) nearest to 11x17, A4 (595,842) nearest to 8.5x11
-                {
-                    PdfWriter wr = PdfWriter.GetInstance(doc, new FileStream(zipPath + @"\"+ lista.itemName+"_colindante.pdf", FileMode.Create));
-                    
-                    ColindantePdfEventHandler e = new ColindantePdfEventHandler()
-                    {
-                        cantidad = lisCol.ListaColindante.Count.ToString(),
-                        controlNumber = lista.ControlNumber,
-                        contribuyente = customerName,
-                        Parcela = lista.itemName
-                    };
-
-                    wr.PageEvent = e;
-
-                    doc.Open();
-
-                    
-                    PdfPTable table = new PdfPTable(7);
-                    table.WidthPercentage = 100;
-                    float[] widths = { 12.00F, 8.00F, 10.00F, 10.00F, 12.00F, 20.00F, 20.00F };
-                    //table.SetWidthPercentage(widths,new RectangleReadOnly(1191, 842));
-                    table.SetTotalWidth(widths);
-                    PdfPCell cell = new PdfPCell(new Phrase("Parcela de procedencia", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
-                    cell.Colspan = 1;
-                    cell.HorizontalAlignment = 0;//0=left 1=center 2=right
-                    PdfPCell cell1 = new PdfPCell(new Phrase("Parcela", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
-                    cell1.Colspan = 1;
-                    cell1.HorizontalAlignment = 0;//0=left 1=center 2=right
-                    PdfPCell cell2 = new PdfPCell(new Phrase("Catastro", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
-                    cell2.Colspan = 1;
-                    cell2.HorizontalAlignment = 0;//0=left 1=center 2=right
-                    PdfPCell cell3 = new PdfPCell(new Phrase("Municipio", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
-                    cell3.Colspan = 1;
-                    cell3.HorizontalAlignment = 0;//0=left 1=center 2=right
-                    PdfPCell cell4 = new PdfPCell(new Phrase("Dueño", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
-                    cell4.Colspan = 1;
-                    cell4.HorizontalAlignment = 0;//0=left 1=center 2=right
-                    PdfPCell cell5 = new PdfPCell(new Phrase("Dirección Física", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
-                    cell5.Colspan = 1;
-                    cell5.HorizontalAlignment = 0;//0=left 1=center 2=right
-                    PdfPCell cell6 = new PdfPCell(new Phrase("Dirección Postal", FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
-                    cell6.Colspan = 1;
-                    cell6.HorizontalAlignment = 0;//0=left 1=center 2=right
-
-                    table.AddCell(cell);
-                    table.AddCell(cell1);
-                    table.AddCell(cell2);
-                    table.AddCell(cell3);
-                    table.AddCell(cell4);
-                    table.AddCell(cell5);
-                    table.AddCell(cell6);
-
-                    //csv headers
-                    string headers = "Parcela de Procedencia" + "," + "Parcela" + "," + "Catastro" + "," + "Municipio" + "," + "Dueño" + "," + "Dirección Física" + "," + "Dirección Postal";
-                    csvContent.AppendLine(headers);
-
-
-                    foreach (var item in lisCol.ListaColindante)
-                    {
-                        table.AddCell(item.ParcelaProcedencia);
-                        table.AddCell(item.Parcela);
-                        table.AddCell(item.Catastro);
-                        table.AddCell(item.Municipio);
-                        table.AddCell(item.Dueno);
-                        table.AddCell(item.DireccionFisica);
-                        table.AddCell(item.DireccionPostal);
-
-                        //string for the csv rows
-                        string row = item.ParcelaProcedencia + "," + item.Parcela + "," + item.Catastro + "," + item.Municipio + "," + item.Dueno + "," + item.DireccionFisica + "," + item.DireccionPostal;
-                        csvContent.AppendLine(row);
-
-                    }
-
-
-                    doc.Add(table);
-
-                    //enter data in csv 
-                    using (StreamWriter file = new StreamWriter(new FileStream(csvPath, FileMode.Create), Encoding.UTF8))
-                    {
-                        file.Write(csvContent.ToString());
-                    }
-
-                    doc.Close();
-
                 }
             }
             return zipPath;
@@ -603,9 +634,21 @@ namespace WcfCrimShopService.entities
             Objects.ProductPrice price = responseHandler.PriceProduct(item.ToUpper(), qty);
 
             total =Convert.ToString(qty * price.price);
-
+            
             
             return total;
+        }
+
+        static string FileNameValidation(string filename)
+        {
+            try
+            {
+                return Regex.Replace(filename, @"[^\w\d()_-]", "", RegexOptions.None, TimeSpan.FromSeconds(1));
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return filename;
+            }
         }
     }
 }
