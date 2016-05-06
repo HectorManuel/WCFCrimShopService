@@ -774,6 +774,7 @@ namespace WcfCrimShopService.entities
                 {
                     if (exceptionCatch)
                     {
+                        //System.Threading.Thread.ResetAbort();
                         var task = Task.Run(async () =>
                         {
                             var createPrinting = await geo.FotoAerea(item);
@@ -781,7 +782,7 @@ namespace WcfCrimShopService.entities
                         });
                         Task.WaitAll(task);
                     }
-                    System.Threading.Thread.ResetAbort();
+                    
                 }
             }
             
@@ -868,8 +869,10 @@ namespace WcfCrimShopService.entities
             }
 
             string path = string.Empty;
+            bool exceptionCatch = false;
             try
             {
+                
                 var task = Task.Run(async () =>
                 {
                     var createPrinting = await geo.OficialMaps(orderList);
@@ -880,13 +883,24 @@ namespace WcfCrimShopService.entities
             }
             catch (Exception e)
             {
-
+                exceptionCatch = true;
                 LogTransaction(controlNumber, e.Message);
 
             }
             finally
             {
-                System.Threading.Thread.ResetAbort();
+                if (exceptionCatch)
+                {
+                    //System.Threading.Thread.ResetAbort();
+                    var task = Task.Run(async () =>
+                    {
+                        var createPrinting = await geo.OficialMaps(orderList);
+                        path = createPrinting.ToString();
+                    });
+                    //task.Wait();
+                    Task.WaitAll(task);
+                }
+               
             }
 
             
