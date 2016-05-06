@@ -13,6 +13,6 @@
             "GMTServiciosProfesionales"
         ]
     },
-    "OrderDownloadStorage": "E:\\OrderDownload\\",
-    "MailDownloadPath": "https://gmtws01/Orders/"
+    "OrderDownloadStorage": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
+    "MailDownloadPath": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\"
 } 

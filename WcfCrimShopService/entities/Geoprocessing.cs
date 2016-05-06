@@ -71,10 +71,20 @@ namespace WcfCrimShopService.entities
 
                 while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                 {
-                    result = await gp.CheckJobStatusAsync(result.JobID);
+                    try 
+                    {
+                        result = await gp.CheckJobStatusAsync(result.JobID);
 
-                    Debug.WriteLine(result.JobStatus);
-                    await Task.Delay(2000);
+                        Debug.WriteLine(result.JobStatus);
+                        await Task.Delay(2000);
+                    }
+                    catch (System.Threading.ThreadAbortException)
+                    {
+                        //connection.LogTransaction(ctrl, "ThreadAbortEsception");
+                        Debug.WriteLine("Abort Exception");
+                        System.Threading.Thread.ResetAbort();
+                    }
+
                 }
                 
                 if (result.JobStatus == GPJobStatus.Succeeded)
@@ -101,13 +111,16 @@ namespace WcfCrimShopService.entities
                 }
                 else
                 {
-                    switch (result.JobStatus)
-                    {
-                        case GPJobStatus.Failed:
-                            return "failed";
-                        case GPJobStatus.TimedOut:
-                            return "time out";
+
+                    if (result.JobStatus ==GPJobStatus.Failed){
+                        return "failed";
                     }
+
+                    if (result.JobStatus == GPJobStatus.TimedOut)
+                    {
+                        return "time out";
+                    }
+                        
 
                 }
             }
@@ -183,13 +196,13 @@ namespace WcfCrimShopService.entities
                 
                 switch (storePath){
                     case "failed":
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
+                            connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
                         break;
                     case "time out":
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
+                            connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
                         break;
                     default:
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                            connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
                         break;
                 }
                     
@@ -216,19 +229,19 @@ namespace WcfCrimShopService.entities
                 }
                 catch (Exception e)
                 {
-                    connection.LogTransaction(listScale10[0].controlNum, e.Message + " 1:1000");
+                    connection.LogTransaction(listScale1[0].controlNum, e.Message + " 1:1000");
                 }
                 
                 switch (storePath)
                 {
                     case "failed":
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k" + storePath);
+                        connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k" + storePath);
                         break;
                     case "time out":
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k" + storePath);
+                        connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k" + storePath);
                         break;
                     default:
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                        connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k creado");
                         break;
                 }
             }
@@ -242,16 +255,15 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="allPics"></param>
         /// <returns></returns>
-        public async Task<string> FotoAerea(List<Objects.OrderItemPhoto> allPics)
+        public async Task<string> FotoAerea(Objects.OrderItemPhoto pic)//allPics
         {
             string zipPath = string.Empty;
             DBConnection connection = new DBConnection();
             string number = string.Empty;
             try
             {
-                foreach (var pic in allPics)
-                {
-                    
+                //foreach (var pic in allPics)
+               // {
                     string map = pic.Item;
                     string cNumber = pic.ControlNumber;
                     string format = pic.Format;
@@ -291,13 +303,22 @@ namespace WcfCrimShopService.entities
                     parameter.GPParameters.Add(parcelList);
                     parameter.GPParameters.Add(bufferDistance);
                     parameter.GPParameters.Add(_title);
-
+                    await Task.Delay(2000);
                     var result = await gp.SubmitJobAsync(parameter);
                     while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                     {
-                        result = await gp.CheckJobStatusAsync(result.JobID);
-                        Debug.WriteLine(result.JobStatus);
-                        await Task.Delay(1000);
+                        try
+                        {
+                            result = await gp.CheckJobStatusAsync(result.JobID);
+                            Debug.WriteLine(result.JobStatus);
+                            await Task.Delay(1000);
+                        }
+                        catch (System.Threading.ThreadAbortException)
+                        {
+                            Debug.WriteLine("Abort Exception");
+                            System.Threading.Thread.ResetAbort();
+                        }
+
                     }
 
                     if (result.JobStatus == GPJobStatus.Succeeded)
@@ -333,7 +354,7 @@ namespace WcfCrimShopService.entities
                         connection.LogTransaction(cNumber, "Foto Aerea No Creada");
                         Debug.WriteLine(message);
                     }
-                }
+                //}
             }
             catch (Exception ex)
             {
@@ -362,10 +383,7 @@ namespace WcfCrimShopService.entities
             {
                 if (Directory.Exists(folderToSave))
                 {
-                    if (File.Exists(Pfile))
-                    {
-                        File.Delete(Pfile);
-                    }
+                    
                     return folderToSave;
                 }
                 else
@@ -391,6 +409,7 @@ namespace WcfCrimShopService.entities
         /// <returns></returns>
         public string LoadUriPdf(Uri uri, string folder, string fileName)
         {
+            DBConnection conForLog = new DBConnection();
             string file = folder + fileName;
             int duplicate = 0;
             try
@@ -402,14 +421,31 @@ namespace WcfCrimShopService.entities
                 else
                 {
                     //File.Delete(file);
+                    string tempFilename = string.Empty;
                     while (File.Exists(file))
                     {
                         duplicate++;
-                        fileName = fileName.Replace(".pdf", "(" + duplicate + ").pdf");
-                        file = folder + fileName;
+                        tempFilename = fileName.Replace(".pdf", "(" + duplicate + ").pdf");
+                        file = folder + tempFilename;
+                    }
+
+                    try
+                    {
+                        webClient.DownloadFile(uri, file);
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            webClient.DownloadFile(uri, file);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                        }
+                        
                     }
                     
-                    webClient.DownloadFile(uri, file);
                 }
             }
             catch (Exception e)
@@ -435,7 +471,16 @@ namespace WcfCrimShopService.entities
             //verify that the zip file doesnt exist
             if (!File.Exists(zipPath))
             {
-                ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);
+                try
+                {
+                    ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);
+                }
+                catch
+                {
+                    ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);
+                }
+
+                
             }
             else
             {
@@ -472,9 +517,18 @@ namespace WcfCrimShopService.entities
                     smtpServer.Credentials = new System.Net.NetworkCredential("CDPRCASOSWEB", "Cc123456");
                     smtpServer.EnableSsl = false;
 
-                    smtpServer.Send(mail);
-                    conForLog.LogTransaction(control, "Email send");
-                    Debug.WriteLine("MailSend");
+                    try
+                    {
+                        smtpServer.Send(mail);
+                        conForLog.LogTransaction(control, "Email send");
+                        Debug.WriteLine("MailSend");
+                        Directory.Delete(orderFolderPath, true);
+                    }
+                    catch (Exception e)
+                    {
+                        conForLog.LogTransaction(control, e.Message);
+                    }
+
                 }
                 catch (Exception e)
                 {
@@ -498,9 +552,10 @@ namespace WcfCrimShopService.entities
             foreach (var lista in itemsFromDb)
             {
                 string name = FileNameValidation(lista.itemName);
-                string pdfName = Path.Combine(zipPath, name + "_colindante.pdf");
+                
                 DBConnection conect = new DBConnection();
                 zipPath = MakeStoreFolder(itemsFromDb[0].ControlNumber, @"\" + name + ".pdf");
+                string pdfName = Path.Combine(zipPath, name + ".pdf");
                 Objects.ListaCol lisCol = JsonConvert.DeserializeObject<Objects.ListaCol>(lista.item);
                 //create csv file
                 string csvPath = Path.Combine(zipPath, name + ".csv");
@@ -512,7 +567,7 @@ namespace WcfCrimShopService.entities
                         while (File.Exists(pdfName))
                         {
                             dup++;
-                            pdfName = Path.Combine(zipPath, name + "_colindante(" + dup + ").pdf");
+                            pdfName = Path.Combine(zipPath, name + "(" + dup + ").pdf");
                             csvPath = Path.Combine(zipPath, name +"("+ dup + ").csv");
                         }
 

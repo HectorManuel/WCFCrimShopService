@@ -750,12 +750,29 @@ namespace WcfCrimShopService.entities
                 }
             }
             string path = string.Empty;
-            var task = Task.Run(async () => {
-                var createPrinting = await geo.FotoAerea(orderList);
-                path = createPrinting.ToString();
-            });
-            task.Wait();
-
+            //manejar esta parte con for each en vez de enviar toda las fotos completas
+            foreach (var item in orderList)
+            {
+                try
+                {
+                    var task = Task.Run(async () =>
+                    {
+                        var createPrinting = await geo.FotoAerea(item);
+                        path = createPrinting.ToString();
+                    });
+                    Task.WaitAll(task);
+                    //task.Wait();
+                }
+                catch (System.Threading.ThreadAbortException)
+                {
+                    System.Threading.Thread.ResetAbort();
+                }
+                finally
+                {
+                    System.Threading.Thread.ResetAbort();
+                }
+            }
+            
             return path;
         }
 
@@ -839,12 +856,27 @@ namespace WcfCrimShopService.entities
             }
 
             string path = string.Empty;
-            var task = Task.Run(async () =>
+            try
             {
-                var createPrinting = await geo.OficialMaps(orderList);
-                path = createPrinting.ToString();
-            });
-            task.Wait();
+                var task = Task.Run(async () =>
+                {
+                    var createPrinting = await geo.OficialMaps(orderList);
+                    path = createPrinting.ToString();
+                });
+                //task.Wait();
+                Task.WaitAll(task);
+            }
+            catch (Exception e)
+            {
+
+                LogTransaction(controlNumber, e.Message);
+
+            }
+            finally
+            {
+                System.Threading.Thread.ResetAbort();
+            }
+
             
             return path;
         }
