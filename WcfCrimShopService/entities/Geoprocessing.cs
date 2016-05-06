@@ -42,7 +42,7 @@ namespace WcfCrimShopService.entities
         /// <param name="geo"></param>
         /// <param name="ctrl"></param>
         /// <returns></returns>
-        public async Task<string> CallingMaps(string template, string array, string geo, string ctrl)
+        public string CallingMaps(string template, string array, string geo, string ctrl)
         {
             DBConnection connection = new DBConnection();
             string storePath = string.Empty;
@@ -51,7 +51,7 @@ namespace WcfCrimShopService.entities
                 //List<Objects.OrderItemCatastral> allCat
                 var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
                 string taskName = "Mapas de Catastro";
-                var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
+                var gp2 = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
 
                 //Set up the parameters
                 var parameter = new GPInputParameter();
@@ -67,65 +67,77 @@ namespace WcfCrimShopService.entities
                 parameter.GPParameters.Add(control);
 
                 //Execute task with the parameters collection defined above
-                var result = await gp.SubmitJobAsync(parameter);
-
-                while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+                var task2 = Task.Run(async () =>
                 {
-                    try 
+                    var result = await gp2.SubmitJobAsync(parameter);
+                    
+                    while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                     {
-                        result = await gp.CheckJobStatusAsync(result.JobID);
-
-                        Debug.WriteLine(result.JobStatus);
-                        await Task.Delay(2000);
-                    }
-                    catch (System.Threading.ThreadAbortException)
-                    {
-                        //connection.LogTransaction(ctrl, "ThreadAbortEsception");
-                        Debug.WriteLine("Abort Exception");
-                        System.Threading.Thread.ResetAbort();
-                    }
-
-                }
-                
-                if (result.JobStatus == GPJobStatus.Succeeded)
-                {
-                    var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
-
-                    if (outParam != null && outParam.Uri != null)
-                    {
-                        //OficialCatUri = outParam.Uri;
-                        string fileName = @"\" + template + ".pdf";
                         try
                         {
-                            storePath = MakeStoreFolder(ctrl, fileName);
-                            string save = LoadUriPdf(outParam.Uri, storePath, fileName);
+                            result = await gp2.CheckJobStatusAsync(result.JobID);
+
+                            Debug.WriteLine(result.JobStatus + "-- " + ctrl + "     "+ template);
+                            await Task.Delay(10000);
                         }
-                        catch (Exception e)
+                        catch (System.Threading.ThreadAbortException e)
                         {
-                            //Debug.WriteLine("Error: ", e.ToString());
-                            connection.LogTransaction(ctrl, e.Message);
+                            //connection.LogTransaction(ctrl, "ThreadAbortEsception");
+                            Debug.WriteLine("Abort Exception" + e.Message);
+                            System.Threading.Thread.ResetAbort();
                         }
 
                     }
 
-                }
-                else
-                {
-
-                    if (result.JobStatus ==GPJobStatus.Failed){
-                        return "failed";
-                    }
-
-                    if (result.JobStatus == GPJobStatus.TimedOut)
+                    if (result.JobStatus == GPJobStatus.Succeeded)
                     {
-                        return "time out";
-                    }
-                        
+                        var outParam = await gp2.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
 
-                }
+                        if (outParam != null && outParam.Uri != null)
+                        {
+                            //OficialCatUri = outParam.Uri;
+                            string fileName = @"\" + template + ".pdf";
+                            try
+                            {
+                                storePath = MakeStoreFolder(ctrl, fileName);
+                                string save = LoadUriPdf(outParam.Uri, storePath, fileName);
+                            }
+                            catch (Exception e)
+                            {
+                                //Debug.WriteLine("Error: ", e.ToString());
+                                connection.LogTransaction(ctrl, e.Message);
+                            }
+
+                        }
+
+                    }
+                    else
+                    {
+
+                        if (result.JobStatus == GPJobStatus.Failed)
+                        {
+                            storePath = "failed";
+                        }
+
+                        if (result.JobStatus == GPJobStatus.TimedOut)
+                        {
+                            storePath = "time out";
+                        }
+
+
+                    }
+                });
+                Task.WaitAll(task2);
+                //task2.Wait();
+                task2.Dispose();
+                
             }
             catch (Exception e)
             {
+                Debug.WriteLine(e.GetBaseException().ToString());
+                Debug.WriteLine(e.StackTrace);
+                Debug.WriteLine(e.Source);
+                Debug.WriteLine(e.InnerException.ToString());
                 connection.LogTransaction(ctrl, e.Message);
             }
             
@@ -138,7 +150,7 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="cadastre"></param>
         /// <returns></returns>
-        public async Task<string> OficialMaps(List<Objects.OrderItemCatastral> cadastre)
+        public string OficialMaps(List<Objects.OrderItemCatastral> cadastre)
         {
             List<Objects.Scale> listScale10 = new List<Objects.Scale>();
             List<Objects.Scale> listScale1 = new List<Objects.Scale>();
@@ -186,7 +198,7 @@ namespace WcfCrimShopService.entities
                 //array.Replace(",)", ")");
                 try
                 {
-                    storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                    storePath = CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
                 }
                 catch (Exception e)
                 {
@@ -225,7 +237,7 @@ namespace WcfCrimShopService.entities
                 //array2.Replace(",)", ")");
                 try
                 {
-                    storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+                    storePath = CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
                 }
                 catch (Exception e)
                 {
@@ -255,15 +267,15 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="allPics"></param>
         /// <returns></returns>
-        public async Task<string> FotoAerea(Objects.OrderItemPhoto pic)//allPics
+        public string FotoAerea(List<Objects.OrderItemPhoto> allPics)//allPics async Task<string>
         {
             string zipPath = string.Empty;
             DBConnection connection = new DBConnection();
             string number = string.Empty;
             try
             {
-                //foreach (var pic in allPics)
-               // {
+                foreach (var pic in allPics)
+                {
                     string map = pic.Item;
                     string cNumber = pic.ControlNumber;
                     string format = pic.Format;
@@ -303,61 +315,75 @@ namespace WcfCrimShopService.entities
                     parameter.GPParameters.Add(parcelList);
                     parameter.GPParameters.Add(bufferDistance);
                     parameter.GPParameters.Add(_title);
-                    await Task.Delay(2000);
-                    var result = await gp.SubmitJobAsync(parameter);
-                    while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+                    //await Task.Delay(2000);
+ 
+                    #region task async
+                   
+
+                    var task = Task.Run(async () =>
                     {
-                        try
+                        var result = await gp.SubmitJobAsync(parameter);
+                        while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                         {
-                            result = await gp.CheckJobStatusAsync(result.JobID);
-                            Debug.WriteLine(result.JobStatus);
-                            await Task.Delay(1000);
-                        }
-                        catch (System.Threading.ThreadAbortException)
-                        {
-                            Debug.WriteLine("Abort Exception");
-                            System.Threading.Thread.ResetAbort();
-                        }
-
-                    }
-
-                    if (result.JobStatus == GPJobStatus.Succeeded)
-                    {
-                        var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
-
-                        if (outParam != null && outParam.Uri != null)
-                        {
-                            parcelTitle = FileNameValidation(pic.Parcel);
-                            string fileName = @"\" + parcelTitle + ".pdf";
                             try
                             {
-                                zipPath = MakeStoreFolder(cNumber, fileName);
-                                string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
-                                connection.LogTransaction(cNumber, "Foto Aerea Creada");
+                                result = await gp.CheckJobStatusAsync(result.JobID);
+                                Debug.WriteLine(result.JobStatus + "-- " + cNumber + "     Foto aerea");
+                                await Task.Delay(10000);
                             }
-                            catch (Exception e)
+                            catch (System.Threading.ThreadAbortException)
                             {
-                                Debug.WriteLine("Process failed", e.ToString());
-                                connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                                Debug.WriteLine("Abort Exception");
+                                System.Threading.Thread.ResetAbort();
                             }
-                            finally { }
-                        }
-                    }
-                    else
-                    {
-                        var message = string.Empty;
-                        foreach (var msg in result.Messages)
-                        {
-                            message += msg.Description + "\n";
 
                         }
-                        connection.LogTransaction(cNumber, "Foto Aerea No Creada");
-                        Debug.WriteLine(message);
-                    }
-                //}
+
+                        if (result.JobStatus == GPJobStatus.Succeeded)
+                        {
+                            var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+                            if (outParam != null && outParam.Uri != null)
+                            {
+                                parcelTitle = FileNameValidation(pic.Parcel);
+                                string fileName = @"\" + parcelTitle + ".pdf";
+                                try
+                                {
+                                    zipPath = MakeStoreFolder(cNumber, fileName);
+                                    string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
+                                    connection.LogTransaction(cNumber, "Foto Aerea Creada");
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.WriteLine("Process failed", e.ToString());
+                                    connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                                }
+                                finally { }
+                            }
+                        }
+                        else
+                        {
+                            var message = string.Empty;
+                            foreach (var msg in result.Messages)
+                            {
+                                message += msg.Description + "\n";
+
+                            }
+                            connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                            Debug.WriteLine(message);
+                        }
+                    });
+                    Task.WaitAll(task);
+                    task.Dispose();
+                    #endregion
+                    //var result = await gp.SubmitJobAsync(parameter);
+                }
+
             }
             catch (Exception ex)
             {
+                Debug.WriteLine(ex.StackTrace);
+                Debug.WriteLine(ex.InnerException.ToString());
                 connection.LogTransaction(number, ex.Message + " error con arcgis llamados");
             }
             

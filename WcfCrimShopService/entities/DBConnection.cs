@@ -752,17 +752,20 @@ namespace WcfCrimShopService.entities
             string path = string.Empty;
             bool exceptionCatch = false;
             //manejar esta parte con for each en vez de enviar toda las fotos completas
-            foreach (var item in orderList)
-            {
+            //foreach (var item in orderList)
+            //{
                 try
                 {
-                    var task = Task.Run(async () =>
-                    {
-                        var createPrinting = await geo.FotoAerea(item);
-                        path = createPrinting.ToString();
-                    });
-                    Task.WaitAll(task);
+                    path = geo.FotoAerea(orderList);
+                    //Parallel.For(0, 1, i => geo.FotoAerea(item));
+                    //var task = Task.Run(async() =>
+                    //{
+                    //    var createPrinting = await geo.FotoAerea(orderList);
+                    //    path = createPrinting.ToString();
+                    //});
+                    //Task.WaitAll(task);
                     //task.Wait();
+                    //task.Dispose();
                 }
                 catch (System.Threading.ThreadAbortException)
                 {
@@ -774,17 +777,17 @@ namespace WcfCrimShopService.entities
                 {
                     if (exceptionCatch)
                     {
-                        //System.Threading.Thread.ResetAbort();
-                        var task = Task.Run(async () =>
-                        {
-                            var createPrinting = await geo.FotoAerea(item);
-                            path = createPrinting.ToString();
-                        });
-                        Task.WaitAll(task);
+                    //    //System.Threading.Thread.ResetAbort();
+                    //    var task = Task.Run(async () =>
+                    //    {
+                    //        var createPrinting = await geo.FotoAerea(orderList);
+                    //        path = createPrinting.ToString();
+                    //    });
+                    //    Task.WaitAll(task);
                     }
                     
                 }
-            }
+            //}
             
             return path;
         }
@@ -872,14 +875,14 @@ namespace WcfCrimShopService.entities
             bool exceptionCatch = false;
             try
             {
-                
-                var task = Task.Run(async () =>
-                {
-                    var createPrinting = await geo.OficialMaps(orderList);
-                    path = createPrinting.ToString();
-                });
-                //task.Wait();
-                Task.WaitAll(task);
+                path = geo.OficialMaps(orderList);
+                //var task = Task.Run(async () =>
+                //{
+                //    var createPrinting = await geo.OficialMaps(orderList);
+                //    path = createPrinting.ToString();
+                //});
+                ////task.Wait();
+                //Task.WaitAll(task);
             }
             catch (Exception e)
             {
@@ -891,14 +894,15 @@ namespace WcfCrimShopService.entities
             {
                 if (exceptionCatch)
                 {
+                    path = geo.OficialMaps(orderList);
                     //System.Threading.Thread.ResetAbort();
-                    var task = Task.Run(async () =>
-                    {
-                        var createPrinting = await geo.OficialMaps(orderList);
-                        path = createPrinting.ToString();
-                    });
-                    //task.Wait();
-                    Task.WaitAll(task);
+                    //var task = Task.Run(async () =>
+                    //{
+                    //    var createPrinting = await geo.OficialMaps(orderList);
+                    //    path = createPrinting.ToString();
+                    //});
+                    ////task.Wait();
+                    //Task.WaitAll(task);
                 }
                
             }
