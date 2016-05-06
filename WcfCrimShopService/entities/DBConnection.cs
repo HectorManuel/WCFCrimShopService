@@ -750,6 +750,7 @@ namespace WcfCrimShopService.entities
                 }
             }
             string path = string.Empty;
+            bool exceptionCatch = false;
             //manejar esta parte con for each en vez de enviar toda las fotos completas
             foreach (var item in orderList)
             {
@@ -765,10 +766,21 @@ namespace WcfCrimShopService.entities
                 }
                 catch (System.Threading.ThreadAbortException)
                 {
+                    exceptionCatch = true;
                     System.Threading.Thread.ResetAbort();
+
                 }
                 finally
                 {
+                    if (exceptionCatch)
+                    {
+                        var task = Task.Run(async () =>
+                        {
+                            var createPrinting = await geo.FotoAerea(item);
+                            path = createPrinting.ToString();
+                        });
+                        Task.WaitAll(task);
+                    }
                     System.Threading.Thread.ResetAbort();
                 }
             }
