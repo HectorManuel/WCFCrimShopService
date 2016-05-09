@@ -42,7 +42,7 @@ namespace WcfCrimShopService.entities
         /// <param name="geo"></param>
         /// <param name="ctrl"></param>
         /// <returns></returns>
-        public string CallingMaps(string template, string array, string geo, string ctrl)
+        public async Task<string> CallingMaps(string template, string array, string geo, string ctrl)
         {
             DBConnection connection = new DBConnection();
             string storePath = string.Empty;
@@ -67,69 +67,61 @@ namespace WcfCrimShopService.entities
                 parameter.GPParameters.Add(control);
 
                 //Execute task with the parameters collection defined above
-                var task2 = Task.Run(async () =>
-                {
-                    var result = await gp2.SubmitJobAsync(parameter);
+                var result = await gp2.SubmitJobAsync(parameter);
                     
-                    while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+                while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+                {
+                    try
                     {
+                        result = await gp2.CheckJobStatusAsync(result.JobID);
+
+                        Debug.WriteLine(result.JobStatus + "-- " + ctrl + "     "+ template);
+                        await Task.Delay(10000);
+                    }
+                    catch (System.Threading.ThreadAbortException e)
+                    {
+                        //connection.LogTransaction(ctrl, "ThreadAbortEsception");
+                        Debug.WriteLine("Abort Exception" + e.Message);
+                        System.Threading.Thread.ResetAbort();
+                    }
+
+                }
+
+                if (result.JobStatus == GPJobStatus.Succeeded)
+                {
+                    var outParam = await gp2.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+                    if (outParam != null && outParam.Uri != null)
+                    {
+                        //OficialCatUri = outParam.Uri;
+                        string fileName = @"\" + template + ".pdf";
                         try
                         {
-                            result = await gp2.CheckJobStatusAsync(result.JobID);
-
-                            Debug.WriteLine(result.JobStatus + "-- " + ctrl + "     "+ template);
-                            await Task.Delay(10000);
+                            storePath = MakeStoreFolder(ctrl, fileName);
+                            string save = LoadUriPdf(outParam.Uri, storePath, fileName);
                         }
-                        catch (System.Threading.ThreadAbortException e)
+                        catch (Exception e)
                         {
-                            //connection.LogTransaction(ctrl, "ThreadAbortEsception");
-                            Debug.WriteLine("Abort Exception" + e.Message);
-                            System.Threading.Thread.ResetAbort();
+                            //Debug.WriteLine("Error: ", e.ToString());
+                            connection.LogTransaction(ctrl, e.Message);
                         }
 
                     }
 
-                    if (result.JobStatus == GPJobStatus.Succeeded)
+                }
+                else
+                {
+
+                    if (result.JobStatus == GPJobStatus.Failed)
                     {
-                        var outParam = await gp2.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
-
-                        if (outParam != null && outParam.Uri != null)
-                        {
-                            //OficialCatUri = outParam.Uri;
-                            string fileName = @"\" + template + ".pdf";
-                            try
-                            {
-                                storePath = MakeStoreFolder(ctrl, fileName);
-                                string save = LoadUriPdf(outParam.Uri, storePath, fileName);
-                            }
-                            catch (Exception e)
-                            {
-                                //Debug.WriteLine("Error: ", e.ToString());
-                                connection.LogTransaction(ctrl, e.Message);
-                            }
-
-                        }
-
+                        storePath = "failed";
                     }
-                    else
+
+                    if (result.JobStatus == GPJobStatus.TimedOut)
                     {
-
-                        if (result.JobStatus == GPJobStatus.Failed)
-                        {
-                            storePath = "failed";
-                        }
-
-                        if (result.JobStatus == GPJobStatus.TimedOut)
-                        {
-                            storePath = "time out";
-                        }
-
-
+                        storePath = "time out";
                     }
-                });
-                Task.WaitAll(task2);
-                //task2.Wait();
-                task2.Dispose();
+                }
                 
             }
             catch (Exception e)
@@ -150,7 +142,7 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="cadastre"></param>
         /// <returns></returns>
-        public string OficialMaps(List<Objects.OrderItemCatastral> cadastre)
+        public async Task<string> OficialMaps(List<Objects.OrderItemCatastral> cadastre)
         {
             List<Objects.Scale> listScale10 = new List<Objects.Scale>();
             List<Objects.Scale> listScale1 = new List<Objects.Scale>();
@@ -198,7 +190,7 @@ namespace WcfCrimShopService.entities
                 //array.Replace(",)", ")");
                 try
                 {
-                    storePath = CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                    storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
                 }
                 catch (Exception e)
                 {
@@ -237,7 +229,7 @@ namespace WcfCrimShopService.entities
                 //array2.Replace(",)", ")");
                 try
                 {
-                    storePath = CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+                    storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
                 }
                 catch (Exception e)
                 {
@@ -267,15 +259,15 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="allPics"></param>
         /// <returns></returns>
-        public string FotoAerea(List<Objects.OrderItemPhoto> allPics)//allPics async Task<string>
+        public async Task<string> FotoAerea(Objects.OrderItemPhoto pic)//allPics async Task<string>
         {
             string zipPath = string.Empty;
             DBConnection connection = new DBConnection();
             string number = string.Empty;
             try
             {
-                foreach (var pic in allPics)
-                {
+                //foreach (var pic in allPics)
+                //{
                     string map = pic.Item;
                     string cNumber = pic.ControlNumber;
                     string format = pic.Format;
@@ -318,66 +310,61 @@ namespace WcfCrimShopService.entities
                     //await Task.Delay(2000);
  
                     #region task async
-                   
 
-                    var task = Task.Run(async () =>
+                    var result = await gp.SubmitJobAsync(parameter);
+                    while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
                     {
-                        var result = await gp.SubmitJobAsync(parameter);
-                        while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+                        try
                         {
+                            result = await gp.CheckJobStatusAsync(result.JobID);
+                            Debug.WriteLine(result.JobStatus + "-- " + cNumber + "     Foto aerea");
+                            await Task.Delay(10000);
+                        }
+                        catch (System.Threading.ThreadAbortException)
+                        {
+                            Debug.WriteLine("Abort Exception");
+                            System.Threading.Thread.ResetAbort();
+                        }
+
+                    }
+
+                    if (result.JobStatus == GPJobStatus.Succeeded)
+                    {
+                        var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+
+                        if (outParam != null && outParam.Uri != null)
+                        {
+                            parcelTitle = FileNameValidation(pic.Parcel);
+                            string fileName = @"\" + parcelTitle + ".pdf";
                             try
                             {
-                                result = await gp.CheckJobStatusAsync(result.JobID);
-                                Debug.WriteLine(result.JobStatus + "-- " + cNumber + "     Foto aerea");
-                                await Task.Delay(10000);
+                                zipPath = MakeStoreFolder(cNumber, fileName);
+                                string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
+                                Debug.WriteLine("Process creada FOto");
+                                connection.LogTransaction(cNumber, "Foto Aerea Creada");
                             }
-                            catch (System.Threading.ThreadAbortException)
+                            catch (Exception e)
                             {
-                                Debug.WriteLine("Abort Exception");
-                                System.Threading.Thread.ResetAbort();
+                                Debug.WriteLine("Process failed", e.ToString());
+                                connection.LogTransaction(cNumber, "Foto Aerea No Creada");
                             }
-
+                            finally { }
                         }
-
-                        if (result.JobStatus == GPJobStatus.Succeeded)
+                    }
+                    else
+                    {
+                        var message = string.Empty;
+                        foreach (var msg in result.Messages)
                         {
-                            var outParam = await gp.GetResultDataAsync(result.JobID, "Output_File") as GPDataFile;
+                            message += msg.Description + "\n";
 
-                            if (outParam != null && outParam.Uri != null)
-                            {
-                                parcelTitle = FileNameValidation(pic.Parcel);
-                                string fileName = @"\" + parcelTitle + ".pdf";
-                                try
-                                {
-                                    zipPath = MakeStoreFolder(cNumber, fileName);
-                                    string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
-                                    connection.LogTransaction(cNumber, "Foto Aerea Creada");
-                                }
-                                catch (Exception e)
-                                {
-                                    Debug.WriteLine("Process failed", e.ToString());
-                                    connection.LogTransaction(cNumber, "Foto Aerea No Creada");
-                                }
-                                finally { }
-                            }
                         }
-                        else
-                        {
-                            var message = string.Empty;
-                            foreach (var msg in result.Messages)
-                            {
-                                message += msg.Description + "\n";
-
-                            }
-                            connection.LogTransaction(cNumber, "Foto Aerea No Creada");
-                            Debug.WriteLine(message);
-                        }
-                    });
-                    Task.WaitAll(task);
-                    task.Dispose();
+                        connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                        Debug.WriteLine(message);
+                    }
                     #endregion
                     //var result = await gp.SubmitJobAsync(parameter);
-                }
+                //}
 
             }
             catch (Exception ex)
@@ -497,16 +484,7 @@ namespace WcfCrimShopService.entities
             //verify that the zip file doesnt exist
             if (!File.Exists(zipPath))
             {
-                try
-                {
-                    ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);
-                }
-                catch
-                {
-                    ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);
-                }
-
-                
+                ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);                
             }
             else
             {

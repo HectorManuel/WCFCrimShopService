@@ -169,15 +169,12 @@ namespace WcfCrimShopService.entities
 
             if (result == 1)
             {
-
-                Task.Run(() =>
-                {
-                    GetOrderDetails(controlNumber);
-                });
+                GetOrderDetails(controlNumber);
             }
             return Message;
         }
 
+        #region Insert Region
         public string InsertAerialPhotoHandler(string title, string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
             decimal cost = Convert.ToDecimal(geo.CalculatePrice("fotoAerea", itemQty));
@@ -603,10 +600,10 @@ namespace WcfCrimShopService.entities
             return Message;
 
         }
-
+        #endregion
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
-        public void GetOrderDetails(string controlNumber)
+        public async Task GetOrderDetails(string controlNumber)
         {
             SqlConnection con = Connection();
             con.Open();
@@ -643,14 +640,14 @@ namespace WcfCrimShopService.entities
                 }
             }
 
-            string ending = GetItems(orderList);
+            string ending = await GetItems(orderList);
 
             con.Close();
 
 
         }
 
-        public string GetItems(List<Objects.Order> myOrder)
+        public async Task<string> GetItems(List<Objects.Order> myOrder)
         {
 
             string pictureContent = string.Empty;
@@ -659,7 +656,8 @@ namespace WcfCrimShopService.entities
 
             if (myOrder[0].HasPhoto.ToUpper() == "Y")
             {
-                pictureContent = ProcessPhotoProducts(myOrder[0].ControlNumber);
+                pictureContent = await ProcessPhotoProducts(myOrder[0].ControlNumber);
+               
             }
 
             if (myOrder[0].HasList.ToUpper() == "Y")
@@ -669,7 +667,7 @@ namespace WcfCrimShopService.entities
 
             if (myOrder[0].HasCat.ToUpper() == "Y")
             {
-                cadastreContent = ProcessCadastralProducts(myOrder[0].ControlNumber);
+                cadastreContent = await ProcessCadastralProducts(myOrder[0].ControlNumber);
             }
 
             if (string.IsNullOrEmpty(pictureContent))
@@ -700,7 +698,7 @@ namespace WcfCrimShopService.entities
             return pictureContent;
         }
 
-        public string ProcessPhotoProducts(string controlNumber)
+        public async Task<string> ProcessPhotoProducts(string controlNumber)
         {
 
             SqlConnection con = Connection();
@@ -750,13 +748,15 @@ namespace WcfCrimShopService.entities
                 }
             }
             string path = string.Empty;
-            bool exceptionCatch = false;
+            //bool exceptionCatch = false;
             //manejar esta parte con for each en vez de enviar toda las fotos completas
-            //foreach (var item in orderList)
-            //{
+            foreach (var item in orderList)
+            {
                 try
                 {
-                    path = geo.FotoAerea(orderList);
+                    Task<string> fotos = geo.FotoAerea(item);
+                    path = await fotos;
+                    fotos.Dispose();
                     //Parallel.For(0, 1, i => geo.FotoAerea(item));
                     //var task = Task.Run(async() =>
                     //{
@@ -767,27 +767,29 @@ namespace WcfCrimShopService.entities
                     //task.Wait();
                     //task.Dispose();
                 }
-                catch (System.Threading.ThreadAbortException)
+                catch (Exception e)
                 {
-                    exceptionCatch = true;
-                    System.Threading.Thread.ResetAbort();
+                    //exceptionCatch = true;
+                    Debug.WriteLine(e.Message);
+                    Debug.WriteLine(e.StackTrace);
+                    //System.Threading.Thread.ResetAbort();
 
                 }
-                finally
-                {
-                    if (exceptionCatch)
-                    {
-                    //    //System.Threading.Thread.ResetAbort();
-                    //    var task = Task.Run(async () =>
-                    //    {
-                    //        var createPrinting = await geo.FotoAerea(orderList);
-                    //        path = createPrinting.ToString();
-                    //    });
-                    //    Task.WaitAll(task);
-                    }
+                //finally
+                //{
+                //    if (exceptionCatch)
+                //    {
+                //    //    //System.Threading.Thread.ResetAbort();
+                //    //    var task = Task.Run(async () =>
+                //    //    {
+                //    //        var createPrinting = await geo.FotoAerea(orderList);
+                //    //        path = createPrinting.ToString();
+                //    //    });
+                //    //    Task.WaitAll(task);
+                //    }
                     
-                }
-            //}
+                //}
+            }
             
             return path;
         }
@@ -835,7 +837,7 @@ namespace WcfCrimShopService.entities
             return path;
         }
 
-        public string ProcessCadastralProducts(string controlNumber)
+        public async Task<string> ProcessCadastralProducts(string controlNumber)
         {
 
             SqlConnection con = Connection();
@@ -872,10 +874,10 @@ namespace WcfCrimShopService.entities
             }
 
             string path = string.Empty;
-            bool exceptionCatch = false;
+            //bool exceptionCatch = false;
             try
             {
-                path = geo.OficialMaps(orderList);
+                path = await geo.OficialMaps(orderList);
                 //var task = Task.Run(async () =>
                 //{
                 //    var createPrinting = await geo.OficialMaps(orderList);
@@ -886,26 +888,26 @@ namespace WcfCrimShopService.entities
             }
             catch (Exception e)
             {
-                exceptionCatch = true;
+                //exceptionCatch = true;
                 LogTransaction(controlNumber, e.Message);
 
             }
-            finally
-            {
-                if (exceptionCatch)
-                {
-                    path = geo.OficialMaps(orderList);
-                    //System.Threading.Thread.ResetAbort();
-                    //var task = Task.Run(async () =>
-                    //{
-                    //    var createPrinting = await geo.OficialMaps(orderList);
-                    //    path = createPrinting.ToString();
-                    //});
-                    ////task.Wait();
-                    //Task.WaitAll(task);
-                }
+            //finally
+            //{
+            //    if (exceptionCatch)
+            //    {
+            //        path = geo.OficialMaps(orderList);
+            //        //System.Threading.Thread.ResetAbort();
+            //        //var task = Task.Run(async () =>
+            //        //{
+            //        //    var createPrinting = await geo.OficialMaps(orderList);
+            //        //    path = createPrinting.ToString();
+            //        //});
+            //        ////task.Wait();
+            //        //Task.WaitAll(task);
+            //    }
                
-            }
+            //}
 
             
             return path;
