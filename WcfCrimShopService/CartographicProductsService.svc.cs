@@ -74,15 +74,9 @@ namespace WcfCrimShopService
                 {
                     ds = result["Confirmation"].ToString();
                     
-                    //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
                 }
                 
             }
-
-            //string ds = string.Empty;
-            //test array object
-            //var list = new List<KeyValuePair<string, string>>();
-            //wb.DownloadFile("http://localhost:9001/test1234.zip", @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives\testing.zip");
             return ds;
 
 

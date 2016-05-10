@@ -88,6 +88,7 @@ namespace WcfCrimShopService.entities
         {
             public ServerConnection ServerConnection { get; set; }
             public ActiveDirectoryInformation ActiveDirectoryInformation { get; set; }
+            public EmailConfiguration EmailConfiguration { get; set; }
             public string OrderDownloadStorage { get; set; }
             public string MailDownloadPath { get; set; }
         }
@@ -98,6 +99,13 @@ namespace WcfCrimShopService.entities
             public string[] group { get; set; }
 
         }
+        public class EmailConfiguration
+        {
+            public string SMTPClient { get; set; }
+            public string MailAddress { get; set; }
+            public string Username { get; set; }
+            public string Password { get; set; }
+        }
 
         public class ServerConnection
         {
@@ -105,6 +113,16 @@ namespace WcfCrimShopService.entities
             public string catalog { get; set; }
             public string id { get; set; }
             public string password { get; set; }
+        }
+        static string pathOfZip;
+        public static string path
+        {
+            get{
+                return pathOfZip;
+            }
+            set{
+                pathOfZip = value;
+            }
         }
     }
 }

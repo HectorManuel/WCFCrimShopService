@@ -20,6 +20,7 @@ namespace WcfCrimShopService.entities
     {
         Geoprocessing geo = new Geoprocessing();
         Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
+        List<Task> tasksList = new List<Task>();
 
         public SqlConnection Connection()
         {
@@ -177,7 +178,7 @@ namespace WcfCrimShopService.entities
             }
             return Message;
         }
-
+        #region Insert Stuff region
         public string InsertAerialPhotoHandler(string title, string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
             decimal cost = Convert.ToDecimal(geo.CalculatePrice("fotoAerea", itemQty));
@@ -603,7 +604,7 @@ namespace WcfCrimShopService.entities
             return Message;
 
         }
-
+        #endregion
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
         public void GetOrderDetails(string controlNumber)
@@ -671,30 +672,48 @@ namespace WcfCrimShopService.entities
             {
                 cadastreContent = ProcessCadastralProducts(myOrder[0].ControlNumber);
             }
-
-            if (string.IsNullOrEmpty(pictureContent))
+            try
             {
-                if (string.IsNullOrEmpty(cadastreContent))
+                Task.WaitAll(tasksList.ToArray());
+            }
+            catch (ThreadAbortException)
+            {
+                try{
+                    Thread.ResetAbort();
+                }
+                catch
                 {
-                    if (string.IsNullOrEmpty(listContent))
+                    Debug.WriteLine("No abort Exception reset");
+                }
+                
+            }
+            finally
+            {
+                if (string.IsNullOrEmpty(pictureContent))
+                {
+                    if (string.IsNullOrEmpty(cadastreContent))
                     {
-                        pictureContent = "Error: no items in order";
+                        if (string.IsNullOrEmpty(listContent))
+                        {
+                            pictureContent = "Error: no items in order";
+                        }
+                        else
+                        {
+                            pictureContent = listContent;
+                        }
                     }
                     else
                     {
-                        pictureContent = listContent;
+                        pictureContent = cadastreContent;
                     }
                 }
-                else
+
+                if (Objects.path != "Error: no items in order")
                 {
-                    pictureContent = cadastreContent;
+                    geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
                 }
             }
-
-            if (pictureContent != "Error: no items in order")
-            {
-                geo.ZipAndSendEmail(pictureContent, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
-            }
+            
             
             
             return pictureContent;
@@ -750,39 +769,25 @@ namespace WcfCrimShopService.entities
                 }
             }
             string path = string.Empty;
-            bool exceptionCatch = false;
             //manejar esta parte con for each en vez de enviar toda las fotos completas
             foreach (var item in orderList)
             {
                 try
                 {
+                    Thread.Sleep(10000);
                     var task = Task.Run(async () =>
                     {
                         var createPrinting = await geo.FotoAerea(item);
                         path = createPrinting.ToString();
                     });
-                    Task.WaitAll(task);
+                    tasksList.Add(task);
+                    
+                    //Task.WaitAll(task);
                     //task.Wait();
                 }
                 catch (System.Threading.ThreadAbortException)
                 {
-                    exceptionCatch = true;
                     System.Threading.Thread.ResetAbort();
-
-                }
-                finally
-                {
-                    if (exceptionCatch)
-                    {
-                        //System.Threading.Thread.ResetAbort();
-                        var task = Task.Run(async () =>
-                        {
-                            var createPrinting = await geo.FotoAerea(item);
-                            path = createPrinting.ToString();
-                        });
-                        Task.WaitAll(task);
-                    }
-                    
                 }
             }
             
@@ -869,37 +874,27 @@ namespace WcfCrimShopService.entities
             }
 
             string path = string.Empty;
-            bool exceptionCatch = false;
+            //bool exceptionCatch = false;
             try
             {
-                
+                Thread.Sleep(10000);
                 var task = Task.Run(async () =>
                 {
                     var createPrinting = await geo.OficialMaps(orderList);
                     path = createPrinting.ToString();
                 });
+                tasksList.Add(task);
                 //task.Wait();
-                Task.WaitAll(task);
+                //Task.WaitAll(task);
             }
             catch (Exception e)
             {
-                exceptionCatch = true;
+
                 LogTransaction(controlNumber, e.Message);
 
             }
             finally
             {
-                if (exceptionCatch)
-                {
-                    //System.Threading.Thread.ResetAbort();
-                    var task = Task.Run(async () =>
-                    {
-                        var createPrinting = await geo.OficialMaps(orderList);
-                        path = createPrinting.ToString();
-                    });
-                    //task.Wait();
-                    Task.WaitAll(task);
-                }
                
             }
 
@@ -1154,6 +1149,96 @@ namespace WcfCrimShopService.entities
             }
             con.Close();
             return number;
+        }
+
+        public void UpdatephotoStatus(string cNumber, string template, string parcelTitle, string subtitle, string title)
+        {
+            string Message = string.Empty;
+            SqlConnection con = Connection();
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString = "UPDATE dbo.OrderItemAerialPhoto SET Created=@created" +
+                                " WHERE ControlNumber=@control AND Title=@title AND LayoutTemplate=@template AND Parcel=@parcelTitle AND Subtitle=@subtitle";
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", cNumber);
+            cmd.Parameters.AddWithValue("@title", title);
+            cmd.Parameters.AddWithValue("@template", template);
+            cmd.Parameters.AddWithValue("@parcelTitle", parcelTitle);
+            cmd.Parameters.AddWithValue("@subtitle", subtitle);
+
+            cmd.Parameters.AddWithValue("@created", "true");
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                Message = "ok";
+                // run task to get information for the printing service
+            }
+            else
+            {
+                Message = "Order  not submitted: #order - " + cNumber;
+            }
+            con.Close();
+        }
+
+        public void UpdateCadStatus(string cNumber, string template, string escala, string created)
+        {
+            string Message = string.Empty;
+            SqlConnection con = Connection();
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString = "UPDATE dbo.OrderItemsCatastrales SET Created=@created" +
+                                " WHERE ControlNumber=@control AND Escala=@escala AND Template=@template";
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", cNumber);
+            cmd.Parameters.AddWithValue("@escala", escala);
+            cmd.Parameters.AddWithValue("@template", template);
+            cmd.Parameters.AddWithValue("@created", created);
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                Message = "ok";
+                // run task to get information for the printing service
+            }
+            else
+            {
+                Message = "Order  not submitted: #order - " + cNumber;
+            }
+            con.Close();
+        }
+
+        public void UpdateListStatus(string cNumber, string parcelas, string item, string created)
+        {
+            string Message = string.Empty;
+            SqlConnection con = Connection();
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString = "UPDATE dbo.OrderItemsListaColindante SET Created=@created" +
+                                " WHERE ControlNumber=@control AND Parcelas=@parcelas AND Item=@item ";
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", cNumber);
+            cmd.Parameters.AddWithValue("@parcelas", parcelas);
+            cmd.Parameters.AddWithValue("@item", item);
+            cmd.Parameters.AddWithValue("@created", created);
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                Message = "ok";
+                // run task to get information for the printing service
+            }
+            else
+            {
+                Message = "Order  not submitted: #order - " + cNumber;
+            }
+            con.Close();
         }
     }
 }
