@@ -109,6 +109,7 @@ namespace WcfCrimShopService.entities
                         {
                             //Debug.WriteLine("Error: ", e.ToString());
                             connection.LogTransaction(ctrl, e.Message);
+                            Objects.path = "Error";
                         }
 
                     }
@@ -202,31 +203,31 @@ namespace WcfCrimShopService.entities
                 switch (storePath){
                     case "failed":
                         connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
-                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale1[0].template, "1:10000", "false");
+                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
                         Thread.Sleep(10000);
                         connection.LogTransaction(listScale10[0].controlNum, "Intentando Mapa Catastral oficial 1:10k creado");
                         storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
                         {
                             connection.LogTransaction(listScale10[0].controlNum, "1:10k Geoprocess failed again");
-                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale1[0].template, "1:10000", "false");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
                         }    
                         break;
                     case "time out":
                         connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
-                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale1[0].template, "1:10000", "false");
+                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
                         Thread.Sleep(10000);
                         connection.LogTransaction(listScale10[0].controlNum, "Intentando Mapa Catastral oficial 1:10k");
                         storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
                         {
                             connection.LogTransaction(listScale10[0].controlNum, "1:10k Geoprocess failed again");
-                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale1[0].template, "1:10000", "false");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
                         } 
                         break;
                     default:
                         connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
-                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale1[0].template, "1:10000", "true");
+                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "true");
                         break;
                 }
                     
@@ -377,7 +378,7 @@ namespace WcfCrimShopService.entities
                                 zipPath = MakeStoreFolder(cNumber, fileName);
                                 string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
                                 connection.LogTransaction(cNumber, "Foto Aerea Creada");
-                                
+                                connection.UpdatephotoStatus(cNumber, template, parcelTitle, sub_Title, title, "true");
                                 Objects.path = zipPath;
 
                             }
@@ -385,6 +386,7 @@ namespace WcfCrimShopService.entities
                             {
                                 Debug.WriteLine("Process failed", e.ToString());
                                 connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                                connection.UpdatephotoStatus(cNumber, template, parcelTitle, sub_Title, title, "false");
                             }
                             finally { }
                         }
@@ -398,6 +400,7 @@ namespace WcfCrimShopService.entities
 
                         }
                         connection.LogTransaction(cNumber, "Foto Aerea No Creada");
+                        connection.UpdatephotoStatus(cNumber, template, parcelTitle, sub_Title, title, "false");
                         Debug.WriteLine(message);
                     }
                 //}
@@ -558,20 +561,38 @@ namespace WcfCrimShopService.entities
                     mail.Body = "Su orden esta lista, la mista estada diponible hasta el  "+ expirationDate +" y puede ser descargada del siguiente enlace: "+ config.MailDownloadPath + control + ".zip";
 
 
-                    string htmlBody = "<div>";
-                    htmlBody += "<p>Su Orden de productos cartografícos esta lista</P>";
-                    htmlBody += "<p>La misma estara disponible hasta "; 
-                    htmlBody += "<b>"+ expirationDate +"</b>"; 
-                    htmlBody += "</P>";
-                    htmlBody += "<p> Puede descargar el archivo del siguiente enlace: ";
+                    string htmlBody = "<div>Su Orden de productos cartografícos esta lista</div>";
+                    htmlBody += "<div>La misma estara disponible hasta <b>" + expirationDate + "</b></div>"; 
+                    htmlBody += "<div>Puede descargar el archivo del siguiente enlace: ";
                     htmlBody += "<a href=\"" + config.MailDownloadPath + control + ".zip" + "\">Presione para descargar</a></div>";
+                    htmlBody += "<p>Contenido de la orden numero "+ control +":</p>";
+                    htmlBody += "<ul>";
+
+
+                    string photos = conForLog.GetPhotoProducts(control);
+                    string cadastre = conForLog.GetCadastralProducts(control);
+                    string listAdyacent = conForLog.GetListProducts(control);
+                    if (!string.IsNullOrEmpty(photos))
+                    {
+                        htmlBody += photos;
+                    }
+                    if (!string.IsNullOrEmpty(listAdyacent))
+                    {
+                        htmlBody += listAdyacent;
+                    }
+                    if (!string.IsNullOrEmpty(cadastre))
+                    {
+                        htmlBody += cadastre;
+                    }
+
+                    htmlBody += "</ul>";
 
                     ContentType mimeType = new ContentType("text/html");
 
                     AlternateView alternate = AlternateView.CreateAlternateViewFromString(htmlBody, mimeType);
                     mail.AlternateViews.Add(alternate);
 
-                    string updatingPath = conForLog.UpdateFolderPath(control, mail.Body.ToString());
+                    string updatingPath = conForLog.UpdateFolderPath(control, config.MailDownloadPath + control + ".zip");
 
                     smtpServer.Port = 25;
                     smtpServer.Credentials = new System.Net.NetworkCredential(config.EmailConfiguration.Username, config.EmailConfiguration.Password);
@@ -729,13 +750,15 @@ namespace WcfCrimShopService.entities
 
                         doc.Close();
                         conect.LogTransaction(lista.ControlNumber, "Lista Colindante Creada");
-                        
+                        conect.UpdateListStatus(lista.ControlNumber, lista.itemName, lista.item, "true");
                         Objects.path = zipPath;
                     }
                 }
                 catch (Exception e)
                 {
-                    conect.LogTransaction(itemsFromDb[0].ControlNumber, e.Message);
+                    conect.LogTransaction(lista.ControlNumber, e.Message);
+                    conect.UpdateListStatus(lista.ControlNumber, lista.itemName, lista.item, "true");
+                    Objects.path = "Error";
                 }
             }
             return zipPath;

@@ -34,7 +34,7 @@ namespace WcfCrimShopService.entities
         {
             SqlConnection con = Connection();
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
-            con.Open();
+            
             string query = "SELECT Confirmation " +
                            "FROM dbo.Orders " +
                            "WHERE ControlNumber= @control";
@@ -48,6 +48,7 @@ namespace WcfCrimShopService.entities
 
             do
             {
+                con.Open();
                 using (SqlDataReader result = cmd.ExecuteReader())
                 {
                     while (result.Read())
@@ -61,6 +62,7 @@ namespace WcfCrimShopService.entities
                     Debug.WriteLine(time + " " + ds);
 
                 }
+                con.Close();
             } while (ds == "Processing" && time != 20);
 
             if (ds == "Processing")
@@ -285,7 +287,7 @@ namespace WcfCrimShopService.entities
             {
                 message = "error inserting Photo item into DB";
             }
-
+            con.Close();
             return message;
         }
 
@@ -462,12 +464,12 @@ namespace WcfCrimShopService.entities
                 {
                     message = "error inserting Lista de colindante into DB";
                 }
+                con.Close();
             }
             catch (Exception e)
             {
                 return e.Message;
             }
-            
 
             return message;
         }
@@ -689,25 +691,6 @@ namespace WcfCrimShopService.entities
             }
             finally
             {
-                if (string.IsNullOrEmpty(pictureContent))
-                {
-                    if (string.IsNullOrEmpty(cadastreContent))
-                    {
-                        if (string.IsNullOrEmpty(listContent))
-                        {
-                            pictureContent = "Error: no items in order";
-                        }
-                        else
-                        {
-                            pictureContent = listContent;
-                        }
-                    }
-                    else
-                    {
-                        pictureContent = cadastreContent;
-                    }
-                }
-
                 if (Objects.path != "Error: no items in order")
                 {
                     geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
@@ -767,8 +750,10 @@ namespace WcfCrimShopService.entities
                         title = title
                     });
                 }
+             
             }
             string path = string.Empty;
+            con.Close();
             //manejar esta parte con for each en vez de enviar toda las fotos completas
             foreach (var item in orderList)
             {
@@ -788,6 +773,7 @@ namespace WcfCrimShopService.entities
                 catch (System.Threading.ThreadAbortException)
                 {
                     System.Threading.Thread.ResetAbort();
+                    
                 }
             }
             
@@ -832,8 +818,8 @@ namespace WcfCrimShopService.entities
 
 
             }
-            
-            
+
+            con.Close();
             return path;
         }
 
@@ -897,7 +883,7 @@ namespace WcfCrimShopService.entities
             {
                
             }
-
+            con.Close();
             
             return path;
         }
@@ -1151,7 +1137,7 @@ namespace WcfCrimShopService.entities
             return number;
         }
 
-        public void UpdatephotoStatus(string cNumber, string template, string parcelTitle, string subtitle, string title)
+        public void UpdatephotoStatus(string cNumber, string template, string parcelTitle, string subtitle, string title, string status)
         {
             string Message = string.Empty;
             SqlConnection con = Connection();
@@ -1168,7 +1154,7 @@ namespace WcfCrimShopService.entities
             cmd.Parameters.AddWithValue("@parcelTitle", parcelTitle);
             cmd.Parameters.AddWithValue("@subtitle", subtitle);
 
-            cmd.Parameters.AddWithValue("@created", "true");
+            cmd.Parameters.AddWithValue("@created", status);
             int result = cmd.ExecuteNonQuery();
 
             if (result == 1)
@@ -1221,11 +1207,10 @@ namespace WcfCrimShopService.entities
             //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
             //        "VALUES (@control,@response,@description)";
             string queryString = "UPDATE dbo.OrderItemsListaColindante SET Created=@created" +
-                                " WHERE ControlNumber=@control AND Parcelas=@parcelas AND Item=@item ";
+                                " WHERE ControlNumber=@control AND Parcelas=@parcelas ";
             SqlCommand cmd = new SqlCommand(queryString, con);
             cmd.Parameters.AddWithValue("@control", cNumber);
             cmd.Parameters.AddWithValue("@parcelas", parcelas);
-            cmd.Parameters.AddWithValue("@item", item);
             cmd.Parameters.AddWithValue("@created", created);
             int result = cmd.ExecuteNonQuery();
 
@@ -1240,5 +1225,121 @@ namespace WcfCrimShopService.entities
             }
             con.Close();
         }
+
+        #region Get product information for email and verify that the product was created
+        public string GetPhotoProducts(string controlNumber)
+        {
+
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT Title,ItemQty,LayoutTemplate,Parcel,Subtitle,Price,Created " +
+                            "FROM dbo.OrderItemAerialPhoto " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+           
+            string htmlUnorderedList = string.Empty;
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string title = result["Title"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string template = result["LayoutTemplate"].ToString();
+                    string parcel = result["Parcel"].ToString();
+                    string sub = result["Subtitle"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+                    string created = result["Created"].ToString();
+
+                    htmlUnorderedList  += "<li>" + title + " - "+ template +" - "+ parcel+"</li>"; 
+                }
+            }
+            con.Close();
+            return htmlUnorderedList;
+        }
+
+        public string GetListProducts(string controlNumber)
+        {
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT Parcelas,ItemQty,Item,Price,Created " +
+                            "FROM dbo.OrderItemsListaColindante " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+            string htmlUnorderedList = string.Empty;
+     
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    
+                    string itemName = result["Parcelas"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string item = result["Item"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+                    string created = result["Created"].ToString();
+
+                    htmlUnorderedList += "<li>" + itemName + " - " + qty + " Colindantes</li>"; 
+                }
+
+            }
+            con.Close();
+            return htmlUnorderedList;
+        }
+
+        public string GetCadastralProducts(string controlNumber)
+        {
+
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT ControlNumber,ItemQty,Escala,Cuadricula,Template,Price " +
+                            "FROM dbo.OrderItemsCatastrales " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            string htmlUnorderedList1_1k = string.Empty;
+            string htmlUnorderedList1_10k = string.Empty;
+            string catToEmail = string.Empty;
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string scale = result["Escala"].ToString();
+                    string cuadro = result["Cuadricula"].ToString();
+                    string template = result["Template"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+
+                    if (template == "MapaCatastral_10k")
+                    {
+                        htmlUnorderedList1_10k += "<li>" + cuadro + "</li>";
+                    }
+                    if (template == "MapaCatastral_1k")
+                    {
+                        htmlUnorderedList1_1k += "<li>" + cuadro + "</li>";
+                    }
+                }
+            }
+            con.Close();
+            if (!string.IsNullOrEmpty(htmlUnorderedList1_10k))
+            {
+                catToEmail += "<li> Mapa Catastral 1:10000<ul>" + htmlUnorderedList1_10k + "</ul></li>";
+            }
+            if (!string.IsNullOrEmpty(htmlUnorderedList1_1k))
+            {
+                catToEmail += "<li>Mapa catastral 1:1000<ul>" + htmlUnorderedList1_1k + "</ul></li>";
+            }
+
+            
+            return catToEmail;
+        }
+        #endregion
     }
 }

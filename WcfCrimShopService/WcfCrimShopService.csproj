@@ -120,7 +120,6 @@
   <ItemGroup>
     <Content Include="Config.json" />
     <Content Include="packages.config" />
-    <Content Include="listacolindante.json" />
     <None Include="Properties\PublishProfiles\GMTProfile.pubxml" />
     <None Include="Properties\PublishProfiles\MyProfile.pubxml" />
     <None Include="Properties\PublishProfiles\site.pubxml" />
