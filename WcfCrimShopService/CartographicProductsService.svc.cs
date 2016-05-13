@@ -250,7 +250,7 @@ namespace WcfCrimShopService
 
             if (!string.IsNullOrEmpty(cNumber))
             {
-                response = responseHandler.PaymentResponseLogHandlerEmployee(cNumber);
+                response = responseHandler.PaymentResponseLogHandlerEmployee(cNumber).Result;
                 if (response == "ok")
                 {
                     responseHandler.LogTransaction(cNumber, "Order Submitted");

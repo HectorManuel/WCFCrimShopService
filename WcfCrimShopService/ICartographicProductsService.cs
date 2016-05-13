@@ -7,6 +7,7 @@ using System.ServiceModel.Web;
 using System.ServiceModel.Activation;
 using System.Text;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace WcfCrimShopService
 {

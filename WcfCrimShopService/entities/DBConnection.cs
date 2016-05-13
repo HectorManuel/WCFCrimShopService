@@ -141,7 +141,7 @@ namespace WcfCrimShopService.entities
             return Message;
         }
 
-        public string PaymentResponseLogHandlerEmployee(string controlNumber)
+        public async Task<string> PaymentResponseLogHandlerEmployee(string controlNumber)
         {
             string Message = string.Empty;
 
@@ -172,11 +172,7 @@ namespace WcfCrimShopService.entities
 
             if (result == 1)
             {
-
-                Task.Run(() =>
-                {
                     GetOrderDetails(controlNumber);
-                });
             }
             return Message;
         }
@@ -610,7 +606,7 @@ namespace WcfCrimShopService.entities
         #endregion
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
-        public void GetOrderDetails(string controlNumber)
+        public async void GetOrderDetails(string controlNumber)
         {
             SqlConnection con = Connection();
             con.Open();
@@ -647,37 +643,36 @@ namespace WcfCrimShopService.entities
                 }
             }
 
-            string ending = GetItems(orderList);
+            string ending = await GetItems(orderList).ConfigureAwait(false);
 
             con.Close();
-
-
         }
 
-        public string GetItems(List<Objects.Order> myOrder)
+        public async Task<string> GetItems(List<Objects.Order> myOrder)
         {
 
             string pictureContent = string.Empty;
             string cadastreContent = string.Empty;
             string listContent = string.Empty;
 
-            if (myOrder[0].HasPhoto.ToUpper() == "Y")
-            {
-                pictureContent = ProcessPhotoProducts(myOrder[0].ControlNumber);
-            }
 
-            if (myOrder[0].HasList.ToUpper() == "Y")
-            {
-                listContent = ProcessListProducts(myOrder[0].ControlNumber, myOrder[0].CustomerName);
-            }
-
-            if (myOrder[0].HasCat.ToUpper() == "Y")
-            {
-                cadastreContent = ProcessCadastralProducts(myOrder[0].ControlNumber);
-            }
             try
             {
-                Task.WaitAll(tasksList.ToArray());
+                if (myOrder[0].HasPhoto.ToUpper() == "Y")
+                {
+                    pictureContent = await ProcessPhotoProducts(myOrder[0].ControlNumber).ConfigureAwait(false);
+                }
+
+                if (myOrder[0].HasList.ToUpper() == "Y")
+                {
+                    listContent = ProcessListProducts(myOrder[0].ControlNumber, myOrder[0].CustomerName);
+                }
+
+                if (myOrder[0].HasCat.ToUpper() == "Y")
+                {
+                    cadastreContent = await ProcessCadastralProducts(myOrder[0].ControlNumber).ConfigureAwait(false);
+                }
+                //Task.WaitAll(tasksList.ToArray());
             }
             catch (ThreadAbortException)
             {
@@ -690,20 +685,24 @@ namespace WcfCrimShopService.entities
                 }
                 
             }
-            finally
+
+            while (pictureContent != string.Empty && cadastreContent != string.Empty && listContent != string.Empty)
             {
-                if (Objects.path != "Error: no items in order")
-                {
-                    geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
-                }
+                Debug.WriteLine("waiting for processes");
+                await Task.Delay(2000);
             }
+            if (Objects.path != "Error: no items in order")
+            {
+                geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
+            }
+
             
             
             
             return pictureContent;
         }
 
-        public string ProcessPhotoProducts(string controlNumber)
+        public async Task<string> ProcessPhotoProducts(string controlNumber)
         {
 
             SqlConnection con = Connection();
@@ -761,12 +760,12 @@ namespace WcfCrimShopService.entities
                 try
                 {
                     Thread.Sleep(10000);
-                    var task = Task.Run(async () =>
-                    {
-                        var createPrinting = await geo.FotoAerea(item).ConfigureAwait(false);
-                        path = createPrinting.ToString();
-                    });
-                    tasksList.Add(task);
+                    //var task = Task.Run(async () =>
+                    //{
+                    var createPrinting = await geo.FotoAerea(item).ConfigureAwait(false);
+                    path = createPrinting.ToString();
+                    //});
+                    //tasksList.Add(task);
                     
                     //Task.WaitAll(task);
                     //task.Wait();
@@ -814,7 +813,7 @@ namespace WcfCrimShopService.entities
                     });
                 }
                 
-                var createPrinting = geo.AdyacentListGenerator(orderList, customerName);
+                string createPrinting = geo.AdyacentListGenerator(orderList, customerName);
                 path = createPrinting.ToString();
 
 
@@ -824,7 +823,7 @@ namespace WcfCrimShopService.entities
             return path;
         }
 
-        public string ProcessCadastralProducts(string controlNumber)
+        public async Task<string> ProcessCadastralProducts(string controlNumber)
         {
 
             SqlConnection con = Connection();
@@ -865,12 +864,12 @@ namespace WcfCrimShopService.entities
             try
             {
                 Thread.Sleep(10000);
-                var task = Task.Run(async () =>
-                {
-                    var createPrinting = await geo.OficialMaps(orderList).ConfigureAwait(false);
-                    path = createPrinting.ToString();
-                });
-                tasksList.Add(task);
+                //var task = Task.Run(async () =>
+                //{
+                var createPrinting = await geo.OficialMaps(orderList).ConfigureAwait(false);
+                path = createPrinting.ToString();
+                //});
+                //tasksList.Add(task);
                 //task.Wait();
                 //Task.WaitAll(task);
             }
