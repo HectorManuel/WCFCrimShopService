@@ -180,6 +180,7 @@ namespace WcfCrimShopService.entities
             }
             return Message;
         }
+        
         #region Insert Stuff region
         public string InsertAerialPhotoHandler(string title, string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
@@ -762,7 +763,7 @@ namespace WcfCrimShopService.entities
                     Thread.Sleep(10000);
                     var task = Task.Run(async () =>
                     {
-                        var createPrinting = await geo.FotoAerea(item);
+                        var createPrinting = await geo.FotoAerea(item).ConfigureAwait(false);
                         path = createPrinting.ToString();
                     });
                     tasksList.Add(task);
@@ -866,7 +867,7 @@ namespace WcfCrimShopService.entities
                 Thread.Sleep(10000);
                 var task = Task.Run(async () =>
                 {
-                    var createPrinting = await geo.OficialMaps(orderList);
+                    var createPrinting = await geo.OficialMaps(orderList).ConfigureAwait(false);
                     path = createPrinting.ToString();
                 });
                 tasksList.Add(task);

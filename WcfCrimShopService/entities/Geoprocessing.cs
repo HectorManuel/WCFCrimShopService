@@ -37,6 +37,7 @@ namespace WcfCrimShopService.entities
             
             return config.OrderDownloadStorage;
         }
+        
         /// <summary>
         /// Function Specifically designto call and generate the cadastral template pdf
         /// </summary>
@@ -175,7 +176,7 @@ namespace WcfCrimShopService.entities
             string array2 = string.Empty;
             string array = string.Empty;
             string storePath = string.Empty;
-            if (listScale10.Count != 0)
+            if (listScale10.Count > 0 && listScale10.Count <=50)
             {
                 array = "(";
                 bool firstItem = true;
@@ -202,28 +203,38 @@ namespace WcfCrimShopService.entities
                 
                 switch (storePath){
                     case "failed":
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k " + storePath);
                         connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
                         Thread.Sleep(10000);
-                        connection.LogTransaction(listScale10[0].controlNum, "Intentando Mapa Catastral oficial 1:10k creado");
+                        connection.LogTransaction(listScale10[0].controlNum, "Trying Mapa Catastral oficial 1:10k");
                         storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
                         {
                             connection.LogTransaction(listScale10[0].controlNum, "1:10k Geoprocess failed again");
                             connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
-                        }    
+                        }
+                        else
+                        {
+                            connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "true");
+                        }
                         break;
                     case "time out":
-                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k" + storePath);
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k " + storePath);
                         connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
                         Thread.Sleep(10000);
-                        connection.LogTransaction(listScale10[0].controlNum, "Intentando Mapa Catastral oficial 1:10k");
+                        connection.LogTransaction(listScale10[0].controlNum, "Trying Mapa Catastral oficial 1:10k");
                         storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
                         {
                             connection.LogTransaction(listScale10[0].controlNum, "1:10k Geoprocess failed again");
                             connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
-                        } 
+                        }
+                        else
+                        {
+                            connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "true");
+                        }
                         break;
                     default:
                         connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
@@ -232,8 +243,81 @@ namespace WcfCrimShopService.entities
                 }
                     
             }
+            else if (listScale10.Count > 50)
+            {
+                int count =0;
+                try
+                {
+                    for (int i = 0; i < listScale10.Count; i++)
+                    {
+                        array = "(";
+                        if (count != 0)
+                        {
+                            array += ",";
+                        }
+                        array += "'" + listScale10[i].cuad + "'";
+                        count++;
+                        if (count == 50)
+                        {
+                            array += ")";
+                            Thread.Sleep(5000);
+                            storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                            count = 0;
+                        }
+                    }
+                }
+                catch
+                {
+                    storePath = "failed";
+                    //Debug.WriteLine(e.Message);
+                }
 
-            if (listScale1.Count != 0)
+                switch (storePath)
+                {
+                    case "failed":
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k " + storePath);
+                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
+                        Thread.Sleep(10000);
+                        connection.LogTransaction(listScale10[0].controlNum, "Trying Mapa Catastral oficial 1:10k");
+                        storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                        if (storePath == "failed" || storePath == "time out")
+                        {
+                            connection.LogTransaction(listScale10[0].controlNum, "1:10k Geoprocess failed again");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
+                        }
+                        else
+                        {
+                            connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "true");
+                        }
+                        break;
+                    case "time out":
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k " + storePath);
+                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
+                        Thread.Sleep(10000);
+                        connection.LogTransaction(listScale10[0].controlNum, "Trying Mapa Catastral oficial 1:10k");
+                        storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                        if (storePath == "failed" || storePath == "time out")
+                        {
+                            connection.LogTransaction(listScale10[0].controlNum, "1:10k Geoprocess failed again");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "false");
+                        }
+                        else
+                        {
+                            connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                            connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "true");
+                        }
+                        break;
+                    default:
+                        connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado");
+                        connection.UpdateCadStatus(listScale10[0].controlNum, listScale10[0].template, "1:10000", "true");
+                        break;
+                }
+                
+                
+            }
+
+            if (listScale1.Count > 0 && listScale1.Count<=50)
             {
                 array2 = "(";
                 bool firstItem = true;
@@ -263,24 +347,34 @@ namespace WcfCrimShopService.entities
                         connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k " + storePath);
                         connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
                         Thread.Sleep(10000);
-                        connection.LogTransaction(listScale1[0].controlNum, "Intentando Mapa Catastral oficial 1:1k");
+                        connection.LogTransaction(listScale1[0].controlNum, "Trying Mapa Catastral oficial 1:1k");
                         storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
                         {
                             connection.LogTransaction(listScale1[0].controlNum, "1:1k Geoprocess failed again");
                             connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
                         }
+                        else
+                        {
+                            connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                            connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "true");
+                        }
                         break;
                     case "time out":
                         connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k " + storePath);
                         connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
                         Thread.Sleep(10000);
-                        connection.LogTransaction(listScale1[0].controlNum, "Intentando Mapa Catastral oficial 1:1k");
+                        connection.LogTransaction(listScale1[0].controlNum, "Trying Mapa Catastral oficial 1:1k");
                         storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
                         {
                             connection.LogTransaction(listScale1[0].controlNum, "1:1k Geoprocess failed again");
                             connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
+                        }
+                        else
+                        {
+                            connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                            connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "true");
                         }
                         break;
                     default:
@@ -289,7 +383,84 @@ namespace WcfCrimShopService.entities
                         break;
                 }
             }
-                        
+            else if (listScale1.Count > 50)
+            {
+                int count = 0;
+                try
+                {
+                   
+                    for (int i = 0; i < listScale1.Count; i++)
+                    {
+                        if (count == 0)
+                        {
+                            array2 += "(";
+                        }
+                        if (count != 0)
+                        {
+                            array2 += ",";
+                        }
+                        array2 += "'" + listScale1[i].cuad + "'";
+                        count++;
+                        if (count == 50)
+                        {
+                            array2 += ")";
+                            Thread.Sleep(5000);
+                            storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+                            count = 0;
+                            array2 = string.Empty;
+                        }
+                    }
+                }
+                catch
+                {
+                    storePath = "failed";
+                    //Debug.WriteLine(e.Message);
+                }
+
+                switch (storePath)
+                {
+                    case "failed":
+                        connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k " + storePath);
+                        connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
+                        Thread.Sleep(10000);
+                        connection.LogTransaction(listScale1[0].controlNum, "Trying Mapa Catastral oficial 1:1k");
+                        storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+                        if (storePath == "failed" || storePath == "time out")
+                        {
+                            connection.LogTransaction(listScale1[0].controlNum, "1:1k Geoprocess failed again");
+                            connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
+                        }
+                        else
+                        {
+                            connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                            connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "true");
+                        }
+                        break;
+                    case "time out":
+                        connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k " + storePath);
+                        connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
+                        Thread.Sleep(10000);
+                        connection.LogTransaction(listScale1[0].controlNum, "Trying Mapa Catastral oficial 1:1k");
+                        storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+                        if (storePath == "failed" || storePath == "time out")
+                        {
+                            connection.LogTransaction(listScale1[0].controlNum, "1:1k Geoprocess failed again");
+                            connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
+                        }
+                        else
+                        {
+                            connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                            connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "true");
+                        }
+                        break;
+                    default:
+                        connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k creado");
+                        connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "true");
+                        break;
+                }
+
+
+            }            
 
             return storePath;
         }
@@ -413,7 +584,6 @@ namespace WcfCrimShopService.entities
 
             return zipPath;
         }
-
 
         /// <summary>
         /// The function will create a folder with name the control number to store all the pdf of the same order
@@ -629,7 +799,24 @@ namespace WcfCrimShopService.entities
         /// <returns>the location where it is stored</returns>
         public string AdyacentListGenerator(List<Objects.OrderItemList> itemsFromDb, string customerName)
         {
+            //Objects.ListaCol listaCombinada = new Objects.ListaCol();
             string zipPath = string.Empty;
+            //for (int i = 0; i < itemsFromDb.Count(); i++)
+            //{
+            //    string name = itemsFromDb[i].itemName;
+            //    string qty = itemsFromDb[i].itemQty;
+            //    if(name == itemsFromDb[i++].itemName && qty == itemsFromDb[i++].itemQty){
+
+            //    }
+            //    string test = string.Empty;
+            //    int index = name.IndexOf("_colindante");
+            //    int realIndex = index + 11;
+            //    if (index > 0)
+            //    {
+            //        test = test.Substring(0, realIndex);
+            //    }
+            //}
+
             foreach (var lista in itemsFromDb)
             {
                 string name = FileNameValidation(lista.itemName);
@@ -764,6 +951,12 @@ namespace WcfCrimShopService.entities
             return zipPath;
         }
 
+        /// <summary>
+        /// Calculate the price for the product item requested
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="qty"></param>
+        /// <returns>subtotal</returns>
         public string CalculatePrice(string item,int qty)
         {
             string total = string.Empty;
