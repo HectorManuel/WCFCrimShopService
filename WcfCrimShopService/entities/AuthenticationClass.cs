@@ -35,12 +35,12 @@ namespace WcfCrimShopService.entities
                     src.ToList().ForEach(sr => result.Add(sr.SamAccountName));
                     //*************************
 
-                    UserPrincipal user = UserPrincipal.FindByIdentity(pc, username);
+                    //UserPrincipal user = UserPrincipal.FindByIdentity(pc, username);
                     string[] groups = config.ActiveDirectoryInformation.group;
                     foreach (string group in groups)
                     {
                         GroupPrincipal gp = GroupPrincipal.FindByIdentity(pc, group);
-                        if (user.IsMemberOf(gp))
+                        if (usesr.IsMemberOf(gp))
                         {
                             //isValidMember = "authorized";
                             emailAddress = usesr.EmailAddress;

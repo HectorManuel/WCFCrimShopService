@@ -74,26 +74,25 @@ namespace WcfCrimShopService
                 {
                     ds = result["Confirmation"].ToString();
                     
-                    //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
                 }
                 
             }
-
-            //string ds = string.Empty;
-            //test array object
-            //var list = new List<KeyValuePair<string, string>>();
-            //wb.DownloadFile("http://localhost:9001/test1234.zip", @"C:\Users\hasencio\Documents\MyProjects\Store\WebApp\pdfArchives\testing.zip");
             return ds;
 
 
         }
 
-
+        /// <summary>
+        /// This functionis in charge of running the Sp to generate a 
+        /// Control number to assign to the order
+        /// </summary>
+        /// <returns>control Number</returns>
         public string GetControlNumber()
         {
             string controlNumber = responseHandler.GetControlNumberHandler();
             return controlNumber;
         }
+        
         /// <summary>
         /// GET function in charge of waiting for a change in the confirmation column of the order.
         /// to wait for it to change from 'Processing' to tell the widget that the order was processed or cancelled
@@ -109,7 +108,6 @@ namespace WcfCrimShopService
             string ds = responseHandler.AwaitForResponse(order);
             return ds;
         }
-
 
         /// <summary>
         ///  InsertORderDetails is one of the main functions of te code, this funciton is in charge os creating the order item
@@ -216,7 +214,6 @@ namespace WcfCrimShopService
             //return Message;
             #endregion
         }
-
         
         /// <summary>
         /// this service is in charge of retrieveing the response string from the online response
@@ -269,8 +266,6 @@ namespace WcfCrimShopService
             return response;
         }
 
-        
-
         /// <summary>
         /// Insert the data for the Aerial Photo item of the order. This information is later use
         /// to generate the Cadastral pdf after the order has been authorize.
@@ -297,8 +292,6 @@ namespace WcfCrimShopService
             return result;
         }
 
-        
-
         /// <summary>
         /// Insert the data for the Adjacent parcel list. the data will later be use to generate
         /// the pdf of the list to send to the user.
@@ -317,8 +310,6 @@ namespace WcfCrimShopService
             var result = responseHandler.InsertListaColindanteItemHanlder(controlNumber, itemName, itemQty, item);
             return result;
         }
-
-        
 
         /// <summary>
         /// Insert the data for the cadastral item of the order. This information is later use
@@ -612,6 +603,10 @@ namespace WcfCrimShopService
             return total;
         }
 
+        /// <summary>
+        /// Thi small function is used to get the Tax value
+        /// </summary>
+        /// <returns>tax value</returns>
         public decimal GetTax()
         {
             decimal tax = responseHandler.GetTax();

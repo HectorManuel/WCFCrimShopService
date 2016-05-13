@@ -20,6 +20,7 @@ namespace WcfCrimShopService.entities
     {
         Geoprocessing geo = new Geoprocessing();
         Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
+        List<Task> tasksList = new List<Task>();
 
         public SqlConnection Connection()
         {
@@ -33,7 +34,7 @@ namespace WcfCrimShopService.entities
         {
             SqlConnection con = Connection();
             //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
-            con.Open();
+            
             string query = "SELECT Confirmation " +
                            "FROM dbo.Orders " +
                            "WHERE ControlNumber= @control";
@@ -47,6 +48,7 @@ namespace WcfCrimShopService.entities
 
             do
             {
+                con.Open();
                 using (SqlDataReader result = cmd.ExecuteReader())
                 {
                     while (result.Read())
@@ -60,6 +62,7 @@ namespace WcfCrimShopService.entities
                     Debug.WriteLine(time + " " + ds);
 
                 }
+                con.Close();
             } while (ds == "Processing" && time != 20);
 
             if (ds == "Processing")
@@ -169,12 +172,16 @@ namespace WcfCrimShopService.entities
 
             if (result == 1)
             {
-                GetOrderDetails(controlNumber);
+
+                Task.Run(() =>
+                {
+                    GetOrderDetails(controlNumber);
+                });
             }
             return Message;
         }
-
-        #region Insert Region
+        
+        #region Insert Stuff region
         public string InsertAerialPhotoHandler(string title, string controlNumber, int itemQty, string item, string format, string layoutTemplate, string georefInfo, string parcel, string subtitle, string buffer, string parcelList, string bufferDistance)
         {
             decimal cost = Convert.ToDecimal(geo.CalculatePrice("fotoAerea", itemQty));
@@ -281,7 +288,7 @@ namespace WcfCrimShopService.entities
             {
                 message = "error inserting Photo item into DB";
             }
-
+            con.Close();
             return message;
         }
 
@@ -458,12 +465,12 @@ namespace WcfCrimShopService.entities
                 {
                     message = "error inserting Lista de colindante into DB";
                 }
+                con.Close();
             }
             catch (Exception e)
             {
                 return e.Message;
             }
-            
 
             return message;
         }
@@ -603,7 +610,7 @@ namespace WcfCrimShopService.entities
         #endregion
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
-        public async Task GetOrderDetails(string controlNumber)
+        public void GetOrderDetails(string controlNumber)
         {
             SqlConnection con = Connection();
             con.Open();
@@ -640,14 +647,14 @@ namespace WcfCrimShopService.entities
                 }
             }
 
-            string ending = await GetItems(orderList);
+            string ending = GetItems(orderList);
 
             con.Close();
 
 
         }
 
-        public async Task<string> GetItems(List<Objects.Order> myOrder)
+        public string GetItems(List<Objects.Order> myOrder)
         {
 
             string pictureContent = string.Empty;
@@ -656,8 +663,7 @@ namespace WcfCrimShopService.entities
 
             if (myOrder[0].HasPhoto.ToUpper() == "Y")
             {
-                pictureContent = await ProcessPhotoProducts(myOrder[0].ControlNumber);
-               
+                pictureContent = ProcessPhotoProducts(myOrder[0].ControlNumber);
             }
 
             if (myOrder[0].HasList.ToUpper() == "Y")
@@ -667,38 +673,37 @@ namespace WcfCrimShopService.entities
 
             if (myOrder[0].HasCat.ToUpper() == "Y")
             {
-                cadastreContent = await ProcessCadastralProducts(myOrder[0].ControlNumber);
+                cadastreContent = ProcessCadastralProducts(myOrder[0].ControlNumber);
             }
-
-            if (string.IsNullOrEmpty(pictureContent))
+            try
             {
-                if (string.IsNullOrEmpty(cadastreContent))
-                {
-                    if (string.IsNullOrEmpty(listContent))
-                    {
-                        pictureContent = "Error: no items in order";
-                    }
-                    else
-                    {
-                        pictureContent = listContent;
-                    }
-                }
-                else
-                {
-                    pictureContent = cadastreContent;
-                }
+                Task.WaitAll(tasksList.ToArray());
             }
-
-            if (pictureContent != "Error: no items in order")
+            catch (ThreadAbortException)
             {
-                geo.ZipAndSendEmail(pictureContent, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
+                try{
+                    Thread.ResetAbort();
+                }
+                catch
+                {
+                    Debug.WriteLine("No abort Exception reset");
+                }
+                
             }
+            finally
+            {
+                if (Objects.path != "Error: no items in order")
+                {
+                    geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
+                }
+            }
+            
             
             
             return pictureContent;
         }
 
-        public async Task<string> ProcessPhotoProducts(string controlNumber)
+        public string ProcessPhotoProducts(string controlNumber)
         {
 
             SqlConnection con = Connection();
@@ -746,49 +751,31 @@ namespace WcfCrimShopService.entities
                         title = title
                     });
                 }
+             
             }
             string path = string.Empty;
-            //bool exceptionCatch = false;
+            con.Close();
             //manejar esta parte con for each en vez de enviar toda las fotos completas
             foreach (var item in orderList)
             {
                 try
                 {
-                    Task<string> fotos = geo.FotoAerea(item);
-                    path = await fotos;
-                    fotos.Dispose();
-                    //Parallel.For(0, 1, i => geo.FotoAerea(item));
-                    //var task = Task.Run(async() =>
-                    //{
-                    //    var createPrinting = await geo.FotoAerea(orderList);
-                    //    path = createPrinting.ToString();
-                    //});
+                    Thread.Sleep(10000);
+                    var task = Task.Run(async () =>
+                    {
+                        var createPrinting = await geo.FotoAerea(item).ConfigureAwait(false);
+                        path = createPrinting.ToString();
+                    });
+                    tasksList.Add(task);
+                    
                     //Task.WaitAll(task);
                     //task.Wait();
-                    //task.Dispose();
                 }
-                catch (Exception e)
+                catch (System.Threading.ThreadAbortException)
                 {
-                    //exceptionCatch = true;
-                    Debug.WriteLine(e.Message);
-                    Debug.WriteLine(e.StackTrace);
-                    //System.Threading.Thread.ResetAbort();
-
-                }
-                //finally
-                //{
-                //    if (exceptionCatch)
-                //    {
-                //    //    //System.Threading.Thread.ResetAbort();
-                //    //    var task = Task.Run(async () =>
-                //    //    {
-                //    //        var createPrinting = await geo.FotoAerea(orderList);
-                //    //        path = createPrinting.ToString();
-                //    //    });
-                //    //    Task.WaitAll(task);
-                //    }
+                    System.Threading.Thread.ResetAbort();
                     
-                //}
+                }
             }
             
             return path;
@@ -832,12 +819,12 @@ namespace WcfCrimShopService.entities
 
 
             }
-            
-            
+
+            con.Close();
             return path;
         }
 
-        public async Task<string> ProcessCadastralProducts(string controlNumber)
+        public string ProcessCadastralProducts(string controlNumber)
         {
 
             SqlConnection con = Connection();
@@ -877,38 +864,27 @@ namespace WcfCrimShopService.entities
             //bool exceptionCatch = false;
             try
             {
-                path = await geo.OficialMaps(orderList);
-                //var task = Task.Run(async () =>
-                //{
-                //    var createPrinting = await geo.OficialMaps(orderList);
-                //    path = createPrinting.ToString();
-                //});
-                ////task.Wait();
+                Thread.Sleep(10000);
+                var task = Task.Run(async () =>
+                {
+                    var createPrinting = await geo.OficialMaps(orderList).ConfigureAwait(false);
+                    path = createPrinting.ToString();
+                });
+                tasksList.Add(task);
+                //task.Wait();
                 //Task.WaitAll(task);
             }
             catch (Exception e)
             {
-                //exceptionCatch = true;
+
                 LogTransaction(controlNumber, e.Message);
 
             }
-            //finally
-            //{
-            //    if (exceptionCatch)
-            //    {
-            //        path = geo.OficialMaps(orderList);
-            //        //System.Threading.Thread.ResetAbort();
-            //        //var task = Task.Run(async () =>
-            //        //{
-            //        //    var createPrinting = await geo.OficialMaps(orderList);
-            //        //    path = createPrinting.ToString();
-            //        //});
-            //        ////task.Wait();
-            //        //Task.WaitAll(task);
-            //    }
+            finally
+            {
                
-            //}
-
+            }
+            con.Close();
             
             return path;
         }
@@ -1161,5 +1137,210 @@ namespace WcfCrimShopService.entities
             con.Close();
             return number;
         }
+
+        public void UpdatephotoStatus(string cNumber, string template, string parcelTitle, string subtitle, string title, string status)
+        {
+            string Message = string.Empty;
+            SqlConnection con = Connection();
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString = "UPDATE dbo.OrderItemAerialPhoto SET Created=@created" +
+                                " WHERE ControlNumber=@control AND Title=@title AND LayoutTemplate=@template AND Parcel=@parcelTitle AND Subtitle=@subtitle";
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", cNumber);
+            cmd.Parameters.AddWithValue("@title", title);
+            cmd.Parameters.AddWithValue("@template", template);
+            cmd.Parameters.AddWithValue("@parcelTitle", parcelTitle);
+            cmd.Parameters.AddWithValue("@subtitle", subtitle);
+
+            cmd.Parameters.AddWithValue("@created", status);
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                Message = "ok";
+                // run task to get information for the printing service
+            }
+            else
+            {
+                Message = "Order  not submitted: #order - " + cNumber;
+            }
+            con.Close();
+        }
+
+        public void UpdateCadStatus(string cNumber, string template, string escala, string created)
+        {
+            string Message = string.Empty;
+            SqlConnection con = Connection();
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString = "UPDATE dbo.OrderItemsCatastrales SET Created=@created" +
+                                " WHERE ControlNumber=@control AND Escala=@escala AND Template=@template";
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", cNumber);
+            cmd.Parameters.AddWithValue("@escala", escala);
+            cmd.Parameters.AddWithValue("@template", template);
+            cmd.Parameters.AddWithValue("@created", created);
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                Message = "ok";
+                // run task to get information for the printing service
+            }
+            else
+            {
+                Message = "Order  not submitted: #order - " + cNumber;
+            }
+            con.Close();
+        }
+
+        public void UpdateListStatus(string cNumber, string parcelas, string item, string created)
+        {
+            string Message = string.Empty;
+            SqlConnection con = Connection();
+            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
+            con.Open();
+            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
+            //        "VALUES (@control,@response,@description)";
+            string queryString = "UPDATE dbo.OrderItemsListaColindante SET Created=@created" +
+                                " WHERE ControlNumber=@control AND Parcelas=@parcelas ";
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", cNumber);
+            cmd.Parameters.AddWithValue("@parcelas", parcelas);
+            cmd.Parameters.AddWithValue("@created", created);
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                Message = "ok";
+                // run task to get information for the printing service
+            }
+            else
+            {
+                Message = "Order  not submitted: #order - " + cNumber;
+            }
+            con.Close();
+        }
+
+        #region Get product information for email and verify that the product was created
+        public string GetPhotoProducts(string controlNumber)
+        {
+
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT Title,ItemQty,LayoutTemplate,Parcel,Subtitle,Price,Created " +
+                            "FROM dbo.OrderItemAerialPhoto " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+           
+            string htmlUnorderedList = string.Empty;
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string title = result["Title"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string template = result["LayoutTemplate"].ToString();
+                    string parcel = result["Parcel"].ToString();
+                    string sub = result["Subtitle"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+                    string created = result["Created"].ToString();
+
+                    htmlUnorderedList  += "<li>" + title + " - "+ template +" - "+ parcel+"</li>"; 
+                }
+            }
+            con.Close();
+            return htmlUnorderedList;
+        }
+
+        public string GetListProducts(string controlNumber)
+        {
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT Parcelas,ItemQty,Item,Price,Created " +
+                            "FROM dbo.OrderItemsListaColindante " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+            string htmlUnorderedList = string.Empty;
+     
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    
+                    string itemName = result["Parcelas"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string item = result["Item"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+                    string created = result["Created"].ToString();
+
+                    htmlUnorderedList += "<li>" + itemName + " - " + qty + " Colindantes</li>"; 
+                }
+
+            }
+            con.Close();
+            return htmlUnorderedList;
+        }
+
+        public string GetCadastralProducts(string controlNumber)
+        {
+
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT ControlNumber,ItemQty,Escala,Cuadricula,Template,Price " +
+                            "FROM dbo.OrderItemsCatastrales " +
+                            "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            string htmlUnorderedList1_1k = string.Empty;
+            string htmlUnorderedList1_10k = string.Empty;
+            string catToEmail = string.Empty;
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string scale = result["Escala"].ToString();
+                    string cuadro = result["Cuadricula"].ToString();
+                    string template = result["Template"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+
+                    if (template == "MapaCatastral_10k")
+                    {
+                        htmlUnorderedList1_10k += "<li>" + cuadro + "</li>";
+                    }
+                    if (template == "MapaCatastral_1k")
+                    {
+                        htmlUnorderedList1_1k += "<li>" + cuadro + "</li>";
+                    }
+                }
+            }
+            con.Close();
+            if (!string.IsNullOrEmpty(htmlUnorderedList1_10k))
+            {
+                catToEmail += "<li> Mapa Catastral 1:10000<ul>" + htmlUnorderedList1_10k + "</ul></li>";
+            }
+            if (!string.IsNullOrEmpty(htmlUnorderedList1_1k))
+            {
+                catToEmail += "<li>Mapa catastral 1:1000<ul>" + htmlUnorderedList1_1k + "</ul></li>";
+            }
+
+            
+            return catToEmail;
+        }
+        #endregion
     }
 }
