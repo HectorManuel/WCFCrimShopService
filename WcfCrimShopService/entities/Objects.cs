@@ -18,6 +18,23 @@ namespace WcfCrimShopService.entities
             public string HasList { get; set; }
         }
 
+        public class FullOrderInfo
+        {
+            public string ControlNumber { get; set; }
+            public string Description { get; set; }
+            public string Confirmation { get; set; }
+            public decimal Tax { get; set; }
+            public decimal Subtotal { get; set; }
+            public decimal Total { get; set; }
+            public DateTime OrderDate { get; set; }
+            public string CustomerName { get; set; }
+            public string CustomerEmail { get; set; }
+            public string HasPhoto { get; set; }
+            public string HasCat { get; set; }
+            public string HasList { get; set; }
+            public string OrderFilePath { get; set; }
+        }
+
         public class OrderItemPhoto
         {
             public string ControlNumber { get; set; }
@@ -89,6 +106,7 @@ namespace WcfCrimShopService.entities
             public ServerConnection ServerConnection { get; set; }
             public ActiveDirectoryInformation ActiveDirectoryInformation { get; set; }
             public EmailConfiguration EmailConfiguration { get; set; }
+            public MerchantInfo MerchantInfo { get; set; }
             public string OrderDownloadStorage { get; set; }
             public string MailDownloadPath { get; set; }
         }
@@ -99,12 +117,20 @@ namespace WcfCrimShopService.entities
             public string[] group { get; set; }
 
         }
+
         public class EmailConfiguration
         {
             public string SMTPClient { get; set; }
             public string MailAddress { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
+        }
+        public class MerchantInfo
+        {
+            public string user { get; set; }
+            public string pass { get; set; }
+            public string serviceUrl { get; set; }
+            public string serviceAction { get; set; }
         }
 
         public class ServerConnection

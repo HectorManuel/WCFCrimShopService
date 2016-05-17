@@ -250,7 +250,11 @@ namespace WcfCrimShopService.entities
                 {
                     for (int i = 0; i < listScale10.Count; i++)
                     {
-                        array = "(";
+                        
+                        if (count == 0)
+                        {
+                            array += "(";
+                        }
                         if (count != 0)
                         {
                             array += ",";
@@ -261,7 +265,15 @@ namespace WcfCrimShopService.entities
                         {
                             array += ")";
                             Thread.Sleep(5000);
-                            storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                            try
+                            {
+                                storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                            }
+                            catch (Exception e)
+                            {
+                                connection.LogTransaction(listScale10[0].controlNum, e.Message + " 1:10000");
+                            }
+                            array = string.Empty;
                             count = 0;
                         }
                     }
@@ -388,7 +400,7 @@ namespace WcfCrimShopService.entities
                 int count = 0;
                 try
                 {
-                   
+                    int parts = 0;
                     for (int i = 0; i < listScale1.Count; i++)
                     {
                         if (count == 0)
@@ -406,6 +418,8 @@ namespace WcfCrimShopService.entities
                             array2 += ")";
                             Thread.Sleep(5000);
                             storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
+
+                            connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k creado parte" + parts++ );
                             count = 0;
                             array2 = string.Empty;
                         }

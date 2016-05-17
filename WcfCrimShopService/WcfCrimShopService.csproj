@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="entities\AuthenticationClass.cs" />
+    <Compile Include="entities\ClientMerchantSoapRequest.cs" />
     <Compile Include="entities\ColindantePdfEventHandler.cs" />
     <Compile Include="entities\Configuration.cs" />
     <Compile Include="entities\DBConnection.cs" />
@@ -120,6 +121,7 @@
   <ItemGroup>
     <Content Include="Config.json" />
     <Content Include="packages.config" />
+    <None Include="Properties\PublishProfiles\CRIMProfile.pubxml" />
     <None Include="Properties\PublishProfiles\GMTProfile.pubxml" />
     <None Include="Properties\PublishProfiles\MyProfile.pubxml" />
     <None Include="Properties\PublishProfiles\site.pubxml" />

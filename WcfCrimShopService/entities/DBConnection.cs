@@ -1026,7 +1026,6 @@ namespace WcfCrimShopService.entities
             string total=string.Empty;
             decimal tax = GetTax();
             decimal subTotal = Convert.ToDecimal(sub);
-
             SqlConnection con = Connection();
             try
             {
@@ -1224,6 +1223,56 @@ namespace WcfCrimShopService.entities
                 Message = "Order  not submitted: #order - " + cNumber;
             }
             con.Close();
+        }
+
+        public List<Objects.FullOrderInfo> OrderInformation(string controlNumber)
+        {
+            SqlConnection con = Connection();
+            string query = "SELECT * " +
+                           "FROM dbo.Orders " +
+                           "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+            con.Open();
+
+            List<Objects.FullOrderInfo> orderList = new List<Objects.FullOrderInfo>();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string description = result["Description"].ToString();
+                    string confirm = result["Confirmation"].ToString();
+                    decimal tax = Convert.ToDecimal(result["Tax"].ToString());
+                    decimal subtotal = Convert.ToDecimal(result["SubTotal"].ToString());
+                    decimal total = Convert.ToDecimal(result["Total"].ToString());
+                    DateTime date = Convert.ToDateTime(result["OrderDate"].ToString());
+                    string name = result["CustomerName"].ToString();
+                    string email = result["CustomerEmail"].ToString();
+                    string haspic = result["HasPhoto"].ToString();
+                    string hascat = result["HasCat"].ToString();
+                    string haslist = result["HasList"].ToString();
+                    
+
+                    orderList.Add(new Objects.FullOrderInfo
+                    {
+                        ControlNumber = cn,
+                        Description = description,
+                        Confirmation = confirm,
+                        Tax = tax,
+                        Subtotal = subtotal,
+                        Total = total,
+                        OrderDate = date,
+                        CustomerName = name,
+                        CustomerEmail = email,
+                        HasPhoto = haspic,
+                        HasCat = hascat,
+                        HasList = haslist
+                    });
+                }
+            }
+            return orderList;
+
         }
 
         #region Get product information for email and verify that the product was created

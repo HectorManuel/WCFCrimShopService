@@ -341,102 +341,21 @@ namespace WcfCrimShopService
         {
             string subtotal = responseHandler.PriceSubTotal(controlNumber);
             string TotalCost = responseHandler.UpdateCost(subtotal, controlNumber);
-            string tax = responseHandler.GetTax().ToString();
+            decimal tax = responseHandler.GetTax();
 
+            decimal st = Convert.ToDecimal(subtotal);
+            string taxAmount = (System.Math.Round(st * (tax/100), 2)).ToString();
+
+            List<Objects.FullOrderInfo> OrderInfo = responseHandler.OrderInformation(controlNumber);
+            string description = OrderInfo[0].Description;
+            string clientName = OrderInfo[0].CustomerName;
+            string email = OrderInfo[0].CustomerEmail;
+
+            var handler = new ClientMerchantSoapRequest();
+
+            string soap = handler.SoapRequest(TotalCost, taxAmount, description, clientName, email, controlNumber);
             //MerchantService web = new MerchantService();
-            string Username ="required"; 
-            string Password = "required"; 
-            string CustomerName = "required"; 
-            string CustomerID = "required";
-            string CustomerEmail = "required"; 
-            string Total = "1.50";
-            string DescriptionBuy = "required"; 
-            string TaxAmount1 = "1.00";
-            string address1 = "optional";
-            string address2 = "optional"; 
-            string city = "optional";
-            string zipcode = "optional"; 
-            string telephone = "Optional"; 
-            string fax = "optional";
-            string ignoreValues = "optional";
-            string language = "es";
-            string TaxAmount2 = ""; 
-            string TaxAmount3 = ""; 
-            string TaxAmount4 = ""; 
-            string TaxAmount5 = "merchantTransId"; 
-            string filler1 = "";
-            string filler2 = "";
-            string filler3 = "";
-            //string getValue = web.MakePayment(Username, Password, CustomerName, CustomerID, CustomerEmail, Total, DescriptionBuy, TaxAmount1, address1, address2, city, zipcode, telephone, fax, ignoreValues, language, TaxAmount2, TaxAmount3, TaxAmount4, TaxAmount5, filler1, filler2, filler3);
-
-            string xmlEnvelope = @"<?xml version=""1.0"" encoding=""utf-8""?>
-            <soap:Envelope xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
-            xmlns:xsd=""http://www.w3.org/2001/XMLSchema""
-            xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
-            <soap:Body>
-            <MakePayment xmlns=""http://tempuri.org/WebMerchant/MerchantService"">
-            <Username>" + Username + @"</Username>
-            <Password>" + Password + @"</Password>
-            <CustomerName>" + CustomerName + @"</CustomerName>
-            <CustomerID>" + CustomerID + @"</CustomerID>
-            <CustomerEmail>" + CustomerEmail + @"</CustomerEmail>
-            <Total>" + Total + @"</Total>
-            <DescriptionBuy>" + DescriptionBuy + @"</DescriptionBuy>
-            <TaxAmount1>" + TaxAmount1 + @"</TaxAmount1>
-            <address1>" + address1 + @"</address1>
-            <address2>" + address2 + @"</address2>
-            <city>" + city + @"</city>
-            <zipcode>" + zipcode + @"</zipcode>
-            <telephone>" + telephone + @"</telephone>
-            <fax>" + fax + @"</fax>
-            <ignoreValues>" + ignoreValues + @"</ignoreValues>
-            <language>" + language + @"</language>
-            <TaxAmount2>" + TaxAmount2 + @"</TaxAmount2>
-            <TaxAmount3>" + TaxAmount3 + @"</TaxAmount3>
-            <TaxAmount4>" + TaxAmount4 + @"</TaxAmount4>
-            <TaxAmount5>" + TaxAmount5 + @"</TaxAmount5>
-            <filler1>" + filler1 + @"</filler1>
-            <filler2>" + filler2 + @"</filler2>
-            <filler3>" + filler3 + @"</filler3>
-            </MakePayment>
-            </soap:Body>
-            </soap:Envelope>";
-
-            //var url = "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx"; //?op=MakePayment
-            //var action = "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx?op=MakePayment";
-
-            //XmlDocument soapEnvelope = new XmlDocument();
-            //soapEnvelope.LoadXml(xmlEnvelope);
-
-
-            //HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
-            //webRequest.Headers.Add("SOAPAction", action);
-            //webRequest.ContentType = "text/xml; charset=\"utf-8\"";
-            //webRequest.Accept = "text/xml";
-            //webRequest.Method = "POST";
-
-            //using (Stream stream = webRequest.GetRequestStream())
-            //{
-            //    soapEnvelope.Save(stream);
-            //}
-
-            //IAsyncResult asyncResult = webRequest.BeginGetResponse(null, null);
-
-            ////suspend this thread until  call is complete
-            //asyncResult.AsyncWaitHandle.WaitOne();
-
-            ////get the response from the completed web request
-            //string soapResult;
-            //using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
-            //{
-            //    using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
-            //    {
-            //        soapResult = rd.ReadToEnd();
-            //    }
-            //    Debug.WriteLine(soapResult);
-                
-            //}
-            return xmlEnvelope;
+            return soap;
         }
 
         /// <summary>
