@@ -603,6 +603,37 @@ namespace WcfCrimShopService.entities
             return Message;
 
         }
+
+        public string InsertExtractDataHandler(string controlNumber, int qty, string layer, string format, string aoi)
+        {
+            string msg = string.Empty;
+
+            SqlConnection con = Connection();
+            
+            string query = "INSERT INTO dbo.ExtractDataItems (ControlNumber, ItemQty, Layers_to_Clip, Area_of_Interest, Feature_Format)" + 
+                " VALUES (@control, @qty, @layer, @format, @aoi)";
+
+            SqlCommand cmd = new SqlCommand(query, con);
+
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+            cmd.Parameters.AddWithValue("@qty", qty);
+            cmd.Parameters.AddWithValue("@layer", layer);
+            cmd.Parameters.AddWithValue("@format", format);
+            cmd.Parameters.AddWithValue("@aoi", aoi);
+
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                msg = "ok";
+            }
+            else
+            {
+                msg = "error";
+            }
+            return msg;
+        }
+
         #endregion
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
@@ -1273,6 +1304,25 @@ namespace WcfCrimShopService.entities
             }
             return orderList;
 
+        }
+
+        public void UpdateFailedCad(string cn, string cuadriculas){
+            SqlConnection con = Connection();
+            string query = "UPDATE dbo.OrderItemsCatastrales SET Created = 'false' " + 
+                "WHERE ControlNumber = @control AND Cuadricula IN @cuadriculas";
+            SqlCommand cmd = new SqlCommand(query,con);
+            cmd.Parameters.AddWithValue("@control", cn);
+            cmd.Parameters.AddWithValue("@cuadriculas", cuadriculas);
+            int result = cmd.ExecuteNonQuery();
+
+            if (result == 1)
+            {
+                LogTransaction(cn, "Failed Task Items not created");
+            }
+            else
+            {
+                LogTransaction(cn, "Error setting the Cadastre items to not created when task cancelled");
+            }
         }
 
         #region Get product information for email and verify that the product was created

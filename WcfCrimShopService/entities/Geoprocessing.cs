@@ -82,11 +82,11 @@ namespace WcfCrimShopService.entities
                         Debug.WriteLine(result.JobStatus +" Catastral ");
                         await Task.Delay(2000);
                     }
-                    catch (System.Threading.ThreadAbortException)
+                    catch (System.Threading.Tasks.TaskCanceledException)
                     {
                         //connection.LogTransaction(ctrl, "ThreadAbortEsception");
-                        Debug.WriteLine("Abort Exception");
-                        System.Threading.Thread.ResetAbort();
+                        Debug.WriteLine("Cancel Exception");
+                        connection.UpdateFailedCad(ctrl, array);
                     }
 
                 }
@@ -248,6 +248,7 @@ namespace WcfCrimShopService.entities
                 int count =0;
                 try
                 {
+                    int parts = 0;
                     for (int i = 0; i < listScale10.Count; i++)
                     {
                         
@@ -268,6 +269,7 @@ namespace WcfCrimShopService.entities
                             try
                             {
                                 storePath = await CallingMaps(listScale10[0].template, array, listScale10[0].geo, listScale10[0].controlNum);
+                                connection.LogTransaction(listScale10[0].controlNum, "Mapa Catastral oficial 1:10k creado parte" + parts++);
                             }
                             catch (Exception e)
                             {

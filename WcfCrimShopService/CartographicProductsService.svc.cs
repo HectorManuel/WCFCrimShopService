@@ -531,6 +531,12 @@ namespace WcfCrimShopService
             decimal tax = responseHandler.GetTax();
             return tax;
         }
+
+        public string ExtractDataService(string controlNumber, int qty, string layer, string areaa, string format)
+        {
+            responseHandler.InsertExtractDataHandler(controlNumber, qty, layer, areaa, format);
+            return "url";
+        }
     }
 
 }

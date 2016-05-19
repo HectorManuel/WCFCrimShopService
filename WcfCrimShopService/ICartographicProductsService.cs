@@ -52,6 +52,11 @@ namespace WcfCrimShopService
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
         string InsertCatastralItem(string controlNumber, int itemQty, string cuadricula1, string cuadricula10);
 
+        [OperationContract]
+        [WebInvoke(Method="POST", ResponseFormat= WebMessageFormat.Json, BodyStyle= WebMessageBodyStyle.Wrapped)]
+        string InsertExtractDataService(string controlNumber, int qty, string layer, string area, string format);
+
+
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
