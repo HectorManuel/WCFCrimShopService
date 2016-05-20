@@ -172,7 +172,7 @@ namespace WcfCrimShopService.entities
 
             if (result == 1)
             {
-                    GetOrderDetails(controlNumber);
+                   GetOrderDetails(controlNumber);
             }
             return Message;
         }
@@ -471,7 +471,7 @@ namespace WcfCrimShopService.entities
             return message;
         }
 
-        public string InsertOrderDetailsHandler(string ControlNumber, string Description, decimal tx, decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList)
+        public string InsertOrderDetailsHandler(string ControlNumber, string Description, decimal tx, decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList, string hasExtract)
         {
             string Message = string.Empty;
             DateTime OrderDate = DateTime.Now;
@@ -483,8 +483,8 @@ namespace WcfCrimShopService.entities
                 con.Open();
                 //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
                 //        "VALUES (@control,@response,@description)";
-                string queryString = "INSERT into dbo.Orders (ControlNumber,Description,Confirmation,Tax,SubTotal,Total,OrderDate,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList)" +
-                                    " VALUES (@control,@description,@confirmation,@tax,@subtotal,@total,@orderDate,@Name,@email,@photo,@cat,@list)";
+                string queryString = "INSERT into dbo.Orders (ControlNumber,Description,Confirmation,Tax,SubTotal,Total,OrderDate,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList, HasExtract)" +
+                                    " VALUES (@control,@description,@confirmation,@tax,@subtotal,@total,@orderDate,@Name,@email,@photo,@cat,@list,@extract)";
                 SqlCommand cmd = new SqlCommand(queryString, con);
                 #region validations
                 if (ControlNumber == null)
@@ -579,6 +579,15 @@ namespace WcfCrimShopService.entities
                     cmd.Parameters.AddWithValue("@list", hasList);
                 }
 
+                if (hasExtract == string.Empty)
+                {
+                    cmd.Parameters.AddWithValue("@extract", "Y");
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@extract", hasExtract);
+                }
+
                 cmd.Parameters.AddWithValue("@confirmation", "Processing");
                 cmd.Parameters.AddWithValue("@orderDate", OrderDate);
                 #endregion
@@ -604,15 +613,15 @@ namespace WcfCrimShopService.entities
 
         }
 
-        public string InsertExtractDataHandler(string controlNumber, int qty, string layer, string format, string aoi)
+        public string InsertExtractDataHandler(string controlNumber, int qty, string layer, string aoi, string format, string raster)
         {
             string msg = string.Empty;
 
             SqlConnection con = Connection();
             
-            string query = "INSERT INTO dbo.ExtractDataItems (ControlNumber, ItemQty, Layers_to_Clip, Area_of_Interest, Feature_Format)" + 
-                " VALUES (@control, @qty, @layer, @format, @aoi)";
-
+            string query = "INSERT INTO dbo.ExtractDataItems (ControlNumber, ItemQty, Layers_to_Clip, Area_of_Interest, Feature_Format, Raster_Format)" +
+                " VALUES (@control, @qty, @layer, @aoi, @format, @raster)";
+            con.Open();
             SqlCommand cmd = new SqlCommand(query, con);
 
             cmd.Parameters.AddWithValue("@control", controlNumber);
@@ -620,9 +629,10 @@ namespace WcfCrimShopService.entities
             cmd.Parameters.AddWithValue("@layer", layer);
             cmd.Parameters.AddWithValue("@format", format);
             cmd.Parameters.AddWithValue("@aoi", aoi);
+            cmd.Parameters.AddWithValue("@raster", raster);
 
             int result = cmd.ExecuteNonQuery();
-
+            con.Close();
             if (result == 1)
             {
                 msg = "ok";
@@ -631,6 +641,7 @@ namespace WcfCrimShopService.entities
             {
                 msg = "error";
             }
+            
             return msg;
         }
 
@@ -642,7 +653,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "SELECT ControlNumber,Confirmation,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList " +
+            string query = "SELECT ControlNumber,Confirmation,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList,HasExtract " +
                            "FROM dbo.Orders " +
                            "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -660,6 +671,7 @@ namespace WcfCrimShopService.entities
                     string haspic = result["HasPhoto"].ToString();
                     string hascat = result["HasCat"].ToString();
                     string haslist = result["HasList"].ToString();
+                    string hasextract = result["HasExtract"].ToString();
 
                     orderList.Add(new Objects.Order
                     {
@@ -669,7 +681,8 @@ namespace WcfCrimShopService.entities
                         CustomerEmail = email,
                         HasPhoto = haspic,
                         HasCat = hascat, 
-                        HasList = haslist
+                        HasList = haslist,
+                        HasExtract = hasextract
                     });
                 }
             }
@@ -685,6 +698,7 @@ namespace WcfCrimShopService.entities
             string pictureContent = string.Empty;
             string cadastreContent = string.Empty;
             string listContent = string.Empty;
+            string extractContent = string.Empty;
 
 
             try
@@ -703,9 +717,13 @@ namespace WcfCrimShopService.entities
                 {
                     cadastreContent = await ProcessCadastralProducts(myOrder[0].ControlNumber).ConfigureAwait(false);
                 }
+                if (myOrder[0].HasExtract.ToUpper() == "Y")
+                {
+                    extractContent = await ProcessExtractDataProduct(myOrder[0].ControlNumber).ConfigureAwait(false);
+                }
                 //Task.WaitAll(tasksList.ToArray());
             }
-            catch (ThreadAbortException)
+            catch (Exception e)
             {
                 try{
                     Thread.ResetAbort();
@@ -714,15 +732,16 @@ namespace WcfCrimShopService.entities
                 {
                     Debug.WriteLine("No abort Exception reset");
                 }
+                LogTransaction(myOrder[0].ControlNumber, "Error in a process - " + e.Message);
                 
             }
 
-            while (pictureContent != string.Empty && cadastreContent != string.Empty && listContent != string.Empty)
+            while (pictureContent != string.Empty && cadastreContent != string.Empty && listContent != string.Empty && extractContent != string.Empty)
             {
                 Debug.WriteLine("waiting for processes");
                 await Task.Delay(2000);
             }
-            if (Objects.path != "Error: no items in order")
+            if (Objects.path != "Error: no items in order"|| !string.IsNullOrEmpty(Objects.path))
             {
                 geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
             }
@@ -790,7 +809,7 @@ namespace WcfCrimShopService.entities
             {
                 try
                 {
-                    Thread.Sleep(10000);
+                    Thread.Sleep(5000);
                     //var task = Task.Run(async () =>
                     //{
                     var createPrinting = await geo.FotoAerea(item).ConfigureAwait(false);
@@ -809,6 +828,64 @@ namespace WcfCrimShopService.entities
             }
             
             return path;
+        }
+
+        public async Task<string> ProcessExtractDataProduct(string controlNumber)
+        {
+            string path = string.Empty;
+            SqlConnection con = Connection();
+
+            string query = "SELECT ControlNumber, ItemQty, Layers_to_Clip, Area_of_Interest, Feature_Format, Raster_Format" +
+                " FROM dbo.ExtractDataItems" +
+                " WHERE ControlNumber = @control";
+
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+            con.Open();
+            List<Objects.ElementoDeExtraccion> ElementsList = new List<Objects.ElementoDeExtraccion>();
+            using(SqlDataReader r = cmd.ExecuteReader())
+            {
+                while (r.Read())
+                {
+                    string control = r["ControlNumber"].ToString();
+                    int itemQty = Convert.ToInt32(r["ItemQty"].ToString());
+                    string layer = r["Layers_to_Clip"].ToString();
+                    string area = r["Area_of_Interest"].ToString();
+                    string format = r["Feature_Format"].ToString();
+                    string raster = r["Raster_Format"].ToString();
+                    
+                    ElementsList.Add(new Objects.ElementoDeExtraccion{
+                        ControlNumber = control,
+                        Qty = itemQty,
+                        Layers_to_Clip = layer,
+                        Area_of_Interest = area,
+                        Feature_Format = format,
+                        Raster_Format = raster
+                    });
+                }
+            }
+            con.Close();
+            try{
+                foreach(var item in ElementsList){
+                    Thread.Sleep(5000);
+                    var createExtractData = await geo.ExtractData(item);
+                    path = createExtractData.ToString();
+                }
+
+            }
+            catch{
+                try{
+                    System.Threading.Thread.ResetAbort();
+                }
+                catch{
+                    LogTransaction(controlNumber, "Error creating Extraction");
+                }
+                finally{
+                    path = "error";
+                }
+            }
+            return path;
+
         }
 
         public string ProcessListProducts(string controlNumber, string customerName)
@@ -843,14 +920,11 @@ namespace WcfCrimShopService.entities
                         cost = cost
                     });
                 }
-                
-                string createPrinting = geo.AdyacentListGenerator(orderList, customerName);
-                path = createPrinting.ToString();
-
-
             }
-
             con.Close();
+            string createPrinting = geo.AdyacentListGenerator(orderList, customerName);
+            path = createPrinting.ToString();
+            
             return path;
         }
 
@@ -889,12 +963,12 @@ namespace WcfCrimShopService.entities
                     });
                 }
             }
-
+            con.Close();
             string path = string.Empty;
             //bool exceptionCatch = false;
             try
             {
-                Thread.Sleep(10000);
+                Thread.Sleep(5000);
                 //var task = Task.Run(async () =>
                 //{
                 var createPrinting = await geo.OficialMaps(orderList).ConfigureAwait(false);
@@ -914,7 +988,7 @@ namespace WcfCrimShopService.entities
             {
                
             }
-            con.Close();
+            
             
             return path;
         }
@@ -934,12 +1008,12 @@ namespace WcfCrimShopService.entities
             cmd.Parameters.AddWithValue("@date", date);
 
             int result = cmd.ExecuteNonQuery();
-
+            con.Close();
             if (result != 1)
             {
                 return "Log not processed";
             }
-            con.Close();
+            
             return "ok";
         }
 
@@ -1251,9 +1325,35 @@ namespace WcfCrimShopService.entities
             }
             else
             {
-                Message = "Order  not submitted: #order - " + cNumber;
+                Message = "Update not submitted: #order - " + cNumber;
             }
             con.Close();
+        }
+
+        public void UpdateExtractDataStatus(string controlNumber, string layers, string area, string feature, string raster, string create)
+        {
+            string msg = string.Empty;
+            SqlConnection con = Connection();
+            string query = "UPDATE dbo.ExtractDataItems Set Created = @created " +
+                "WHERE ControlNumber=@control AND Area_of_Interest=@area AND Feature_Format=@feature AND Raster_Format=@raster ";
+            con.Open();
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@created", create);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+            cmd.Parameters.AddWithValue("@area", area);
+            cmd.Parameters.AddWithValue("@feature", feature);
+            cmd.Parameters.AddWithValue("@raster", raster);
+            int result = cmd.ExecuteNonQuery();
+            con.Close();
+            if (result == 1)
+            {
+                msg = "ok";
+            }
+            else
+            {
+                msg = "Update Not processed in Extraccion on Order #- "+ controlNumber;
+            }
+            
         }
 
         public List<Objects.FullOrderInfo> OrderInformation(string controlNumber)

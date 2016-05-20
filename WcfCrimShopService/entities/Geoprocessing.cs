@@ -53,9 +53,9 @@ namespace WcfCrimShopService.entities
             try
             {
                 //List<Objects.OrderItemCatastral> allCat
-                var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
-                string taskName = "Mapas de Catastro";
-                var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
+                //var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
+                //string taskName = "Mapas de Catastro";
+                var gp = new Geoprocessor(new Uri(config.MapasCatastral));
 
                 //Set up the parameters
                 var parameter = new GPInputParameter();
@@ -507,9 +507,11 @@ namespace WcfCrimShopService.entities
                     string bf_distance_unit = pic.distance;
                     string title = pic.title;
 
-                    var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
-                    var taskName = "Mapas de Fotos Aerea";
-                    var gp = new Geoprocessor(new Uri(serviceURL + "/" + taskName));
+                    //var serviceURL = "http://mapas.gmtgis.net/arcgis/rest/services/Geoprocesos/ProductosCartograficos/GPServer";
+                    //var taskName = "Mapas de Fotos Aerea";
+                    var gp = new Geoprocessor(new Uri(config.FotoAereaUrl));
+   
+                    
                     var parameter = new GPInputParameter();
                     var jsonMap = new GPString("Web_Map_As_JSON", map);
                     var Format = new GPString("Format", format);
@@ -601,6 +603,109 @@ namespace WcfCrimShopService.entities
             return zipPath;
         }
 
+
+
+        public async Task<string> ExtractData(Objects.ElementoDeExtraccion element) // Elemento de extraccino
+        {
+            string zipPath = string.Empty;
+            DBConnection connection = new DBConnection();
+            string number = string.Empty;
+            try
+            {
+                //foreach (var pic in allPics)
+                // {
+                string areaOfInterest = element.Area_of_Interest;
+                string cNumber = element.ControlNumber;
+                string format = element.Feature_Format;
+                string rasterFormat = element.Raster_Format;
+                string layersToClip = element.Layers_to_Clip;
+                List<GPString> test = new List<GPString>();
+                
+
+
+                //var serviceURL = "https://www.satasgis.crimpr.net/crimgis/rest/services/Mapas/ExtractData/GPServer/";
+                //var taskName = "Extrae y comprime data";
+                
+                var gp = new Geoprocessor(new Uri(config.ExtractDataUrl));
+                
+                var parameter = new GPInputParameter();
+                var layers = new GPString("Layers_to_Clip", layersToClip);
+                test.Add(layers);
+                var multi = new GPMultiValue<GPString>("Layers_to_Clip", test);
+                var area = new GPString("Area_of_Interest", areaOfInterest);
+                var featureFormat = new GPString("Feature_Format", format);
+                var raster = new GPString("Raster_Format", rasterFormat);
+                //var test = new GPMultiValue<GPString>(List<GPString>Test);
+
+                parameter.GPParameters.Add(multi);
+                parameter.GPParameters.Add(area);
+                parameter.GPParameters.Add(featureFormat);
+                parameter.GPParameters.Add(raster);
+               
+                await Task.Delay(2000);
+                var result = await gp.SubmitJobAsync(parameter);
+                while (result.JobStatus != GPJobStatus.Cancelled && result.JobStatus != GPJobStatus.Deleted && result.JobStatus != GPJobStatus.Succeeded && result.JobStatus != GPJobStatus.TimedOut && result.JobStatus != GPJobStatus.Failed)
+                {
+                    try
+                    {
+                        result = await gp.CheckJobStatusAsync(result.JobID);
+                        Debug.WriteLine(result.JobStatus + "Extraccion");
+                        await Task.Delay(1000);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        Debug.WriteLine("Abort Exception");
+                        
+                    }
+
+                }
+
+                if (result.JobStatus == GPJobStatus.Succeeded)
+                {
+                    var outParam = await gp.GetResultDataAsync(result.JobID, "Área_extraida") as GPDataFile;
+
+                    if (outParam != null && outParam.Uri != null)
+                    {
+                        //parcelTitle = FileNameValidation(pic.Parcel);
+                        string fileName = @"\ExtraccionParcelasOutput.zip";
+                        try
+                        {
+                            zipPath = MakeStoreFolder(cNumber, fileName);
+                            string saved = LoadUriPdf(outParam.Uri, zipPath, fileName);
+                            connection.LogTransaction(cNumber, "Elemento Extraccion Creado");
+                            connection.UpdateExtractDataStatus(cNumber, layersToClip, areaOfInterest, format, rasterFormat, "true");
+                            Objects.path = zipPath;
+
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.WriteLine("Process failed", e.Message.ToString());
+                            connection.LogTransaction(cNumber, "Elemento Extraccion No Creada");
+                            connection.UpdateExtractDataStatus(cNumber, layersToClip, areaOfInterest, format, rasterFormat, "false");
+                        }
+                    }
+                }
+                else
+                {
+                    var message = result.JobStatus ;
+                    connection.LogTransaction(cNumber, "Extraccion No Creada"+ message);
+                    connection.UpdateExtractDataStatus(cNumber, layersToClip, areaOfInterest, format, rasterFormat, "false");
+                    Debug.WriteLine(message);
+                }
+                //}
+            }
+            catch (Exception ex)
+            {
+                connection.LogTransaction(number, ex.Message + " error con arcgis llamados");
+            }
+
+
+            return zipPath;
+        }
+
+
+
+
         /// <summary>
         /// The function will create a folder with name the control number to store all the pdf of the same order
         /// under the same folder. if check if the folder does not exist it create it.
@@ -628,7 +733,7 @@ namespace WcfCrimShopService.entities
             }
             catch (Exception e)
             {
-                Debug.WriteLine("Directory coudl not be created : ",e.ToString());
+                Debug.WriteLine("Directory could not be created : ", e.Message.ToString());
             }
             return folderToSave;
         }
@@ -660,7 +765,15 @@ namespace WcfCrimShopService.entities
                     while (File.Exists(file))
                     {
                         duplicate++;
-                        tempFilename = fileName.Replace(".pdf", "(" + duplicate + ").pdf");
+                        if (fileName.Contains(".zip"))
+                        {
+                            tempFilename = fileName.Replace(".zip", "(" + duplicate + ").zip");
+                        }
+                        else
+                        {
+                            tempFilename = fileName.Replace(".pdf", "(" + duplicate + ").pdf");
+                        }
+                        
                         file = folder + tempFilename;
                     }
 

@@ -30,7 +30,7 @@ namespace WcfCrimShopService
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string InsertOrderDetails(string ControlNumber, string Description, decimal tx, decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList);
+        string InsertOrderDetails(string ControlNumber, string Description, decimal tx, decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList, string hasExtract);
         
 
         [OperationContract]
@@ -54,7 +54,7 @@ namespace WcfCrimShopService
 
         [OperationContract]
         [WebInvoke(Method="POST", ResponseFormat= WebMessageFormat.Json, BodyStyle= WebMessageBodyStyle.Wrapped)]
-        string InsertExtractDataService(string controlNumber, int qty, string layer, string area, string format);
+        string InsertExtractDataService(string controlNumber, int qty, string layer, string area, string format, string raster);
 
 
 

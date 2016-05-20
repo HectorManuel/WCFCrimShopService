@@ -127,11 +127,11 @@ namespace WcfCrimShopService
         /// <param name="hasCat"></param>
         /// <param name="hasList"></param>
         /// <returns></returns>
-        public string InsertOrderDetails(string ControlNumber, string Description, decimal tx,decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList)
+        public string InsertOrderDetails(string ControlNumber, string Description, decimal tx,decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList, string hasExtract)
         {
             //DBConnection responseHandler = new DBConnection();
 
-            var result = responseHandler.InsertOrderDetailsHandler(ControlNumber, Description, tx, sTotal, Total, CustomerName, customerEmail, hasPhoto,hasCat,hasList);
+            var result = responseHandler.InsertOrderDetailsHandler(ControlNumber, Description, tx, sTotal, Total, CustomerName, customerEmail, hasPhoto,hasCat,hasList, hasExtract);
 
             return result;
             #region commented Code
@@ -532,10 +532,22 @@ namespace WcfCrimShopService
             return tax;
         }
 
-        public string ExtractDataService(string controlNumber, int qty, string layer, string areaa, string format)
+        public string InsertExtractDataService(string controlNumber, int qty, string layer, string areaa, string format, string raster)
         {
-            responseHandler.InsertExtractDataHandler(controlNumber, qty, layer, areaa, format);
-            return "url";
+            string response = string.Empty;
+            if (raster != "ESRI GRID - GRID")
+            {
+                raster = "ESRI GRID - GRID";
+            }
+            if (controlNumber != null && qty != 0 && layer != null && areaa != null && format != null)
+            {
+                response = responseHandler.InsertExtractDataHandler(controlNumber, qty, layer, areaa, format, raster);
+            }
+            else{
+                response = "Missing parameter";
+            }
+            
+            return response;
         }
     }
 

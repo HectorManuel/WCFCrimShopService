@@ -25,21 +25,21 @@ namespace WcfCrimShopService.entities
             string Total = total; //base de datos
             string DescriptionBuy = desc; // base de datos
             string TaxAmount1 = tax; //base de datos
-            string address1 = "";
-            string address2 = "";
-            string city = "";
-            string zipcode = "";
-            string telephone = "";
-            string fax = "";
-            string ignoreValues = "";
-            string language = "es";
-            string TaxAmount2 = "";
-            string TaxAmount3 = "";
-            string TaxAmount4 = "";
-            string TaxAmount5 = controlNumber;
-            string filler1 = "";
-            string filler2 = "";
-            string filler3 = "";
+            //string address1 = "";
+            //string address2 = "";
+            //string city = "";
+            //string zipcode = "";
+            //string telephone = "";
+            //string fax = "";
+            //string ignoreValues = "";
+            //string language = "es";
+            //string TaxAmount2 = "";
+            //string TaxAmount3 = "";
+            //string TaxAmount4 = "";
+            //string TaxAmount5 = controlNumber;
+            //string filler1 = "";
+            //string filler2 = "";
+            //string filler3 = "";
 
             var url = config.MerchantInfo.serviceUrl; //?op=MakePayment  "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx"
             var action = config.MerchantInfo.serviceAction; // "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx?op=MakePayment"

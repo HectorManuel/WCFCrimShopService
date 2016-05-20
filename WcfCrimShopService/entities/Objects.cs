@@ -16,6 +16,7 @@ namespace WcfCrimShopService.entities
             public string HasPhoto { get; set; }
             public string HasCat { get; set; }
             public string HasList { get; set; }
+            public string HasExtract { get; set; }
         }
 
         public class FullOrderInfo
@@ -32,6 +33,7 @@ namespace WcfCrimShopService.entities
             public string HasPhoto { get; set; }
             public string HasCat { get; set; }
             public string HasList { get; set; }
+            public string HasExtract { get; set; }
             public string OrderFilePath { get; set; }
         }
 
@@ -109,6 +111,9 @@ namespace WcfCrimShopService.entities
             public MerchantInfo MerchantInfo { get; set; }
             public string OrderDownloadStorage { get; set; }
             public string MailDownloadPath { get; set; }
+            public string ExtractDataUrl { get; set; }
+            public string FotoAereaUrl { get; set; }
+            public string MapasCatastral { get; set; }
         }
 
         public class ActiveDirectoryInformation
@@ -149,6 +154,16 @@ namespace WcfCrimShopService.entities
             set{
                 pathOfZip = value;
             }
+        }
+
+        public class ElementoDeExtraccion
+        {
+            public string ControlNumber { get; set; }
+            public int Qty { get; set; }
+            public string Layers_to_Clip { get; set; }
+            public string Area_of_Interest { get; set; }
+            public string Feature_Format { get; set; }
+            public string Raster_Format { get; set; }
         }
     }
 }
