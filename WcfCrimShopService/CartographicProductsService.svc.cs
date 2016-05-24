@@ -228,8 +228,16 @@ namespace WcfCrimShopService
         public string PaymentResponse(string PaymentResponse)
         {
             //DBConnection responseHandler = new DBConnection();
-
-            var result = responseHandler.PaymentResponseLogHandler(PaymentResponse);
+            string result = string.Empty;
+            if (!string.IsNullOrEmpty(PaymentResponse))
+            {
+                result = responseHandler.PaymentResponseLogHandler(PaymentResponse).Result;
+            }
+            else
+            {
+                result = "PaymentResponse null or empty";
+            }
+            
 
             return result;
         }
@@ -549,6 +557,11 @@ namespace WcfCrimShopService
             
             return response;
         }
-    }
 
+        public string test(string cn)
+        {
+           string result = responseHandler.CheckForFailedItems(cn);
+           return result;
+        }
+    }
 }

@@ -57,13 +57,14 @@ namespace WcfCrimShopService.entities
 
                         //list.Add(new Objects.Order{ControlNumber= cn, Confirmation= confirm, Description = desc});
                     }
-                    Thread.Sleep(2000); // modify to await 20min later
-                    time += 2;
-                    Debug.WriteLine(time + " " + ds);
+
 
                 }
                 con.Close();
-            } while (ds == "Processing" && time != 20);
+                Thread.Sleep(2000); // modify to await 20min later
+                time += 2;
+                Debug.WriteLine(time + " " + ds);
+            } while (ds == "Processing" && time != 20); //cambiar este valro to await for 20 minutes instead of 20 seconds
 
             if (ds == "Processing")
             {
@@ -73,7 +74,7 @@ namespace WcfCrimShopService.entities
             return ds;
         }
 
-        public string PaymentResponseLogHandler(string PaymentResponse)
+        public async Task<string> PaymentResponseLogHandler(string PaymentResponse)
         {
             string Message = "things";
             NameValueCollection nvc = HttpUtility.ParseQueryString(PaymentResponse);
@@ -132,11 +133,7 @@ namespace WcfCrimShopService.entities
 
             if (result2 == 1 && result == 1)
             {
-
-                Task.Run( () =>
-                {
-                   GetOrderDetails(merchantTransId);
-                });
+                GetOrderDetails(merchantTransId).ConfigureAwait(false);
             }
             return Message;
         }
@@ -172,7 +169,7 @@ namespace WcfCrimShopService.entities
 
             if (result == 1)
             {
-                   GetOrderDetails(controlNumber);
+                  GetOrderDetails(controlNumber).ConfigureAwait(false);
             }
             return Message;
         }
@@ -183,7 +180,7 @@ namespace WcfCrimShopService.entities
             decimal cost = Convert.ToDecimal(geo.CalculatePrice("fotoAerea", itemQty));
             SqlConnection con = Connection();
 
-            con.Open();
+            
 
             string query = "INSERT into dbo.OrderItemAerialphoto (Title,ControlNumber,ItemQty,Item,Format,LayoutTemplate,GeorefInfo,Parcel,Subtitle,Buffer,ParcelList,BufferDistance,Price) " +
                            "VALUES (@title,@control,@qty,@item,@format,@template,@georef,@parcel,@sub,@buffer,@list,@bufferDistance,@price)";
@@ -272,8 +269,9 @@ namespace WcfCrimShopService.entities
             cmd.Parameters.AddWithValue("@georef", georefInfo);
             cmd.Parameters.AddWithValue("@parcel", parcel);
             cmd.Parameters.AddWithValue("@sub", subtitle);
-
+            con.Open();
             var result = cmd.ExecuteNonQuery();
+            con.Close();
             string message;
             if (result == 1)
             {
@@ -284,7 +282,7 @@ namespace WcfCrimShopService.entities
             {
                 message = "error inserting Photo item into DB";
             }
-            con.Close();
+            
             return message;
         }
 
@@ -389,7 +387,7 @@ namespace WcfCrimShopService.entities
                 cmd.Parameters.AddWithValue("@price", cost);
 
                 var result = cmd.ExecuteNonQuery();
-
+                con.Close();
                 if (result == 1)
                 {
                     message = "sucess";
@@ -399,7 +397,7 @@ namespace WcfCrimShopService.entities
                 {
                     message = "error inserting Item Catastral into DB";
                 }
-                con.Close();
+                
             }
             catch (Exception e)
             {
@@ -451,7 +449,7 @@ namespace WcfCrimShopService.entities
                 cmd.Parameters.AddWithValue("@cost", cost);
 
                 var result = cmd.ExecuteNonQuery();
-                
+                con.Close();
                 if (result == 1)
                 {
                     message = "OK";
@@ -461,7 +459,7 @@ namespace WcfCrimShopService.entities
                 {
                     message = "error inserting Lista de colindante into DB";
                 }
-                con.Close();
+                
             }
             catch (Exception e)
             {
@@ -593,6 +591,8 @@ namespace WcfCrimShopService.entities
                 #endregion
 
                 int result = cmd.ExecuteNonQuery();
+
+                con.Close();
                 if (result == 1)
                 {
                     Message = "ok";
@@ -608,7 +608,7 @@ namespace WcfCrimShopService.entities
                 LogTransaction(ControlNumber, e.Message);
             }
             
-            con.Close();
+            
             return Message;
 
         }
@@ -616,11 +616,11 @@ namespace WcfCrimShopService.entities
         public string InsertExtractDataHandler(string controlNumber, int qty, string layer, string aoi, string format, string raster)
         {
             string msg = string.Empty;
-
+            decimal cost = Convert.ToDecimal(geo.CalculatePrice("parcela", qty));
             SqlConnection con = Connection();
             
-            string query = "INSERT INTO dbo.ExtractDataItems (ControlNumber, ItemQty, Layers_to_Clip, Area_of_Interest, Feature_Format, Raster_Format)" +
-                " VALUES (@control, @qty, @layer, @aoi, @format, @raster)";
+            string query = "INSERT INTO dbo.ExtractDataItems (ControlNumber, ItemQty, Layers_to_Clip, Area_of_Interest, Feature_Format, Raster_Format,Price)" +
+                " VALUES (@control, @qty, @layer, @aoi, @format, @raster, @price)";
             con.Open();
             SqlCommand cmd = new SqlCommand(query, con);
 
@@ -630,6 +630,7 @@ namespace WcfCrimShopService.entities
             cmd.Parameters.AddWithValue("@format", format);
             cmd.Parameters.AddWithValue("@aoi", aoi);
             cmd.Parameters.AddWithValue("@raster", raster);
+            cmd.Parameters.AddWithValue("@price", cost);
 
             int result = cmd.ExecuteNonQuery();
             con.Close();
@@ -648,7 +649,7 @@ namespace WcfCrimShopService.entities
         #endregion
 
         //Asyncronous calls to the database to get the infromation of the order items and process it
-        public async void GetOrderDetails(string controlNumber)
+        public async Task GetOrderDetails(string controlNumber)
         {
             SqlConnection con = Connection();
             con.Open();
@@ -686,10 +687,10 @@ namespace WcfCrimShopService.entities
                     });
                 }
             }
-
+            con.Close();
             string ending = await GetItems(orderList).ConfigureAwait(false);
 
-            con.Close();
+            
         }
 
         public async Task<string> GetItems(List<Objects.Order> myOrder)
@@ -736,14 +737,18 @@ namespace WcfCrimShopService.entities
                 
             }
 
-            while (pictureContent != string.Empty && cadastreContent != string.Empty && listContent != string.Empty && extractContent != string.Empty)
-            {
-                Debug.WriteLine("waiting for processes");
-                await Task.Delay(2000);
-            }
+            //while (pictureContent != string.Empty && cadastreContent != string.Empty && listContent != string.Empty && extractContent != string.Empty)
+            //{
+            //    Debug.WriteLine("waiting for processes");
+            //    await Task.Delay(2000);
+            //}
             if (Objects.path != "Error: no items in order"|| !string.IsNullOrEmpty(Objects.path))
             {
                 geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
+            }
+            else
+            {
+
             }
 
             
@@ -936,7 +941,8 @@ namespace WcfCrimShopService.entities
 
             string query = "SELECT ControlNumber,ItemQty,Escala,Cuadricula,Template,Price " +
                             "FROM dbo.OrderItemsCatastrales " +
-                            "WHERE ControlNumber=@control ";
+                            "WHERE ControlNumber=@control "+
+                            "Order by Cuadricula";
             SqlCommand cmd = new SqlCommand(query, con);
             cmd.Parameters.AddWithValue("@control", controlNumber);
 
@@ -1060,7 +1066,7 @@ namespace WcfCrimShopService.entities
                 string queryPhoto = "SELECT Price FROM dbo.OrderItemAerialphoto WHERE ControlNumber = @control";
                 string queryCad = "SELECT Price FROM dbo.OrderItemsCatastrales WHERE ControlNumber = @control";
                 string queryList = "SELECT Price FROM dbo.OrderItemsListaColindante WHERE ControlNumber = @control";
-
+                string queryExtract = "SELECT Price FROM dbo.ExtractDataItems WHERE ControlNumber = @control";
                 SqlCommand cmd = new SqlCommand(queryPhoto, con);
                 cmd.Parameters.AddWithValue("@control", controlNumber);
 
@@ -1093,6 +1099,20 @@ namespace WcfCrimShopService.entities
                 cmd3.Parameters.AddWithValue("@control", controlNumber);
 
                 using (SqlDataReader result = cmd3.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+
+                        prices.Add(price);
+
+                    }
+                }
+
+                SqlCommand cmd4 = new SqlCommand(queryExtract, con);
+                cmd4.Parameters.AddWithValue("@control", controlNumber);
+
+                using (SqlDataReader result = cmd4.ExecuteReader())
                 {
                     while (result.Read())
                     {
@@ -1226,6 +1246,7 @@ namespace WcfCrimShopService.entities
             con.Open();
             data = cmd.ExecuteReader();
             con.Close();
+            Thread.Sleep(2000);
             con.Open();
             string getNumber = "SELECT TOP 1 * FROM dbo.ControlNumberTemp ORDER BY createDate DESC";
             SqlCommand cmd2 = new SqlCommand(getNumber, con);
@@ -1406,15 +1427,20 @@ namespace WcfCrimShopService.entities
 
         }
 
-        public void UpdateFailedCad(string cn, string cuadriculas){
+        public void UpdateFailedCad(string cn, string cuadriculas, string create)
+        {
+            cuadriculas = cuadriculas.Replace("(", "");
+            cuadriculas = cuadriculas.Replace(")", "");
             SqlConnection con = Connection();
-            string query = "UPDATE dbo.OrderItemsCatastrales SET Created = 'false' " + 
-                "WHERE ControlNumber = @control AND Cuadricula IN @cuadriculas";
+            string query = "UPDATE dbo.OrderItemsCatastrales SET Created = @create " + 
+                "WHERE ControlNumber = @control AND Cuadricula IN (@cuadriculas)";
             SqlCommand cmd = new SqlCommand(query,con);
             cmd.Parameters.AddWithValue("@control", cn);
-            cmd.Parameters.AddWithValue("@cuadriculas", cuadriculas);
+            cmd.Parameters.AddWithValue("@cuadriculas", cuadriculas.Trim());
+            cmd.Parameters.AddWithValue("@create", create);
+            con.Open();
             int result = cmd.ExecuteNonQuery();
-
+            con.Close();
             if (result == 1)
             {
                 LogTransaction(cn, "Failed Task Items not created");
@@ -1425,7 +1451,7 @@ namespace WcfCrimShopService.entities
             }
         }
 
-        #region Get product information for email and verify that the product was created
+        #region Get product information for email 
         public string GetPhotoProducts(string controlNumber)
         {
 
@@ -1539,6 +1565,197 @@ namespace WcfCrimShopService.entities
             
             return catToEmail;
         }
+
+        public string GetExtractDataItem(string controlNumber)
+        {
+            SqlConnection con = Connection();
+            
+            string htmlUnorderedList = string.Empty;
+
+            string query = "SELECT * FROM dbo.ExtractDataItems WHERE ControlNumber=@control ";
+
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            List<Objects.ElementoDeExtraccion> extractList = new List<Objects.ElementoDeExtraccion>();
+            con.Open();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    int qty = Convert.ToInt32(result["ItemQty"].ToString());
+                    string layer = result["Layers_to_Clip"].ToString();
+                    string area = result["Area_of_Interest"].ToString();
+                    string feature = result["Feature_Format"].ToString();
+                    string raster = result["Raster_Format"].ToString();
+                    string created = result["Created"].ToString();
+                    decimal price = Convert.ToDecimal(result["Price"].ToString());
+
+                    htmlUnorderedList += "<li>Elemento Extracción, Formato " + feature + " - " + qty + " parcelas en elemento</li>"; 
+
+                }
+            }
+            con.Close();
+            return htmlUnorderedList;
+        }
         #endregion
+
+        public string CheckForFailedItems(string controlNumber)
+        {
+            string message = string.Empty;
+            
+            List<Objects.OrderItemPhoto> missingPic = new List<Objects.OrderItemPhoto>();
+            List<Objects.OrderItemCatastral> missingCad = new List<Objects.OrderItemCatastral>();
+            List<Objects.OrderItemList> missingList = new List<Objects.OrderItemList>();
+            List<Objects.ElementoDeExtraccion> missingElement = new List<Objects.ElementoDeExtraccion>();
+           
+            SqlConnection con = Connection();
+            try
+            {
+                con.Open();
+
+                string queryPhoto = "SELECT * FROM dbo.OrderItemAerialphoto WHERE ControlNumber = @control and Created=@create";
+                string queryCad = "SELECT * FROM dbo.OrderItemsCatastrales WHERE ControlNumber = @control and Created=@create";
+                string queryList = "SELECT * FROM dbo.OrderItemsListaColindante WHERE ControlNumber = @control and Created=@create";
+                string queryExtract = "SELECT * FROM dbo.ExtractDataItems WHERE ControlNumber = @control and Created=@create";
+                SqlCommand cmd = new SqlCommand(queryPhoto, con);
+                cmd.Parameters.AddWithValue("@control", controlNumber);
+                cmd.Parameters.AddWithValue("@create", "false");
+
+                using (SqlDataReader result = cmd.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        string title = result["Title"].ToString();
+                        string cn = result["ControlNumber"].ToString();
+                        string qty = result["ItemQty"].ToString();
+                        string item = result["Item"].ToString();
+                        string format = result["Format"].ToString();
+                        string template = result["LayoutTemplate"].ToString();
+                        string georef = result["GeorefInfo"].ToString();
+                        string parcel = result["Parcel"].ToString();
+                        string sub = result["Subtitle"].ToString();
+                        string buffer = result["Buffer"].ToString();
+                        string parcelList = result["ParcelList"].ToString();
+                        string bufferDistance = result["BufferDistance"].ToString();
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+                        string create = result["Created"].ToString();
+
+                        missingPic.Add(new Objects.OrderItemPhoto
+                        {
+                            ControlNumber = cn,
+                            ItemQty = qty,
+                            Item = item,
+                            Format = format,
+                            LayoutTemplate = template,
+                            GeorefInfo = georef,
+                            Parcel = parcel,
+                            subtitle = sub,
+                            buffer = buffer,
+                            parcelList = parcelList,
+                            distance = bufferDistance,
+                            cost = price,
+                            title = title
+                        });
+                    }
+                }
+
+                SqlCommand cmd2 = new SqlCommand(queryCad, con);
+                cmd2.Parameters.AddWithValue("@control", controlNumber);
+                cmd2.Parameters.AddWithValue("@create", "false");
+
+                using (SqlDataReader result = cmd2.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        string cn = result["ControlNumber"].ToString();
+                        string qty = result["ItemQty"].ToString();
+                        string scale = result["Escala"].ToString();
+                        string cuadro = result["Cuadricula"].ToString();
+                        string template = result["Template"].ToString();
+                        string creates = result["Created"].ToString();
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+
+                        missingCad.Add(new Objects.OrderItemCatastral
+                        {
+                            ControlNumber = cn,
+                            itemQty = qty,
+                            escala = scale,
+                            cuadricula = cuadro,
+                            template = template,
+                            cost = price
+                        });
+                    }
+                }
+
+                SqlCommand cmd3 = new SqlCommand(queryList, con);
+                cmd3.Parameters.AddWithValue("@control", controlNumber);
+                cmd3.Parameters.AddWithValue("@create", "false");
+
+                using (SqlDataReader result = cmd3.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        string cn = result["ControlNumber"].ToString();
+                        string itemName = result["Parcelas"].ToString();
+                        string qty = result["ItemQty"].ToString();
+                        string item = result["Item"].ToString();
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+                        string create = result["Created"].ToString();
+
+                        missingList.Add(new Objects.OrderItemList
+                        {
+                            ControlNumber = cn,
+                            itemName = itemName,
+                            itemQty = qty,
+                            item = item,
+                            cost = price,
+                            created = create
+                        });
+                    }
+                }
+
+                SqlCommand cmd4 = new SqlCommand(queryExtract, con);
+                cmd4.Parameters.AddWithValue("@control", controlNumber);
+                cmd4.Parameters.AddWithValue("@create", "false");
+
+                using (SqlDataReader result = cmd4.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        string cn = result["ControlNumber"].ToString();
+                        int qty = Convert.ToInt32(result["ItemQty"].ToString());
+                        string layer = result["Layers_to_Clip"].ToString();
+                        string area = result["Area_of_Interest"].ToString();
+                        string feature = result["Feature_Format"].ToString();
+                        string raster = result["Raster_Format"].ToString();
+                        string created = result["Created"].ToString();
+                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+
+                        missingElement.Add(new Objects.ElementoDeExtraccion
+                        {
+                            ControlNumber = cn,
+                            Qty = qty,
+                            Layers_to_Clip = layer,
+                            Area_of_Interest = area,
+                            Feature_Format = feature,
+                            Raster_Format = raster,
+                            Created = created,
+                            Price = price
+                        });
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                message = e.Message;
+            }
+
+            con.Close();
+            return "ok";
+        }
+    
     }
 }

@@ -63,7 +63,7 @@ namespace WcfCrimShopService
         string StarGeoprocess(string cNumber);
 
         [OperationContract]
-        [WebInvoke(Method = "POST",RequestFormat=WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        [WebInvoke(Method = "POST",RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         string MakePayment(string controlNumber);
 
         [OperationContract]
@@ -81,6 +81,10 @@ namespace WcfCrimShopService
         [OperationContract]
         [WebGet(UriTemplate = "GetTax", ResponseFormat = WebMessageFormat.Json)]
         decimal GetTax();
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        string test(string cn);
     }
 
 }

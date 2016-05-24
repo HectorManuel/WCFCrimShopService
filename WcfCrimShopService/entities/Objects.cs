@@ -52,6 +52,7 @@ namespace WcfCrimShopService.entities
             public string distance { get; set; }
             public decimal cost { get; set; }
             public string title { get; set; }
+            public string created { get; set; }
         }
 
         public class OrderItemList
@@ -61,6 +62,7 @@ namespace WcfCrimShopService.entities
             public string itemQty { get; set; }
             public string item { get; set; }
             public decimal cost { get; set; }
+            public string created { get; set; }
         }
 
         public class OrderItemCatastral
@@ -71,6 +73,7 @@ namespace WcfCrimShopService.entities
             public string cuadricula { get; set; }
             public string template { get; set; }
             public decimal cost { get; set; }
+            public string created { get; set; }
         }
 
         public class Scale
@@ -164,6 +167,10 @@ namespace WcfCrimShopService.entities
             public string Area_of_Interest { get; set; }
             public string Feature_Format { get; set; }
             public string Raster_Format { get; set; }
+            public string Created { get; set; }
+            public decimal Price { get; set; }
         }
+
+
     }
 }
