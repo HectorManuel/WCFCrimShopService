@@ -20,6 +20,7 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Net.Mime;
 using System.Threading;
+using Esri.ArcGISRuntime.Http;
 
 namespace WcfCrimShopService.entities
 {
@@ -39,9 +40,26 @@ namespace WcfCrimShopService.entities
             return config.OrderDownloadStorage;
         }
 
-        private async Task GenerateToken()
+        public async Task GenerateToken()
         {
-            var opt = new GenerateTokenOptions();
+            try
+            {
+                var opt = new GenerateTokenOptions();
+                opt.TokenAuthenticationType = TokenAuthenticationType.ArcGISToken;
+
+                var cred = await IdentityManager.Current.GenerateCredentialAsync(config.PortalAuthentication.ServiceUri, 
+                                                                                config.PortalAuthentication.username, 
+                                                                                config.PortalAuthentication.password, 
+                                                                                opt);
+
+                IdentityManager.Current.AddCredential(cred);
+
+            }
+            catch (ArcGISWebException webExp)
+            {
+                Debug.WriteLine("Unable to authenticate : " + webExp.Message);
+            }
+            
         }
         
         /// <summary>
@@ -518,6 +536,7 @@ namespace WcfCrimShopService.entities
         /// <returns></returns>
         public async Task<string> FotoAerea(Objects.OrderItemPhoto pic)//allPics
         {
+            
             string zipPath = string.Empty;
             DBConnection connection = new DBConnection();
             string number = string.Empty;
@@ -929,7 +948,7 @@ namespace WcfCrimShopService.entities
 
                     string updatingPath = conForLog.UpdateFolderPath(control, config.MailDownloadPath + control + ".zip");
 
-                    smtpServer.Port = 25;
+                    smtpServer.Port = config.EmailConfiguration.port;
                     smtpServer.Credentials = new System.Net.NetworkCredential(config.EmailConfiguration.Username, config.EmailConfiguration.Password);
                     smtpServer.EnableSsl = false;
 

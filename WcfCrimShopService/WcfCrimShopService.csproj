@@ -94,6 +94,7 @@
     <Compile Include="entities\ColindantePdfEventHandler.cs" />
     <Compile Include="entities\Configuration.cs" />
     <Compile Include="entities\DBConnection.cs" />
+    <Compile Include="entities\EmailSupport.cs" />
     <Compile Include="entities\Geoprocessing.cs" />
     <Compile Include="entities\Objects.cs" />
     <Compile Include="Global.asax.cs">

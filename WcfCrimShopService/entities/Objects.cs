@@ -106,17 +106,24 @@ namespace WcfCrimShopService.entities
             public decimal price { get; set; }
         }
 
+        /**
+         * 
+         * Configuration objects
+         * 
+         * **/
         public class ConfigObject
         {
             public ServerConnection ServerConnection { get; set; }
             public ActiveDirectoryInformation ActiveDirectoryInformation { get; set; }
             public EmailConfiguration EmailConfiguration { get; set; }
             public MerchantInfo MerchantInfo { get; set; }
+            public PortalAuthentication PortalAuthentication { get; set; }
             public string OrderDownloadStorage { get; set; }
             public string MailDownloadPath { get; set; }
             public string ExtractDataUrl { get; set; }
             public string FotoAereaUrl { get; set; }
             public string MapasCatastral { get; set; }
+            public string SupportEmail { get; set; }
         }
 
         public class ActiveDirectoryInformation
@@ -132,6 +139,7 @@ namespace WcfCrimShopService.entities
             public string MailAddress { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
+            public string port { get; set; }
         }
         public class MerchantInfo
         {
@@ -148,6 +156,19 @@ namespace WcfCrimShopService.entities
             public string id { get; set; }
             public string password { get; set; }
         }
+
+        public class PortalAuthentication
+        {
+            public string ServiceUri { get; set; }
+            public string username { get; set; }
+            public string password { get; set; }
+        }
+
+        /**
+         * 
+         * End of configuration objects
+         * 
+         * **/
         static string pathOfZip;
         public static string path
         {
@@ -159,6 +180,18 @@ namespace WcfCrimShopService.entities
             }
         }
 
+        static string htmlBody;
+        public static string bodyHtml
+        {
+            get
+            {
+                return htmlBody;
+            }
+            set
+            {
+                htmlBody = value;
+            }
+        }
         public class ElementoDeExtraccion
         {
             public string ControlNumber { get; set; }

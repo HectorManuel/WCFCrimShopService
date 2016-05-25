@@ -651,6 +651,7 @@ namespace WcfCrimShopService.entities
         //Asyncronous calls to the database to get the infromation of the order items and process it
         public async Task GetOrderDetails(string controlNumber)
         {
+            await geo.GenerateToken();
             SqlConnection con = Connection();
             con.Open();
 
@@ -744,17 +745,14 @@ namespace WcfCrimShopService.entities
             //}
             if (Objects.path != "Error: no items in order"|| !string.IsNullOrEmpty(Objects.path))
             {
+                string  doubleCheck = await CheckForFailedItems(myOrder[0].ControlNumber, myOrder[0].CustomerName);
                 geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
             }
             else
             {
 
             }
-
-            
-            
-            
-            return pictureContent;
+            return Objects.path;
         }
 
         public async Task<string> ProcessPhotoProducts(string controlNumber)
@@ -1431,19 +1429,20 @@ namespace WcfCrimShopService.entities
         {
             cuadriculas = cuadriculas.Replace("(", "");
             cuadriculas = cuadriculas.Replace(")", "");
+            //cuadriculas = cuadriculas.Replace("'","\'");
             SqlConnection con = Connection();
             string query = "UPDATE dbo.OrderItemsCatastrales SET Created = @create " + 
-                "WHERE ControlNumber = @control AND Cuadricula IN (@cuadriculas)";
+                "WHERE ControlNumber = @control AND Cuadricula IN ("+ cuadriculas.Trim() +")";
             SqlCommand cmd = new SqlCommand(query,con);
             cmd.Parameters.AddWithValue("@control", cn);
-            cmd.Parameters.AddWithValue("@cuadriculas", cuadriculas.Trim());
+            //cmd.Parameters.AddWithValue("@cuadriculas", cuadriculas.Trim());
             cmd.Parameters.AddWithValue("@create", create);
             con.Open();
             int result = cmd.ExecuteNonQuery();
             con.Close();
-            if (result == 1)
+            if (result >= 1)
             {
-                LogTransaction(cn, "Failed Task Items not created");
+                LogTransaction(cn, "Items Updated");
             }
             else
             {
@@ -1590,7 +1589,7 @@ namespace WcfCrimShopService.entities
                     string feature = result["Feature_Format"].ToString();
                     string raster = result["Raster_Format"].ToString();
                     string created = result["Created"].ToString();
-                    decimal price = Convert.ToDecimal(result["Price"].ToString());
+                    //decimal price = Convert.ToDecimal(result["Price"].ToString());
 
                     htmlUnorderedList += "<li>Elemento Extracción, Formato " + feature + " - " + qty + " parcelas en elemento</li>"; 
 
@@ -1601,10 +1600,11 @@ namespace WcfCrimShopService.entities
         }
         #endregion
 
-        public string CheckForFailedItems(string controlNumber)
+        public async Task<string> CheckForFailedItems(string controlNumber, string customerName)
         {
+            EmailSupport email = new EmailSupport();
             string message = string.Empty;
-            
+            string path = "Checked";
             List<Objects.OrderItemPhoto> missingPic = new List<Objects.OrderItemPhoto>();
             List<Objects.OrderItemCatastral> missingCad = new List<Objects.OrderItemCatastral>();
             List<Objects.OrderItemList> missingList = new List<Objects.OrderItemList>();
@@ -1664,7 +1664,7 @@ namespace WcfCrimShopService.entities
                 SqlCommand cmd2 = new SqlCommand(queryCad, con);
                 cmd2.Parameters.AddWithValue("@control", controlNumber);
                 cmd2.Parameters.AddWithValue("@create", "false");
-
+                
                 using (SqlDataReader result = cmd2.ExecuteReader())
                 {
                     while (result.Read())
@@ -1754,7 +1754,39 @@ namespace WcfCrimShopService.entities
             }
 
             con.Close();
-            return "ok";
+
+            if (missingList.Count > 0)
+            {
+                foreach(var item in missingList){
+                    string addBody = email.AddListToBody(item);
+                }
+                
+            }
+
+            if (missingPic.Count > 0)
+            {
+                foreach (var item in missingPic)
+                {
+                    
+                    string addBody = email.AddFotoToBody(item);
+
+                }
+            }
+
+            if (missingCad.Count > 0)
+            {
+                string addBody = email.AddCadToBody(missingCad);
+            }
+
+            if (missingElement.Count > 0)
+            {
+                foreach (var item in missingElement)
+                {
+                    string addBody = email.AddExtractToBody(item);
+                }
+            }
+
+            return path;
         }
     
     }
