@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Net.Mime;
 using WcfCrimShopService.entities;
-using System.Diagnostics;
 
 
 namespace WcfCrimShopService.entities
@@ -15,10 +14,8 @@ namespace WcfCrimShopService.entities
     public class EmailSupport
     {
         Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
-        public string EmailGenerator(string controlNumber)
+        public string EmailGenerator()
         {
-            JoinHeaderToBody(controlNumber);
-            string message = string.Empty;
             MailMessage mail = new MailMessage();
             SmtpClient smtpServer = new SmtpClient(config.EmailConfiguration.SMTPClient);
             mail.From = new MailAddress(config.EmailConfiguration.MailAddress);
@@ -32,48 +29,15 @@ namespace WcfCrimShopService.entities
             AlternateView alternate = AlternateView.CreateAlternateViewFromString(EmailBody(), mimeType);
             mail.AlternateViews.Add(alternate);
 
-            smtpServer.Port = config.EmailConfiguration.port;
-            smtpServer.Credentials = new System.Net.NetworkCredential(config.EmailConfiguration.Username, config.EmailConfiguration.Password);
-            smtpServer.EnableSsl = false;
 
-            try
-            {
-                smtpServer.Send(mail);
-                message = "support email send";
-                Objects.bodyHtml = string.Empty;
-            }
-            catch
-            {
-                Debug.WriteLine("email not send");
-                message = "support email not send";
-            }
 
-            return message;
+            return "";
         }
 
         private string EmailBody()
         {
             string body = Objects.bodyHtml;
             return body;
-        }
-
-        private void JoinHeaderToBody(string control)
-        {
-            DBConnection con = new DBConnection();
-            List<Objects.FullOrderInfo> info = con.OrderInformation(control);
-            string body = string.Empty;
-            if (info.Count > 0)
-            {
-                body = "<div>No se pudieron generar los productos de la siguiente orden:</div>";
-                body += "<div><strong>Orden Número</strong> : "+ info[0].ControlNumber +"</div>";
-                body += "<div><strong>Fecha</strong> : "+ info[0].OrderDate +"</div>";
-                body += "<div><strong>Nombre cliente</strong> : "+ info[0].CustomerName +"</div>";
-                body += "<div><strong>correo electrónico</strong> : "+ info[0].CustomerEmail +"</div>";
-                body += "<div><strong>Total</strong> : "+ info[0].Total +"</div>";
-                body += "<div><strong>Número de confirmación</strong> : "+ info[0].Confirmation +"</div>";
-
-                Objects.bodyHtml = body + Objects.bodyHtml;
-            }
         }
 
         public string AddFotoToBody(Objects.OrderItemPhoto item)
@@ -155,8 +119,7 @@ namespace WcfCrimShopService.entities
 
             if (listScale10.Count > 0)
             {
-                string htmlBody = "<p><strong>Mapa de Catastro oficial - escala 1:10000</strong></p>"; 
-                htmlBody += "<p style=\"padding-left: 30px;\">Layout_Template : "+ listScale10[0].template +"</p>";
+                string htmlBody = "<p style=\"padding-left: 30px;\">Layout_Template : "+ listScale10[0].template +"</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Page_Range : "+ array+"</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Georef_info : "+ listScale10[0].geo+"</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Control : "+ listScale10[0].controlNum+"</p>";
@@ -165,8 +128,7 @@ namespace WcfCrimShopService.entities
 
             if (listScale1.Count > 0)
             {
-                string htmlBody = "<p><strong>Mapa de Catastro oficial - escala 1:1000</strong></p>"; 
-                htmlBody += "<p style=\"padding-left: 30px;\">Layout_Template : " + listScale1[0].template + "</p>";
+                string htmlBody = "<p style=\"padding-left: 30px;\">Layout_Template : " + listScale1[0].template + "</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Page_Range : " + array2 + "</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Georef_info : " + listScale1[0].geo + "</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Control : " + listScale1[0].controlNum + "</p>";
@@ -188,12 +150,12 @@ namespace WcfCrimShopService.entities
             return Objects.bodyHtml;
         }
 
-        public string AddListToBody(Objects.OrderItemList item, string client)
+        public string AddListToBody(Objects.OrderItemList item)
         {
             string htmlBody = "<p><strong>Lista de Colindantes:</strong></p>";
-            htmlBody += "<p style=\"padding-left: 30px;\">Control: " + item.ControlNumber + "</p>";
-            htmlBody += "<p style=\"padding-left: 30px;\">Cantidad de Parcelas: " + item.itemQty + "</p>";
-            htmlBody += "<p style=\"padding-left: 30px;\">Enlace para volver a general la Lista: <a href=\"" + config.ServiceUrl +"GenerateList/"+item.ControlNumber +"/"+client+"\">Generar lista de colindante</a></p>";
+            htmlBody += "<p style=\"padding-left: 30px;\">Control:</p>";
+            htmlBody += "<p style=\"padding-left: 30px;\">Parcelas:</p>";
+            htmlBody += "<p style=\"padding-left: 30px;\">Item:</p>";
 
             Objects.bodyHtml += htmlBody;
             return Objects.bodyHtml;
