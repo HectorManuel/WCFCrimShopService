@@ -1833,10 +1833,25 @@ namespace WcfCrimShopService.entities
                 }
             }
             con.Close();
-            string createPrinting = geo.AdyacentListGenerator(orderList, customerName);
-            path = createPrinting.ToString();
-            string zip = geo.MakeZipAgain(path);
-            string uri = config.MailDownloadPath + controlNumber+".zip";
+            string uri = string.Empty;
+            if (orderList.Count > 0)
+            {
+                string createPrinting = geo.AdyacentListGenerator(orderList, customerName);
+                path = createPrinting.ToString();
+                
+                if (!string.IsNullOrEmpty(path))
+                {
+                    string zip = geo.MakeZipAgain(path);
+                    uri = config.MailDownloadPath + controlNumber + ".zip";
+                    Directory.Delete(path);
+                }
+                else
+                {
+                    uri = "no list available to generate";
+                }
+            }
+            
+
             return uri;
         }
     }

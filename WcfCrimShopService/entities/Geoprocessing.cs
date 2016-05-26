@@ -33,13 +33,20 @@ namespace WcfCrimShopService.entities
         
         
         //string path = System.AppDomain.CurrentDomain.BaseDirectory + @"OrderFolder\";
-        
+        /// <summary>
+        /// Get the download storage path
+        /// </summary>
+        /// <returns></returns>
         public string GetPath()
         {
             
             return config.OrderDownloadStorage;
         }
 
+        /// <summary>
+        /// Generate the authentication token for the arcgis services
+        /// </summary>
+        /// <returns></returns>
         public async Task GenerateToken()
         {
             try
@@ -104,7 +111,7 @@ namespace WcfCrimShopService.entities
                         result = await gp.CheckJobStatusAsync(result.JobID);
 
                         Debug.WriteLine(result.JobStatus +" Catastral ");
-                        await Task.Delay(2000);
+                        await Task.Delay(5000);
                     }
                     catch (System.Threading.Tasks.TaskCanceledException)
                     {
@@ -200,7 +207,7 @@ namespace WcfCrimShopService.entities
             string array2 = string.Empty;
             string array = string.Empty;
             string storePath = string.Empty;
-            #region 1:10k menor o igual a 50
+            #region 1:10k menor o igual a 25
             if (listScale10.Count > 0 && listScale10.Count <=25)
             {
                 array = "(";
@@ -400,7 +407,7 @@ namespace WcfCrimShopService.entities
                     case "failed":
                         connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k " + storePath);
                         //connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
-                        Thread.Sleep(10000);
+                        Thread.Sleep(5000);
                         connection.LogTransaction(listScale1[0].controlNum, "Trying Mapa Catastral oficial 1:1k");
                         storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
@@ -417,7 +424,7 @@ namespace WcfCrimShopService.entities
                     case "time out":
                         connection.LogTransaction(listScale1[0].controlNum, "Mapa Catastral oficial 1:1k " + storePath);
                         connection.UpdateCadStatus(listScale1[0].controlNum, listScale1[0].template, "1:1000", "false");
-                        Thread.Sleep(10000);
+                        Thread.Sleep(5000);
                         connection.LogTransaction(listScale1[0].controlNum, "Trying Mapa Catastral oficial 1:1k");
                         storePath = await CallingMaps(listScale1[0].template, array2, listScale1[0].geo, listScale1[0].controlNum);
                         if (storePath == "failed" || storePath == "time out")
@@ -593,7 +600,7 @@ namespace WcfCrimShopService.entities
                         {
                             result = await gp.CheckJobStatusAsync(result.JobID);
                             Debug.WriteLine(result.JobStatus + "foto aerea");
-                            await Task.Delay(1000);
+                            await Task.Delay(5000);
                         }
                         catch (TaskCanceledException)
                         {
@@ -652,8 +659,11 @@ namespace WcfCrimShopService.entities
             return zipPath;
         }
 
-
-
+        /// <summary>
+        /// Task to run the ExtractData geoprocess 
+        /// </summary>
+        /// <param name="element"></param>
+        /// <returns></returns>
         public async Task<string> ExtractData(Objects.ElementoDeExtraccion element) // Elemento de extraccino
         {
             string zipPath = string.Empty;
@@ -699,7 +709,7 @@ namespace WcfCrimShopService.entities
                     {
                         result = await gp.CheckJobStatusAsync(result.JobID);
                         Debug.WriteLine(result.JobStatus + "Extraccion");
-                        await Task.Delay(1000);
+                        await Task.Delay(5000);
                     }
                     catch (TaskCanceledException)
                     {
@@ -751,9 +761,6 @@ namespace WcfCrimShopService.entities
 
             return zipPath;
         }
-
-
-
 
         /// <summary>
         /// The function will create a folder with name the control number to store all the pdf of the same order
@@ -1141,6 +1148,11 @@ namespace WcfCrimShopService.entities
             return total;
         }
 
+        /// <summary>
+        /// Validate the name for the file to avoid illegal characters
+        /// </summary>
+        /// <param name="filename"></param>
+        /// <returns></returns>
         static string FileNameValidation(string filename)
         {
             try
@@ -1153,6 +1165,11 @@ namespace WcfCrimShopService.entities
             }
         }
 
+        /// <summary>
+        /// Make a zip file for any purpose, use when files need to be created again due to a previous failure
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public string MakeZipAgain(string path)
         {
             string zipPath = path + ".zip";
