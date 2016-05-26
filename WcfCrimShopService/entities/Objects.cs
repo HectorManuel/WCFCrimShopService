@@ -124,6 +124,7 @@ namespace WcfCrimShopService.entities
             public string FotoAereaUrl { get; set; }
             public string MapasCatastral { get; set; }
             public string SupportEmail { get; set; }
+            public string ServiceUrl { get; set; }
         }
 
         public class ActiveDirectoryInformation
@@ -139,7 +140,7 @@ namespace WcfCrimShopService.entities
             public string MailAddress { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
-            public string port { get; set; }
+            public int port { get; set; }
         }
         public class MerchantInfo
         {

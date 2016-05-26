@@ -745,7 +745,7 @@ namespace WcfCrimShopService.entities
             //}
             if (Objects.path != "Error: no items in order"|| !string.IsNullOrEmpty(Objects.path))
             {
-                string  doubleCheck = await CheckForFailedItems(myOrder[0].ControlNumber, myOrder[0].CustomerName);
+                string  doubleCheck = CheckForFailedItems(myOrder[0].ControlNumber, myOrder[0].CustomerName);
                 geo.ZipAndSendEmail(Objects.path, myOrder[0].CustomerEmail, myOrder[0].ControlNumber);
             }
             else
@@ -1600,8 +1600,13 @@ namespace WcfCrimShopService.entities
         }
         #endregion
 
-        public async Task<string> CheckForFailedItems(string controlNumber, string customerName)
+        public string CheckForFailedItems(string controlNumber, string customerName)
         {
+            if (string.IsNullOrEmpty(controlNumber))
+            {
+                return "control number empty";
+            }
+
             EmailSupport email = new EmailSupport();
             string message = string.Empty;
             string path = "Checked";
@@ -1758,7 +1763,7 @@ namespace WcfCrimShopService.entities
             if (missingList.Count > 0)
             {
                 foreach(var item in missingList){
-                    string addBody = email.AddListToBody(item);
+                    string addBody = email.AddListToBody(item, customerName);
                 }
                 
             }
@@ -1786,8 +1791,53 @@ namespace WcfCrimShopService.entities
                 }
             }
 
+            if (!string.IsNullOrEmpty(Objects.bodyHtml))
+            {
+                string mail = email.EmailGenerator(controlNumber);
+                path = mail;
+            }
             return path;
         }
-    
+
+        public string ProcessFailedListProducts(string controlNumber, string customerName)
+        {
+            string path = string.Empty;
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT ControlNumber,Parcelas,ItemQty,Item,Price " +
+                            "FROM dbo.OrderItemsListaColindante " +
+                            "WHERE ControlNumber=@control AND Created='false'";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            List<Objects.OrderItemList> orderList = new List<Objects.OrderItemList>();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string itemName = result["Parcelas"].ToString();
+                    string qty = result["ItemQty"].ToString();
+                    string item = result["Item"].ToString();
+                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+
+                    orderList.Add(new Objects.OrderItemList
+                    {
+                        ControlNumber = cn,
+                        itemName = itemName,
+                        itemQty = qty,
+                        item = item,
+                        cost = cost
+                    });
+                }
+            }
+            con.Close();
+            string createPrinting = geo.AdyacentListGenerator(orderList, customerName);
+            path = createPrinting.ToString();
+            string zip = geo.MakeZipAgain(path);
+            string uri = config.MailDownloadPath + controlNumber+".zip";
+            return uri;
+        }
     }
 }

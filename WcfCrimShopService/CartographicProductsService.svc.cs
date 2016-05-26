@@ -558,13 +558,19 @@ namespace WcfCrimShopService
             return response;
         }
 
+        public string GenerateLista(string control, string client)
+        {
+            string url = responseHandler.ProcessFailedListProducts(control, client);
+            return url;
+        }
+
         public string test(string cn)
         {
             string test = "'087-001','087-002','087-003','087-004','087-005','087-006','087-007','087-008','087-009','087-010','087-011','087-012','087-013','087-014','087-015','087-016','087-017','087-018','087-019','087-020','087-021','087-022','087-023','087-024','087-025','087-026','087-027','087-028','087-029','087-030','087-031','087-032','087-033','087-034','087-035','087-036','087-037','087-038','087-039','087-040','087-041','087-042','087-043','087-044','087-045','087-046','087-047','087-048','087-049','087-050'";
            //string result = responseHandler.CheckForFailedItems(cn, "test").Result;
-            responseHandler.UpdateFailedCad(cn, test, "false");
+            string  fn = responseHandler.CheckForFailedItems(cn,"hasencio");
             //string result = responseHandler.GetExtractDataItem(cn);
-            return test;
+            return fn;
         }
     }
 }

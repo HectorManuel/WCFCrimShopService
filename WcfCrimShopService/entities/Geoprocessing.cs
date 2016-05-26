@@ -985,21 +985,6 @@ namespace WcfCrimShopService.entities
         {
             //Objects.ListaCol listaCombinada = new Objects.ListaCol();
             string zipPath = string.Empty;
-            //for (int i = 0; i < itemsFromDb.Count(); i++)
-            //{
-            //    string name = itemsFromDb[i].itemName;
-            //    string qty = itemsFromDb[i].itemQty;
-            //    if(name == itemsFromDb[i++].itemName && qty == itemsFromDb[i++].itemQty){
-
-            //    }
-            //    string test = string.Empty;
-            //    int index = name.IndexOf("_colindante");
-            //    int realIndex = index + 11;
-            //    if (index > 0)
-            //    {
-            //        test = test.Substring(0, realIndex);
-            //    }
-            //}
 
             foreach (var lista in itemsFromDb)
             {
@@ -1166,6 +1151,45 @@ namespace WcfCrimShopService.entities
             {
                 return filename;
             }
+        }
+
+        public string MakeZipAgain(string path)
+        {
+            string zipPath = path + ".zip";
+            //zip file creation
+            //verify that the zip file doesnt exist
+            if (!File.Exists(zipPath))
+            {
+                try
+                {
+                    ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
+                }
+                catch
+                {
+                    ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
+                }
+
+
+            }
+            else
+            {
+                string temp = zipPath;
+                int dup = 0;
+                while (File.Exists(temp))
+                {
+                    dup++;
+                    temp = temp.Replace(".zip", "(" + dup + ").zip");
+                    
+                }
+                zipPath = temp;
+
+                //File.Delete(zipPath);
+                ZipFile.CreateFromDirectory(path, zipPath, CompressionLevel.Optimal, true);
+            }
+
+            
+
+            return zipPath;
         }
     }
 }
