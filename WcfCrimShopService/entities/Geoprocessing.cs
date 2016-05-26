@@ -297,7 +297,7 @@ namespace WcfCrimShopService.entities
                         }
                         array += "'" + listScale10[i].cuad + "'";
                         count++;
-                        if (count == 25)
+                        if (count == 25 || i == listScale10.Count-1)
                         {
                             array += ")";
                             Thread.Sleep(5000);
@@ -464,7 +464,7 @@ namespace WcfCrimShopService.entities
                         }
                         array2 += "'" + listScale1[i].cuad + "'";
                         count++;
-                        if (count == 50)
+                        if (count == 50 || i == listScale1.Count-1)
                         {
                             array2 += ")";
                             Thread.Sleep(5000);
@@ -884,7 +884,6 @@ namespace WcfCrimShopService.entities
                     ZipFile.CreateFromDirectory(orderFolderPath, zipPath, CompressionLevel.Optimal, true);
                 }
 
-                
             }
             else
             {
@@ -1170,9 +1169,10 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public string MakeZipAgain(string path)
+        public string MakeZipAgain(string path, string controlNumber)
         {
             string zipPath = path + ".zip";
+            string zipName = controlNumber + ".zip";
             //zip file creation
             //verify that the zip file doesnt exist
             if (!File.Exists(zipPath))
@@ -1191,12 +1191,13 @@ namespace WcfCrimShopService.entities
             else
             {
                 string temp = zipPath;
+                
                 int dup = 0;
                 while (File.Exists(temp))
                 {
                     dup++;
                     temp = temp.Replace(".zip", "(" + dup + ").zip");
-                    
+                    zipName = zipName.Replace(".zip", "(" + dup + ").zip");
                 }
                 zipPath = temp;
 
@@ -1206,7 +1207,7 @@ namespace WcfCrimShopService.entities
 
             
 
-            return zipPath;
+            return zipName;
         }
     }
 }

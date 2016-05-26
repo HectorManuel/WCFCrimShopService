@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Net.Mime;
 using WcfCrimShopService.entities;
+using System.Diagnostics;
 
 
 namespace WcfCrimShopService.entities
@@ -14,8 +15,11 @@ namespace WcfCrimShopService.entities
     public class EmailSupport
     {
         Objects.ConfigObject config = JsonConvert.DeserializeObject<Objects.ConfigObject>(File.ReadAllText(System.AppDomain.CurrentDomain.BaseDirectory + @"Config.json"));
-        public string EmailGenerator()
+        public string EmailGenerator(string controlNumber)
         {
+            DBConnection conForLog = new DBConnection();
+            string message = string.Empty;
+            AddHeaderToBody(controlNumber);
             MailMessage mail = new MailMessage();
             SmtpClient smtpServer = new SmtpClient(config.EmailConfiguration.SMTPClient);
             mail.From = new MailAddress(config.EmailConfiguration.MailAddress);
@@ -29,15 +33,51 @@ namespace WcfCrimShopService.entities
             AlternateView alternate = AlternateView.CreateAlternateViewFromString(EmailBody(), mimeType);
             mail.AlternateViews.Add(alternate);
 
+            smtpServer.Port = config.EmailConfiguration.port;
+            smtpServer.Credentials = new System.Net.NetworkCredential(config.EmailConfiguration.Username, config.EmailConfiguration.Password);
+            smtpServer.EnableSsl = false;
 
+            try
+            {
+                smtpServer.Send(mail);
+                conForLog.LogTransaction(controlNumber, "Support Email send");
+                message = "Support email send";
+                Debug.WriteLine("MailSend");
+                //Directory.Delete(orderFolderPath, true);
+            }
+            catch (Exception e)
+            {
+                conForLog.LogTransaction(controlNumber, e.Message);
+                message = e.Message;
+            }
 
-            return "";
+            return message;
         }
 
         private string EmailBody()
         {
             string body = Objects.bodyHtml;
             return body;
+        }
+
+        public void AddHeaderToBody(string controlNumber)
+        {
+            DBConnection conForLog = new DBConnection();
+            List<Objects.FullOrderInfo> orderInfo = new List<Objects.FullOrderInfo>();
+            orderInfo = conForLog.OrderInformation(controlNumber);
+            string htmlbody = string.Empty;
+            if(orderInfo.Count > 0)
+            {
+                htmlbody = "<div>No se pudieron generar los productos de la siguiente orden:</div>";
+                htmlbody += "<div><strong>Orden Número</strong> : "+orderInfo[0].ControlNumber+"</div>";
+                htmlbody += "<div><strong>Fecha</strong> : "+ orderInfo[0].OrderDate+ "</div>";
+                htmlbody += "<div><strong>Nombre cliente</strong> : "+ orderInfo[0].CustomerName +"</div>";
+                htmlbody += "<div><strong>correo electrónico</strong> : "+orderInfo[0].CustomerEmail+"</div>";
+                htmlbody += "<div><strong>Total</strong> : "+ orderInfo[0].Total+"</div>";
+                htmlbody += "<div><strong>Número de confirmación</strong> : "+orderInfo[0].Confirmation+"</div>";
+
+                Objects.bodyHtml = htmlbody + Objects.bodyHtml;
+            }
         }
 
         public string AddFotoToBody(Objects.OrderItemPhoto item)
@@ -150,12 +190,12 @@ namespace WcfCrimShopService.entities
             return Objects.bodyHtml;
         }
 
-        public string AddListToBody(Objects.OrderItemList item)
+        public string AddListToBody(Objects.OrderItemList item, string client)
         {
             string htmlBody = "<p><strong>Lista de Colindantes:</strong></p>";
-            htmlBody += "<p style=\"padding-left: 30px;\">Control:</p>";
-            htmlBody += "<p style=\"padding-left: 30px;\">Parcelas:</p>";
-            htmlBody += "<p style=\"padding-left: 30px;\">Item:</p>";
+            htmlBody += "<p style=\"padding-left: 30px;\">Control: "+item.ControlNumber+"</p>";
+            htmlBody += "<p style=\"padding-left: 30px;\">Cantidad de Parcelas: "+ item.itemQty+"</p>";
+            htmlBody += "<p style=\"padding-left: 30px;\">Enlace para volver a general la Lista : "+ config.ServiceUrl + "GenerateList/"+item.ControlNumber+"/"+client+"</p>";
 
             Objects.bodyHtml += htmlBody;
             return Objects.bodyHtml;

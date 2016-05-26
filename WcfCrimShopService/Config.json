@@ -13,6 +13,30 @@
             "GMTServiciosProfesionales"
         ]
     },
+    "EmailConfiguration": {
+        "SMTPClient": "mail.crimpr.net",
+        "MailAddress": "cdprcasosweb@crimpr.net",
+        "Username": "CDPRCASOSWEB",
+        "Password": "Cc123456",
+        "port": 25
+    },
+    "MerchantInfo": {
+        "user": "CERT4549444000001",
+        "pass": "W04085j2",
+        "serviceUrl": "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx",
+        "serviceAction": "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx/MakePayment"
+    },
+    "PortalAuthentication": {
+        "ServiceUri": "https://www.satasgis.crimpr.net/crimgis/rest/services/",
+        "username": "crimpr\\cdprwebediting",
+        "password": "Cw123456"
+    },
+    "SupportEmail": "hasencio@gmtgis.com",
+    "ServiceUrl": "https://www.satasgis.crimpr.net/cdprws/cartographicProductsService.svc/",
     "OrderDownloadStorage": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
-    "MailDownloadPath": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\"
+    "MailDownloadPath": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
+    "ExtractDataUrl": "https://www.satasgis.crimpr.net/crimgis/rest/services/Mapas/ExtractData/GPServer/Extrae y comprime data",
+    "FotoAereaURl": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ProductosCartograficos/GPServer/Mapas de Fotos Aerea",
+    "MapasCatastral": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ProductosCartograficos/GPServer/Mapas de Catastro"
+
 } 

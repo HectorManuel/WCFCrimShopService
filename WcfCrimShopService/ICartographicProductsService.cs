@@ -83,6 +83,10 @@ namespace WcfCrimShopService
         decimal GetTax();
 
         [OperationContract]
+        [WebGet(UriTemplate = "GenerateList/{control}/{customer}", ResponseFormat = WebMessageFormat.Json)]
+        string GenerateList(string control, string customer);
+
+        [OperationContract]
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         string test(string cn);
     }

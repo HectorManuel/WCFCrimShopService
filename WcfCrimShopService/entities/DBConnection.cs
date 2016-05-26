@@ -1796,6 +1796,8 @@ namespace WcfCrimShopService.entities
                 string mail = email.EmailGenerator(controlNumber);
                 path = mail;
             }
+
+            
             return path;
         }
 
@@ -1841,8 +1843,8 @@ namespace WcfCrimShopService.entities
                 
                 if (!string.IsNullOrEmpty(path))
                 {
-                    string zip = geo.MakeZipAgain(path);
-                    uri = config.MailDownloadPath + controlNumber + ".zip";
+                    string zip = geo.MakeZipAgain(path, controlNumber);
+                    uri = config.MailDownloadPath + zip;
                     Directory.Delete(path);
                 }
                 else
@@ -1850,8 +1852,6 @@ namespace WcfCrimShopService.entities
                     uri = "no list available to generate";
                 }
             }
-            
-
             return uri;
         }
     }
