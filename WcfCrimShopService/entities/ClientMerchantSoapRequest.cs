@@ -20,7 +20,7 @@ namespace WcfCrimShopService.entities
             string Username = config.MerchantInfo.user;
             string Password = config.MerchantInfo.pass;
             string CustomerName = clientName; //base de dato
-            string CustomerID = controlNumber; //numero de control?
+            string CustomerID = controlNumber; //numero de control?6
             string CustomerEmail = clientEmail;//base de datos
             string Total = total; //base de datos
             string DescriptionBuy = desc; // base de datos

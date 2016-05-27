@@ -7,6 +7,7 @@ using System.Collections;
 using System.DirectoryServices.AccountManagement;
 using Newtonsoft.Json;
 using System.IO;
+using WcfCrimShopService.entities;
 
 namespace WcfCrimShopService.entities
 {
@@ -17,40 +18,74 @@ namespace WcfCrimShopService.entities
         {
             string isValidMember = string.Empty;
             string emailAddress = string.Empty;
-
+            DBConnection con = new DBConnection();
             
 
             using (PrincipalContext pc = new PrincipalContext(ContextType.Domain, config.ActiveDirectoryInformation.domain))
             {
+                bool isValid = false;
                 // validate credentials
-                bool isValid = pc.ValidateCredentials(username, pwd);
+                try
+                {
+                    isValid = pc.ValidateCredentials(username, pwd);
+                }
+                catch (Exception e)
+                {
+                    con.LogTransaction(username, e.Message);
+                }
+                
                 
                 if (isValid)
                 {
+                    con.LogTransaction(username, "usuario es valido");
                     //get the groups of the user
-                    var src = UserPrincipal.FindByIdentity(pc, username).GetGroups(pc);
-                    var usesr = UserPrincipal.FindByIdentity(pc, username);
-                    
-                    var result = new List<string>();
-                    src.ToList().ForEach(sr => result.Add(sr.SamAccountName));
-                    //*************************
-
-                    //UserPrincipal user = UserPrincipal.FindByIdentity(pc, username);
-                    string[] groups = config.ActiveDirectoryInformation.group;
-                    foreach (string group in groups)
+                    try
                     {
-                        GroupPrincipal gp = GroupPrincipal.FindByIdentity(pc, group);
-                        if (usesr.IsMemberOf(gp))
+                        
+                                           
+                        var src = UserPrincipal.FindByIdentity(pc, username).GetGroups(pc);
+                       
+                        
+                        
+                        var result = new List<string>();
+
+                        try
                         {
-                            //isValidMember = "authorized";
-                            emailAddress = usesr.EmailAddress;
-                            return emailAddress;
+                            src.ToList().ForEach(sr => result.Add(sr.SamAccountName));
                         }
-                        else
+                        catch (Exception e)
                         {
-                            emailAddress = "0";
+                            con.LogTransaction(username, "Groupt to list SamAccountName" +  e.Message);
+                        }
+                        
+                        //*************************
+                        con.LogTransaction(username, "verificando los grupo6s");
+                        //UserPrincipal user = UserPrincipal.FindByIdentity(pc, username);
+                        string[] groups = config.ActiveDirectoryInformation.group;
+                        
+                        var usesr = UserPrincipal.FindByIdentity(pc, username);
+                        foreach (string group in groups)
+                        {
+                            GroupPrincipal gp = GroupPrincipal.FindByIdentity(pc, group);
+                            if (usesr.IsMemberOf(gp))
+                            {
+                                //isValidMember = "authorized";
+                                emailAddress = usesr.EmailAddress;
+                                con.LogTransaction(username, "usuario pertenece al grupo " + emailAddress);
+                                return emailAddress;
+                                
+                            }
+                            else
+                            {
+                                emailAddress = "0";
+                            }
                         }
                     }
+                    catch (Exception e)
+                    {
+                        con.LogTransaction(username, e.Message);
+                    }
+                    
                     
                 }
                 else { emailAddress = "00"; }
@@ -61,10 +96,6 @@ namespace WcfCrimShopService.entities
         }
     }
 }
-
-
-
-
 
 
 
