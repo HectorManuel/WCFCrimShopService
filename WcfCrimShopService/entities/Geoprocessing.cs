@@ -721,7 +721,7 @@ namespace WcfCrimShopService.entities
 
                 if (result.JobStatus == GPJobStatus.Succeeded)
                 {
-                    var outParam = await gp.GetResultDataAsync(result.JobID, "Área_extraida") as GPDataFile;
+                    var outParam = await gp.GetResultDataAsync(result.JobID, "Output_Zip_File") as GPDataFile;
 
                     if (outParam != null && outParam.Uri != null)
                     {
