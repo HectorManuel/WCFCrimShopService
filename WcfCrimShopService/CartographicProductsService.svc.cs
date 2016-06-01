@@ -27,6 +27,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Web.Script.Serialization;
 using System.DirectoryServices.AccountManagement;
+using System.Text.RegularExpressions;
 
 
 namespace WcfCrimShopService
@@ -114,7 +115,6 @@ namespace WcfCrimShopService
         ///  and storing it in the database with all the information required.
         ///  
         /// cartographicProductsService.svc/InsertOrderDetails
-        /// 
         /// </summary>
         /// <param name="ControlNumber"></param>
         /// <param name="Description"></param>
@@ -126,6 +126,7 @@ namespace WcfCrimShopService
         /// <param name="hasPhoto"></param>
         /// <param name="hasCat"></param>
         /// <param name="hasList"></param>
+        /// <param name="hasExtract"></param>
         /// <returns></returns>
         public string InsertOrderDetails(string ControlNumber, string Description, decimal tx,decimal sTotal, decimal Total, string CustomerName, string customerEmail, string hasPhoto, string hasCat, string hasList, string hasExtract)
         {
@@ -305,7 +306,6 @@ namespace WcfCrimShopService
         /// the pdf of the list to send to the user.
         /// 
         /// cartographicProductsService.svc/InsertListaColindanteItem
-        /// 
         /// </summary>
         /// <param name="controlNumber"></param>
         /// <param name="itemName"></param>
@@ -320,15 +320,13 @@ namespace WcfCrimShopService
         }
 
         /// <summary>
-        /// Insert the data for the cadastral item of the order. This information is later use
+        ///         /// Insert the data for the cadastral item of the order. This information is later use
         /// to generate the Cadastral pdf after the order has been authorize.
         /// 
         /// cartographicProductsService.svc/InsertCatastralItem
-        /// 
         /// </summary>
         /// <param name="controlNumber"></param>
         /// <param name="itemQty"></param>
-        /// <param name="escala"></param>
         /// <param name="cuadricula1"></param>
         /// <param name="cuadricula10"></param>
         /// <returns></returns>
@@ -540,6 +538,16 @@ namespace WcfCrimShopService
             return tax;
         }
 
+        /// <summary>
+        /// insert the data for the Extract Data Items
+        /// </summary>
+        /// <param name="controlNumber"></param>
+        /// <param name="qty"></param>
+        /// <param name="layer"></param>
+        /// <param name="areaa"></param>
+        /// <param name="format"></param>
+        /// <param name="raster"></param>
+        /// <returns></returns>
         public string InsertExtractDataService(string controlNumber, int qty, string layer, string areaa, string format, string raster)
         {
             string response = string.Empty;
@@ -558,12 +566,22 @@ namespace WcfCrimShopService
             return response;
         }
 
+        /// <summary>
+        /// process the failed List products
+        /// </summary>
+        /// <param name="control"></param>
+        /// <param name="customer"></param>
+        /// <returns></returns>
         public string GenerateList(string control, string customer)
         {
             string file = responseHandler.ProcessFailedListProducts(control, customer);
             return file;
         }
 
+        /// <summary>
+        /// Get the list of prices per unit 
+        /// </summary>
+        /// <returns></returns>
         public string GetPriceList()
         {
             string jsonList = responseHandler.GetPriceList();
@@ -580,6 +598,10 @@ namespace WcfCrimShopService
             return test;
         }
 
+        /// <summary>
+        /// obtiene el mac adrress, Physical IP, public Ip
+        /// </summary>
+        /// <returns></returns>
         public string GetIP()
         {
             string ip = HttpContext.Current.Request.UserHostAddress;
@@ -591,7 +613,17 @@ namespace WcfCrimShopService
             {
                 nameIp += id.ToString() + " , ";
             }
+            try
+            {
+                string externalIP;
+                externalIP = (new WebClient()).DownloadString("http://checkip.dyndns.org/");
+                externalIP = (new Regex(@"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")).Matches(externalIP)[0].ToString();
+                nameIp += externalIP;
+            }
+            catch
+            {
 
+            }
             return nameIp;
         }
     }
