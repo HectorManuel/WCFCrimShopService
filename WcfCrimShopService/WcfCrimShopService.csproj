@@ -96,6 +96,7 @@
     <Compile Include="entities\DBConnection.cs" />
     <Compile Include="entities\EmailSupport.cs" />
     <Compile Include="entities\Geoprocessing.cs" />
+    <Compile Include="entities\JoinListColindante.cs" />
     <Compile Include="entities\Objects.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

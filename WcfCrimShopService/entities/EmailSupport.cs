@@ -96,6 +96,8 @@ namespace WcfCrimShopService.entities
             htmlBody += "<p style=\"padding-left: 30px;\">Buffer_Distance_Units : "+ item.distance +"</p>";
 
             Objects.bodyHtml += htmlBody;
+
+            Objects.NotCreated += "<div>" + item.title + " - " + item.Parcel + "</div>";
             return "failed item added to support email: "+ item.title +" "+item.ControlNumber;
         }
 
@@ -164,6 +166,9 @@ namespace WcfCrimShopService.entities
                 htmlBody += "<p style=\"padding-left: 30px;\">Georef_info : "+ listScale10[0].geo+"</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Control : "+ listScale10[0].controlNum+"</p>";
                 Objects.bodyHtml += htmlBody;
+
+                //catId.Add();
+                Objects.NotCreated += "<div> Mapas catasatrales 1:10,000 no creados: " + array + "</div>";
             }
 
             if (listScale1.Count > 0)
@@ -173,6 +178,8 @@ namespace WcfCrimShopService.entities
                 htmlBody += "<p style=\"padding-left: 30px;\">Georef_info : " + listScale1[0].geo + "</p>";
                 htmlBody += "<p style=\"padding-left: 30px;\">Control : " + listScale1[0].controlNum + "</p>";
                 Objects.bodyHtml += htmlBody;
+
+                Objects.NotCreated += "<div> Mapas catasatrales 1:1,000 no creados: " + array2 + "</div>";
             }
             
             return Objects.bodyHtml;
@@ -187,6 +194,8 @@ namespace WcfCrimShopService.entities
             htmlBody += "<p style=\"padding-left: 30px;\">Raster_Format : "+elemento.Raster_Format+"</p>";
 
             Objects.bodyHtml += htmlBody;
+
+            Objects.NotCreated += "Elemento Extracción, Formato " + elemento.Feature_Format + " - " + elemento.Qty + " parcelas en elemento";
             return Objects.bodyHtml;
         }
 
@@ -198,6 +207,9 @@ namespace WcfCrimShopService.entities
             htmlBody += "<p style=\"padding-left: 30px;\">Enlace para volver a general la Lista : "+ config.ServiceUrl + "GenerateList/"+item.ControlNumber+"/"+client+"</p>";
 
             Objects.bodyHtml += htmlBody;
+
+            Objects.NotCreated += "<div>" + item.itemName + " - " + item.itemQty + " Colindantes</div>";
+
             return Objects.bodyHtml;
         }
 

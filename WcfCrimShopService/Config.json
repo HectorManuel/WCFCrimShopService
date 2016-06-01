@@ -37,6 +37,7 @@
     "MailDownloadPath": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
     "ExtractDataUrl": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ExtractData/GPServer/Extrae y comprime data",
     "FotoAereaURl": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ProductosCartograficos/GPServer/Mapas de Fotos Aerea",
-    "MapasCatastral": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ProductosCartograficos/GPServer/Mapas de Catastro"
+    "MapasCatastral": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ProductosCartograficos/GPServer/Mapas de Catastro",
+    "crimPhone": "(787) 625-2746"
 
 } 

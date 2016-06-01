@@ -125,6 +125,7 @@ namespace WcfCrimShopService.entities
             public string MapasCatastral { get; set; }
             public string SupportEmail { get; set; }
             public string ServiceUrl { get; set; }
+            public string crimPhone { get; set; }
         }
 
         public class ActiveDirectoryInformation
@@ -181,6 +182,19 @@ namespace WcfCrimShopService.entities
             }
         }
 
+        static string notCreatedProduct;
+        public static string NotCreated
+        {
+            get
+            {
+                return notCreatedProduct;
+            }
+            set
+            {
+                notCreatedProduct = value;
+            }
+        }
+
         static string htmlBody;
         public static string bodyHtml
         {
@@ -203,6 +217,12 @@ namespace WcfCrimShopService.entities
             public string Raster_Format { get; set; }
             public string Created { get; set; }
             public decimal Price { get; set; }
+        }
+
+        public class PriceList
+        {
+            public string item { get; set; }
+            public decimal price { get; set; }
         }
 
 

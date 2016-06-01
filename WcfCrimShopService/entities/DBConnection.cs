@@ -1854,5 +1854,34 @@ namespace WcfCrimShopService.entities
             }
             return uri;
         }
+
+        public string GetPriceList()
+        {
+            
+            SqlConnection con = Connection();
+            con.Open();
+            string query = "SELECT * FROM dbo.ProductPrice ";
+            SqlCommand command = new SqlCommand(query, con);
+            List<Objects.PriceList> prices = new List<Objects.PriceList>();
+            using (SqlDataReader read = command.ExecuteReader())
+            {
+                while (read.Read())
+                {
+                    string item = read["Product"].ToString();
+                    decimal tax = Convert.ToDecimal(read["Price"].ToString());
+
+                    prices.Add(new Objects.PriceList
+                    {
+                        item = item,
+                        price = tax
+                    });
+                }
+            }
+            con.Close();
+
+            string json = JsonConvert.SerializeObject(prices);
+
+            return json;
+        }
     }
 }

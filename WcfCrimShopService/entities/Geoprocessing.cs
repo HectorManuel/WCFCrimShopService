@@ -922,6 +922,7 @@ namespace WcfCrimShopService.entities
                     htmlBody += "<p>Contenido de la orden numero "+ control +":</p>";
                     htmlBody += "<ul>";
 
+                    
 
                     string photos = conForLog.GetPhotoProducts(control);
                     string cadastre = conForLog.GetCadastralProducts(control);
@@ -945,7 +946,15 @@ namespace WcfCrimShopService.entities
                         htmlBody += cadastre;
                     }
 
-                    htmlBody += "</ul>";
+                    htmlBody += "</ul><br/>";
+
+                    if (!string.IsNullOrEmpty(Objects.NotCreated))
+                    {
+                        htmlBody += Objects.NotCreated;
+                        htmlBody += "<br/>";
+                    }
+
+                    htmlBody += "<div>Para seguimiento de los productos no creados favor llamar a la oficina del catastro digital al " + config.crimPhone + "</div>";
 
                     ContentType mimeType = new ContentType("text/html");
 
@@ -992,7 +1001,12 @@ namespace WcfCrimShopService.entities
             //Objects.ListaCol listaCombinada = new Objects.ListaCol();
             string zipPath = string.Empty;
 
-            foreach (var lista in itemsFromDb)
+            var evaluateList = new JoinListColindante();
+
+            List<Objects.OrderItemList> evaluatedList = evaluateList.JoinMultipleList(itemsFromDb);
+
+
+            foreach (var lista in evaluatedList)
             {
                 string name = FileNameValidation(lista.itemName);
                 

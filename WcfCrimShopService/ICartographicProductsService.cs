@@ -89,6 +89,11 @@ namespace WcfCrimShopService
         [OperationContract]
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
         string test(string cn);
+
+        [OperationContract]
+        [WebGet(UriTemplate = "GetPriceList", ResponseFormat = WebMessageFormat.Json)]
+        string GetPriceList();
+
     }
 
 }
