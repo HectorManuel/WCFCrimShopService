@@ -94,6 +94,10 @@ namespace WcfCrimShopService
         [WebGet(UriTemplate = "GetPriceList", ResponseFormat = WebMessageFormat.Json)]
         string GetPriceList();
 
+        [OperationContract]
+        [WebGet(UriTemplate = "GetIPAdress", ResponseFormat = WebMessageFormat.Json)]
+        string GetIP();
+
     }
 
 }

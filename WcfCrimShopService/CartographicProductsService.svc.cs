@@ -579,5 +579,20 @@ namespace WcfCrimShopService
             //string result = responseHandler.GetExtractDataItem(cn);
             return test;
         }
+
+        public string GetIP()
+        {
+            string ip = HttpContext.Current.Request.UserHostAddress;
+            string name = HttpContext.Current.Request.UserHostName;
+            //string nameIp = ip + "  " + name;
+            string nameIp = string.Empty;
+            IPHostEntry heserver = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var id in heserver.AddressList)
+            {
+                nameIp += id.ToString() + " , ";
+            }
+
+            return nameIp;
+        }
     }
 }
