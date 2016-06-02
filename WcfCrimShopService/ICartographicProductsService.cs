@@ -71,7 +71,7 @@ namespace WcfCrimShopService
         string CreatePdfListaColindante(string json, string cNumber, string customer, string parcela);
 
         [OperationContract]
-        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.WrappedRequest)]
+        [WebGet(UriTemplate="Authentication/{username}/{password}", ResponseFormat = WebMessageFormat.Json)]
         string Authentication(string username, string password);
 
         [OperationContract]

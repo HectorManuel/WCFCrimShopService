@@ -24,7 +24,7 @@
         "user": "CERT4549444000001",
         "pass": "W04085j2",
         "serviceUrl": "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx",
-        "serviceAction": "https://mmpay.evertecinc.com/webservicev2/wscheckoutpayment.asmx/MakePayment"
+        "serviceAction": "https://everpaycert.evertecinc.com/wscheckoutpayment/wscheckoutpayment.asmx/MakePayment"
     },
     "PortalAuthentication": {
         "ServiceUri": "https://www.satasgis.crimpr.net/crimgis/rest/services/",
