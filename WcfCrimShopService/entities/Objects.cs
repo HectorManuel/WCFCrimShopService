@@ -126,6 +126,7 @@ namespace WcfCrimShopService.entities
             public string SupportEmail { get; set; }
             public string ServiceUrl { get; set; }
             public string crimPhone { get; set; }
+            public int applicationWaitingTimeInSec { get; set; }
         }
 
         public class ActiveDirectoryInformation

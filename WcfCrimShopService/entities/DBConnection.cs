@@ -64,11 +64,11 @@ namespace WcfCrimShopService.entities
                 Thread.Sleep(2000); // modify to await 20min later
                 time += 2;
                 Debug.WriteLine(time + " " + ds);
-            } while (ds == "Processing" && time != 20); //cambiar este valro to await for 20 minutes instead of 20 seconds
+            } while (ds == "Processing" && time != config.applicationWaitingTimeInSec); //cambiar este valro to await for 20 minutes instead of 20 seconds
 
             if (ds == "Processing")
             {
-                ds = "error completing the payment";
+                ds = "error";
             }
 
             return ds;

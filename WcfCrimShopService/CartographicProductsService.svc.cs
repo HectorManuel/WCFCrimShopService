@@ -238,10 +238,51 @@ namespace WcfCrimShopService
             {
                 result = "PaymentResponse null or empty";
             }
-            
 
             return result;
         }
+
+        ///// <summary>
+        ///// this service is in charge of retrieveing the response string from the online response
+        ///// POST from Evertec and process it. extracting all the information of the order and processing every product
+        ///// if the order payment was succesful. this service is for the use of evertec response
+        ///// 
+        ///// cartographicProductsService.svc/PaymentResponse
+        ///// 
+        ///// </summary>
+        ///// <param name="PaymentResponse"></param>
+        ///// <returns></returns>
+        //public string PaymentResponse2(string response, Stream PaymentResponse)
+        //{
+        //    //DBConnection responseHandler = new DBConnection();
+
+        //    string result = string.Empty;
+        //    byte[] buffer = new byte[10000];
+        //    int bytesRead, totalBytesRead = 0;
+        //    do
+        //    {
+        //        bytesRead = PaymentResponse.Read(buffer, 0, buffer.Length);
+        //        totalBytesRead += bytesRead;
+        //    } while (bytesRead > 0);
+        //    return totalBytesRead.ToString();
+        //    //if (!string.IsNullOrEmpty(PaymentResponse))
+        //    //{
+        //    //    result = responseHandler.PaymentResponseLogHandler(PaymentResponse).Result;
+        //    //}
+        //    //else
+        //    //{
+        //    //    result = "PaymentResponse null or empty";
+        //    //}
+
+
+        //    //return result;
+        //}
+
+
+
+
+        //    return result;
+        //}
 
         /// <summary>
         /// StarGeorpocess if a function build to test the geoprocesses to observe the way they work.

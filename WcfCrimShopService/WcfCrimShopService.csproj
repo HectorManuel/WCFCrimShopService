@@ -98,6 +98,7 @@
     <Compile Include="entities\Geoprocessing.cs" />
     <Compile Include="entities\JoinListColindante.cs" />
     <Compile Include="entities\Objects.cs" />
+    <Compile Include="entities\TypeMapper.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
