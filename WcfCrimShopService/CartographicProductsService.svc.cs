@@ -226,13 +226,21 @@ namespace WcfCrimShopService
         /// </summary>
         /// <param name="PaymentResponse"></param>
         /// <returns></returns>
-        public string PaymentResponse(string PaymentResponse)
+        public string PaymentResponse(Stream PaymentResponse)
         {
+            // ********* PARTE DE PRUEBA DE STREAM
+            DBConnection con = new DBConnection();
+            
+            StreamReader streamReader = new StreamReader(PaymentResponse);
+
+            string rawString = streamReader.ReadToEnd();
+            streamReader.Dispose();
             //DBConnection responseHandler = new DBConnection();
+            con.LogTransaction("Response", rawString);
             string result = string.Empty;
-            if (!string.IsNullOrEmpty(PaymentResponse))
+            if (!string.IsNullOrEmpty(rawString))
             {
-                result = responseHandler.PaymentResponseLogHandler(PaymentResponse).Result;
+                result = responseHandler.PaymentResponseLogHandler(rawString).Result;
             }
             else
             {
@@ -241,42 +249,47 @@ namespace WcfCrimShopService
 
             return result;
         }
+        //VTransactionId=IdTrans12345&VAccountId=CustomerAccount12345&VTotalAmount=10.52&VPaymentMethod=V&VPaymentDescription=InternetPayment&VAuthorizationNum=AutNum12345&VConfirmationNum=ConfNum12345
+        //https://msdn.microsoft.com/en-us/library/cc656724(v=vs.110).aspx
+        //http://www.codeproject.com/Articles/35982/REST-WCF-and-Streams-Getting-Rid-of-those-Names-Sp
+        //
+        /// <summary>
+        /// this service is in charge of retrieveing the response string from the online response
+        /// POST from Evertec and process it. extracting all the information of the order and processing every product
+        /// if the order payment was succesful. this service is for the use of evertec response
+        /// 
+        /// cartographicProductsService.svc/PaymentResponse
+        /// 
+        /// </summary>
+        /// <param name="PaymentResponse"></param>
+        /// <returns></returns>
+        public string PaymentResponse2(Stream PaymentResponse)
+        {
+            //DBConnection responseHandler = new DBConnection();
+            DBConnection con = new DBConnection();
+            StreamReader streamReader = new StreamReader(PaymentResponse);
 
-        ///// <summary>
-        ///// this service is in charge of retrieveing the response string from the online response
-        ///// POST from Evertec and process it. extracting all the information of the order and processing every product
-        ///// if the order payment was succesful. this service is for the use of evertec response
-        ///// 
-        ///// cartographicProductsService.svc/PaymentResponse
-        ///// 
-        ///// </summary>
-        ///// <param name="PaymentResponse"></param>
-        ///// <returns></returns>
-        //public string PaymentResponse2(string response, Stream PaymentResponse)
-        //{
-        //    //DBConnection responseHandler = new DBConnection();
+            string rawString = streamReader.ReadToEnd();
+            streamReader.Dispose();
+            con.LogTransaction("Response", rawString);
 
-        //    string result = string.Empty;
-        //    byte[] buffer = new byte[10000];
-        //    int bytesRead, totalBytesRead = 0;
-        //    do
-        //    {
-        //        bytesRead = PaymentResponse.Read(buffer, 0, buffer.Length);
-        //        totalBytesRead += bytesRead;
-        //    } while (bytesRead > 0);
-        //    return totalBytesRead.ToString();
-        //    //if (!string.IsNullOrEmpty(PaymentResponse))
-        //    //{
-        //    //    result = responseHandler.PaymentResponseLogHandler(PaymentResponse).Result;
-        //    //}
-        //    //else
-        //    //{
-        //    //    result = "PaymentResponse null or empty";
-        //    //}
+            NameValueCollection queryString = HttpUtility.ParseQueryString(rawString);
+
+            string confirm = queryString["VConfirmationNum"];
+
+            return confirm +"    " + rawString;
+            //if (!string.IsNullOrEmpty(PaymentResponse))
+            //{
+            //    result = responseHandler.PaymentResponseLogHandler(PaymentResponse).Result;
+            //}
+            //else
+            //{
+            //    result = "PaymentResponse null or empty";
+            //}
 
 
-        //    //return result;
-        //}
+            //return result;
+        }
 
 
 

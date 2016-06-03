@@ -35,11 +35,11 @@ namespace WcfCrimShopService
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
-        string PaymentResponse(string PaymentResponse);
+        string PaymentResponse(System.IO.Stream PaymentResponse);
 
-        //[OperationContract]
-        //[WebInvoke(UriTemplate="PaymentResponse2/{response}")]
-        //string PaymentResponse2(string response,System.IO.Stream PaymentResponse);
+        [OperationContract]
+        [WebInvoke(Method = "POST", UriTemplate="PaymentResponse2")]
+        string PaymentResponse2(System.IO.Stream PaymentResponse);
 
         [OperationContract]
         [WebInvoke(Method = "POST", ResponseFormat = WebMessageFormat.Json, BodyStyle = WebMessageBodyStyle.Wrapped)]
