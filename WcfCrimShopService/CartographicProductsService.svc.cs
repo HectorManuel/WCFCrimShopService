@@ -237,10 +237,33 @@ namespace WcfCrimShopService
             streamReader.Dispose();
             //DBConnection responseHandler = new DBConnection();
             con.LogTransaction("Response", rawString);
+
             string result = string.Empty;
             if (!string.IsNullOrEmpty(rawString))
             {
-                result = responseHandler.PaymentResponseLogHandler(rawString).Result;
+                NameValueCollection queryString = new NameValueCollection();
+                try
+                {
+                    queryString = HttpUtility.ParseQueryString(rawString);
+                    //string confirm = queryString["VConfirmationNum"];
+                    //string Transid = queryString["VTransactionId"];
+                    //string account = queryString["VAccountId"];
+                    //string totalAmount = queryString["VTotalAmount"];
+                    //string PaymentMethod = queryString["VPaymentMethod"];
+                    //string PaymentDescription = queryString["VPaymentDescription"];
+                    //string authNumber = queryString["VAuthorizationNum"];
+                   // string MerchantTransId = queryString["VMerchantTransId"];
+
+                    //con.LogTransaction("PaymentResponse", confirm + "," + Transid + ", " + account + "," + totalAmount + "," + PaymentDescription + "," + PaymentMethod + "," + authNumber);
+                    result = responseHandler.PaymentResponseLogHandler(queryString).Result;
+                }
+                catch(Exception e)
+                {
+                    con.LogTransaction("errorResponse", e.Message);
+                }
+                
+                
+
             }
             else
             {
@@ -249,10 +272,12 @@ namespace WcfCrimShopService
 
             return result;
         }
-        //VTransactionId=IdTrans12345&VAccountId=CustomerAccount12345&VTotalAmount=10.52&VPaymentMethod=V&VPaymentDescription=InternetPayment&VAuthorizationNum=AutNum12345&VConfirmationNum=ConfNum12345
+        //VTransactionId=IdTrans12345&VAccountId=CustomerAccount12345&VTotalAmount=10.52&VPaymentMethod=V&VPaymentDescription=InternetPayment&
+        //VAuthorizationNum=AutNum12345&VConfirmationNum=ConfNum12345
         //https://msdn.microsoft.com/en-us/library/cc656724(v=vs.110).aspx
         //http://www.codeproject.com/Articles/35982/REST-WCF-and-Streams-Getting-Rid-of-those-Names-Sp
         //
+
         /// <summary>
         /// this service is in charge of retrieveing the response string from the online response
         /// POST from Evertec and process it. extracting all the information of the order and processing every product

@@ -74,67 +74,70 @@ namespace WcfCrimShopService.entities
             return ds;
         }
 
-        public async Task<string> PaymentResponseLogHandler(string PaymentResponse)
+        public async Task<string> PaymentResponseLogHandler(NameValueCollection nvc)
         {
             string Message = "things";
-            NameValueCollection nvc = HttpUtility.ParseQueryString(PaymentResponse);
+            LogTransaction("inside", "inside handler");
 
-            //string val = nvc.Get("VPaymentDescription");
-            string transactionId = nvc.Get("VTransactionId");
-            string accountId = nvc.Get("VAccountId");
-            string totalAmount = nvc.Get("VTotalAmount");
-            string paymentMethod = nvc.Get("VPaymentMethod");
-            string paymentDescription = nvc.Get("VPaymentDescription");
-            string authorizationNum = nvc.Get("VAuthorizationNum");
-            string confirmationNum = nvc.Get("VConfirmationNum");
-            string merchantTransId = nvc.Get("VMerchantTransId");
-            //string merchantTransId = nvc.Get("VMerchantTransId");
+            //VTransactionId=a86fa6a00903a1d&VAccountId=060620160004&VTotalAmount=30.1000&VPaymentMethod=V&VPaymentDescription=controlNumber&
+            //VAuthorizationNum=124608&VConfirmationNum=000000000226874&VApp=strReponseAppOrigen&VFiller=060620160004
+            try
+            {
+                string transactionId = nvc["VTransactionId"];
+                string accountId = nvc["VAccountId"];
+                string totalAmount = nvc["VTotalAmount"];
+                string paymentMethod = nvc["VPaymentMethod"];
+                string paymentDescription = nvc["VPaymentDescription"];
+                string authorizationNum = nvc["VAuthorizationNum"];
+                string confirmationNum = nvc["VConfirmationNum"];
+                SqlConnection con = Connection();
+                con.Open();
 
-            SqlConnection con = Connection();
-            //SqlConnection con = new SqlConnection(@"Data Source=HECTOR_CUSTOMS\MYOWNSQLSERVER;Initial Catalog=CRIMShopManagement;Trusted_Connection=Yes;");
-            con.Open();
-            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
-            //        "VALUES (@control,@response,@description)";
-            string queryString = "UPDATE dbo.Orders SET Confirmation=@confirm" +
-                                " WHERE ControlNumber=@control";
-            SqlCommand cmd = new SqlCommand(queryString, con);
-            cmd.Parameters.AddWithValue("@control", merchantTransId);
+                string queryString2 = "INSERT into dbo.PaymentResponseLog (VTransactionID,VAccountId,VTotalAmount,VPaymentMethod,VPaymentDescription,VAuthorizationNum,VConfirmationNum, VMerchantTransId)" +
+                                    "VALUES (@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum, @VMerchantTransId)";
+                SqlCommand cmd2 = new SqlCommand(queryString2, con);
+                //cmd.Parameters.AddWithValue("@control", ControlNumber);
+                cmd2.Parameters.AddWithValue("@VTransactionID", transactionId);
+                cmd2.Parameters.AddWithValue("@VAccountId", accountId);
+                cmd2.Parameters.AddWithValue("@VTotalAmount", totalAmount);
+                cmd2.Parameters.AddWithValue("@VPaymentMethod", paymentMethod);
+                cmd2.Parameters.AddWithValue("@VPaymentDescription", paymentDescription);
+                cmd2.Parameters.AddWithValue("@VAuthorizationNum", authorizationNum);
+                cmd2.Parameters.AddWithValue("@VConfirmationNum", confirmationNum);
+                cmd2.Parameters.AddWithValue("@VMerchantTransId", accountId);
+                //cmd2.Parameters.AddWithValue("@VMerchantTransId", merchantTransId);
+                int result2 = cmd2.ExecuteNonQuery();
+
+                string queryString = "UPDATE dbo.Orders SET Confirmation=@confirm" +
+                        " WHERE ControlNumber=@control";
+                SqlCommand cmd = new SqlCommand(queryString, con);
+                cmd.Parameters.AddWithValue("@control", accountId);
+
+                cmd.Parameters.AddWithValue("@confirm", transactionId);
+                int result = cmd.ExecuteNonQuery();
+
+                if (result2 == 1 && result == 1)
+                {
+                    Message = "ok";
+                    // run task to get information for the printing service
+                }
+                else
+                {
+                    Message = "Order  not updated: ";
+                }
+                con.Close();
+
+                if (result2 == 1 && result == 1)
+                {
+                    GetOrderDetails(accountId).ConfigureAwait(false);
+                    LogTransaction(accountId, "OrderSubmitted");
+                }
+            }
+            catch (Exception e)
+            {
+                LogTransaction("error", e.Message);
+            }
             
-            cmd.Parameters.AddWithValue("@confirm", confirmationNum);
-            int result = cmd.ExecuteNonQuery();
-
-            //string queryString = "INSERT into dbo.Orders (ContorlNumber,PaymentResponse,Description)" +
-            //        "VALUES (@control,@response,@description)";
-            string queryString2 = "INSERT into dbo.PaymentResponseLog (VTransactionID,VAccountId,VTotalAmount,VPaymentMethod,VPaymentDescription,VAuthorizationNum,VConfirmationNum, VMerchantTransId)" +
-                                "VALUES (@VTransactionID,@VAccountId,@VTotalAmount,@VPaymentMethod,@VPaymentDescription,@VAuthorizationNum,@VConfirmationNum, @VMerchantTransId)";
-            SqlCommand cmd2 = new SqlCommand(queryString2, con);
-            //cmd.Parameters.AddWithValue("@control", ControlNumber);
-            cmd2.Parameters.AddWithValue("@VTransactionID", transactionId);
-            cmd2.Parameters.AddWithValue("@VAccountId", accountId);
-            cmd2.Parameters.AddWithValue("@VTotalAmount", totalAmount);
-            cmd2.Parameters.AddWithValue("@VPaymentMethod", paymentMethod);
-            cmd2.Parameters.AddWithValue("@VPaymentDescription", paymentDescription);
-            cmd2.Parameters.AddWithValue("@VAuthorizationNum", authorizationNum);
-            cmd2.Parameters.AddWithValue("@VConfirmationNum", confirmationNum);
-            cmd2.Parameters.AddWithValue("@VMerchantTransId", merchantTransId);
-            //cmd2.Parameters.AddWithValue("@VMerchantTransId", merchantTransId);
-            int result2 = cmd2.ExecuteNonQuery();
-
-            if (result2 == 1 && result == 1)
-            {
-                Message = "ok";
-                // run task to get information for the printing service
-            }
-            else
-            {
-                Message = "Order  not updated: " + PaymentResponse;
-            }
-            con.Close();
-
-            if (result2 == 1 && result == 1)
-            {
-                GetOrderDetails(merchantTransId).ConfigureAwait(false);
-            }
             return Message;
         }
 
@@ -1882,6 +1885,48 @@ namespace WcfCrimShopService.entities
             string json = JsonConvert.SerializeObject(prices);
 
             return json;
+        }
+
+        public Objects.Order CheckIfIsClient(string controlNumber)
+        {
+            SqlConnection con = Connection();
+            con.Open();
+
+            string query = "SELECT ControlNumber,Confirmation,CustomerName,CustomerEmail,HasPhoto,HasCat,HasList,HasExtract " +
+                           "FROM dbo.Orders " +
+                           "WHERE ControlNumber=@control ";
+            SqlCommand cmd = new SqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@control", controlNumber);
+
+            Objects.Order orderList = new Objects.Order();
+            using (SqlDataReader result = cmd.ExecuteReader())
+            {
+                while (result.Read())
+                {
+                    string cn = result["ControlNumber"].ToString();
+                    string confirm = result["Confirmation"].ToString();
+                    string name = result["CustomerName"].ToString();
+                    string email = result["CustomerEmail"].ToString();
+                    string haspic = result["HasPhoto"].ToString();
+                    string hascat = result["HasCat"].ToString();
+                    string haslist = result["HasList"].ToString();
+                    string hasextract = result["HasExtract"].ToString();
+
+
+                    orderList.ControlNumber = cn;
+                    orderList.Confirmation = confirm;
+                    orderList.CustomerName = name;
+                    orderList.CustomerEmail = email;
+                    orderList.HasPhoto = haspic;
+                    orderList.HasCat = hascat;
+                    orderList.HasList = haslist;
+                    orderList.HasExtract = hasextract;
+
+                }
+            }
+            con.Close();
+
+            return orderList;
         }
     }
 }

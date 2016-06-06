@@ -52,7 +52,7 @@ namespace WcfCrimShopService.entities
             dc.Add("CustomerID", CustomerID);
             dc.Add("CustomerEmail", CustomerEmail);
             dc.Add("Total",Total);
-            dc.Add("DescriptionBuy",DescriptionBuy);
+            dc.Add("DescriptionBuy",controlNumber);
             dc.Add("TaxAmount1",TaxAmount1);
             dc.Add("address1","");
             dc.Add("address2","");
@@ -65,43 +65,13 @@ namespace WcfCrimShopService.entities
             dc.Add("TaxAmount2","");
             dc.Add("TaxAmount3","");
             dc.Add("TaxAmount4","");
-            dc.Add("TaxAmount5",controlNumber);
+            dc.Add("TaxAmount5", controlNumber);
             dc.Add("filler1","");
             dc.Add("filler2","");
             dc.Add("filler3","");
 
             string soapResult = HttpPostRequest(dc);
-            //XmlDocument soapEnvelope = CreateSoapEnvelope(Username, Password, CustomerName, CustomerID,
-            // CustomerEmail, Total, DescriptionBuy, TaxAmount1,
-            // address1, address2, city, zipcode,
-            // telephone, fax, ignoreValues, language,
-            // TaxAmount2, TaxAmount3, TaxAmount4, TaxAmount5,
-            // filler1, filler2, filler3);
-
-            //HttpWebRequest webRequest = CreateWebRequest(url, action);
-
-            //using (Stream stream = webRequest.GetRequestStream())
-            //{
-            //    soapEnvelope.Save(stream);
-            //}
-
-            //IAsyncResult asyncResult = webRequest.BeginGetResponse(null, null);
-
-            ////suspend this thread until  call is complete
-            //asyncResult.AsyncWaitHandle.WaitOne();
-
-            ////get the response from the completed web request
-            //string soapResult;
-            ////using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
-            //using (WebResponse webResponse = webRequest.GetResponse())
-            //{
-            //    using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
-            //    {
-            //        soapResult = rd.ReadToEnd();
-            //    }
-            //    Debug.WriteLine(soapResult);
-
-            //}
+            
             return soapResult;
         }
 
@@ -166,10 +136,7 @@ namespace WcfCrimShopService.entities
                     Console.WriteLine("Status Code : {0}", ((HttpWebResponse)e.Response).StatusCode);
                     Console.WriteLine("Status Description : {0}", ((HttpWebResponse)e.Response).StatusDescription);
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
+                pageContent = e.Message;
             }
 
 

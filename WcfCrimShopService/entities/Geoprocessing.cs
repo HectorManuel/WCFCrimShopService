@@ -39,7 +39,6 @@ namespace WcfCrimShopService.entities
         /// <returns></returns>
         public string GetPath()
         {
-            
             return config.OrderDownloadStorage;
         }
 
@@ -164,7 +163,7 @@ namespace WcfCrimShopService.entities
             }
             catch (Exception e)
             {
-                connection.LogTransaction(ctrl, e.Message);
+                connection.LogTransaction(ctrl, e.Message +" "+ ctrl);
             }
             
             return storePath;
@@ -652,7 +651,7 @@ namespace WcfCrimShopService.entities
             }
             catch (Exception ex)
             {
-                connection.LogTransaction(number, ex.Message + " error con arcgis llamados");
+                connection.LogTransaction(number, ex.Message + " error con arcgis llamados " + pic.ControlNumber);
             }
             
 
@@ -755,7 +754,7 @@ namespace WcfCrimShopService.entities
             }
             catch (Exception ex)
             {
-                connection.LogTransaction(number, ex.Message + " error con arcgis llamados");
+                connection.LogTransaction(number, ex.Message + " error con arcgis llamados ExtractData " );
             }
 
 
@@ -920,9 +919,15 @@ namespace WcfCrimShopService.entities
                     htmlBody += "<div>Puede descargar el archivo del siguiente enlace: ";
                     htmlBody += "<a href=\"" + config.MailDownloadPath + control + ".zip" + "\">Presione para descargar</a></div>";
                     htmlBody += "<p>Contenido de la orden numero "+ control +":</p>";
-                    htmlBody += "<ul>";
 
-                    
+                    Objects.Order orderDetails = conForLog.CheckIfIsClient(control);
+
+                    if (orderDetails.Confirmation != "Employee")
+                    {
+                        htmlBody += "<div> Número de transacción : " + orderDetails.Confirmation;
+                    }
+
+                    htmlBody += "<ul>";
 
                     string photos = conForLog.GetPhotoProducts(control);
                     string cadastre = conForLog.GetCadastralProducts(control);
