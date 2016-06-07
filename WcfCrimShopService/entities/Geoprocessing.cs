@@ -902,31 +902,31 @@ namespace WcfCrimShopService.entities
                     SmtpClient smtpServer = new SmtpClient(config.EmailConfiguration.SMTPClient);
                     mail.From = new MailAddress(config.EmailConfiguration.MailAddress);
                     mail.To.Add(clientEmail);
-                    mail.Subject = "Productos Cartografícos Núm. Control: " + control;
+                    mail.Subject = "Productos Cartográficos, orden número: " + control;
                     mail.BodyEncoding = System.Text.Encoding.UTF8;
                     //como body voy a enviar un url para llamar el zipPath file;
 
                     DateTime date = new DateTime();
                     date = DateTime.Now;
                     DateTime expDate = date.AddDays(5);
-                    string expirationDate = expDate.ToString("d MMMM yyyy", CultureInfo.CreateSpecificCulture("es-PR"));
+                    string expirationDate = expDate.ToString("dddd d 'de' MMMM 'de' yyyy", CultureInfo.CreateSpecificCulture("es-PR"));
 
-                    mail.Body = "Su orden esta lista, la mista estada diponible hasta el  "+ expirationDate +" y puede ser descargada del siguiente enlace: "+ config.MailDownloadPath + control + ".zip";
+                    mail.Body = "Su orden esta lista, la misma estada disponible hasta el  "+ expirationDate +" y puede ser descargada del siguiente enlace:  "+ config.MailDownloadPath + control + ".zip";
 
 
-                    string htmlBody = "<div>Su Orden de productos cartografícos esta lista</div>";
-                    htmlBody += "<div>La misma estara disponible hasta <b>" + expirationDate + "</b></div>"; 
+                    string htmlBody = "<div style=\"font-family:'Calibri';font-size:11pt\" <div>Su orden de productos cartográficos esta lista.</div>";
+                    htmlBody += "<div>La misma estara disponible hasta el <b>" + expirationDate + "</b></div>"; 
                     htmlBody += "<div>Puede descargar el archivo del siguiente enlace: ";
                     htmlBody += "<a href=\"" + config.MailDownloadPath + control + ".zip" + "\">Presione para descargar</a></div>";
-                    htmlBody += "<p>Contenido de la orden numero "+ control +":</p>";
+                    
 
                     Objects.Order orderDetails = conForLog.CheckIfIsClient(control);
 
                     if (orderDetails.Confirmation != "Employee")
                     {
-                        htmlBody += "<div> Número de transacción : " + orderDetails.Confirmation;
+                        htmlBody += "<div> Número de transacción : " + orderDetails.Confirmation + "</div>";
                     }
-
+                    htmlBody += "<p>Contenido de la orden número " + control + ":</p>";
                     htmlBody += "<ul>";
 
                     string photos = conForLog.GetPhotoProducts(control);
@@ -959,7 +959,7 @@ namespace WcfCrimShopService.entities
                         htmlBody += "<br/>";
                     }
 
-                    htmlBody += "<div>Para seguimiento de los productos no creados favor llamar a la oficina del catastro digital al " + config.crimPhone + "</div>";
+                    htmlBody += "<div>Para dudas o pregunta favor llamar a la oficina del catastro digital al " + config.crimPhone + "</div>";
 
                     ContentType mimeType = new ContentType("text/html");
 

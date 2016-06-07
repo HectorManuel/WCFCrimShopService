@@ -130,7 +130,7 @@ namespace WcfCrimShopService.entities
                 if (result2 == 1 && result == 1)
                 {
                     GetOrderDetails(accountId).ConfigureAwait(false);
-                    LogTransaction(accountId, "OrderSubmitted");
+                    
                 }
             }
             catch (Exception e)
@@ -760,6 +760,7 @@ namespace WcfCrimShopService.entities
 
         public async Task<string> ProcessPhotoProducts(string controlNumber)
         {
+            LogTransaction(controlNumber, "Processing Photo products");
 
             SqlConnection con = Connection();
             con.Open();
@@ -838,6 +839,7 @@ namespace WcfCrimShopService.entities
 
         public async Task<string> ProcessExtractDataProduct(string controlNumber)
         {
+            LogTransaction(controlNumber, "Processing ExtractData products");
             string path = string.Empty;
             SqlConnection con = Connection();
 
@@ -896,6 +898,7 @@ namespace WcfCrimShopService.entities
 
         public string ProcessListProducts(string controlNumber, string customerName)
         {
+            LogTransaction(controlNumber, "Processing List products");
             string path = string.Empty;
             SqlConnection con = Connection();
             con.Open();
@@ -936,7 +939,7 @@ namespace WcfCrimShopService.entities
 
         public async Task<string> ProcessCadastralProducts(string controlNumber)
         {
-
+            LogTransaction(controlNumber, "Processing Cadastre products");
             SqlConnection con = Connection();
             con.Open();
 
@@ -1498,7 +1501,7 @@ namespace WcfCrimShopService.entities
             SqlCommand cmd = new SqlCommand(query, con);
             cmd.Parameters.AddWithValue("@control", controlNumber);
             string htmlUnorderedList = string.Empty;
-     
+            List<Objects.OrderItemList> orderList = new List<Objects.OrderItemList>();
             using (SqlDataReader result = cmd.ExecuteReader())
             {
                 while (result.Read())
@@ -1510,11 +1513,29 @@ namespace WcfCrimShopService.entities
                     decimal cost = Convert.ToDecimal(result["Price"].ToString());
                     string created = result["Created"].ToString();
 
-                    htmlUnorderedList += "<li>" + itemName + " - " + qty + " Colindantes</li>"; 
+                    orderList.Add(new Objects.OrderItemList
+                    {
+                        
+                        itemName = itemName,
+                        itemQty = qty,
+                        item = item,
+                        cost = cost,
+                        created = created
+                    });
                 }
 
             }
             con.Close();
+
+            JoinListColindante joinList = new JoinListColindante();
+            List<Objects.OrderItemList> finalList = new List<Objects.OrderItemList>();
+            finalList = joinList.JoinMultipleList(orderList);
+
+            foreach(var item in finalList)
+            {
+                htmlUnorderedList += "<li>" + item.itemName + " - " + item.itemQty + " Colindantes</li>"; 
+            }
+            
             return htmlUnorderedList;
         }
 
@@ -1524,7 +1545,7 @@ namespace WcfCrimShopService.entities
             SqlConnection con = Connection();
             con.Open();
 
-            string query = "SELECT ControlNumber,ItemQty,Escala,Cuadricula,Template,Price " +
+            string query = "SELECT ControlNumber,ItemQty,Escala,Cuadricula,Template,Price,Created " +
                             "FROM dbo.OrderItemsCatastrales " +
                             "WHERE ControlNumber=@control ";
             SqlCommand cmd = new SqlCommand(query, con);
@@ -1543,6 +1564,7 @@ namespace WcfCrimShopService.entities
                     string cuadro = result["Cuadricula"].ToString();
                     string template = result["Template"].ToString();
                     decimal cost = Convert.ToDecimal(result["Price"].ToString());
+
 
                     if (template == "MapaCatastral_10k")
                     {

@@ -237,7 +237,7 @@ namespace WcfCrimShopService
             streamReader.Dispose();
             //DBConnection responseHandler = new DBConnection();
             con.LogTransaction("Response", rawString);
-
+            string account = string.Empty;
             string result = string.Empty;
             if (!string.IsNullOrEmpty(rawString))
             {
@@ -247,7 +247,7 @@ namespace WcfCrimShopService
                     queryString = HttpUtility.ParseQueryString(rawString);
                     //string confirm = queryString["VConfirmationNum"];
                     //string Transid = queryString["VTransactionId"];
-                    //string account = queryString["VAccountId"];
+                    account = queryString["VAccountId"];
                     //string totalAmount = queryString["VTotalAmount"];
                     //string PaymentMethod = queryString["VPaymentMethod"];
                     //string PaymentDescription = queryString["VPaymentDescription"];
@@ -268,6 +268,11 @@ namespace WcfCrimShopService
             else
             {
                 result = "PaymentResponse null or empty";
+            }
+            
+            if (result == "ok")
+            {
+                responseHandler.LogTransaction(account, "Order Submitted");
             }
 
             return result;
