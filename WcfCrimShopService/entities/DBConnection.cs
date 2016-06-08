@@ -1065,15 +1065,19 @@ namespace WcfCrimShopService.entities
             try
             {
                 
-                con.Open();
+                
 
                 string queryPhoto = "SELECT Price FROM dbo.OrderItemAerialphoto WHERE ControlNumber = @control";
                 string queryCad = "SELECT Price FROM dbo.OrderItemsCatastrales WHERE ControlNumber = @control";
-                string queryList = "SELECT Price FROM dbo.OrderItemsListaColindante WHERE ControlNumber = @control";
+                string queryList = "SELECT * FROM dbo.OrderItemsListaColindante WHERE ControlNumber = @control";
                 string queryExtract = "SELECT Price FROM dbo.ExtractDataItems WHERE ControlNumber = @control";
+
+                /**
+                 * get the aerial photos price
+                 **/
                 SqlCommand cmd = new SqlCommand(queryPhoto, con);
                 cmd.Parameters.AddWithValue("@control", controlNumber);
-
+                con.Open();
                 using (SqlDataReader result = cmd.ExecuteReader())
                 {
                     while (result.Read())
@@ -1084,10 +1088,14 @@ namespace WcfCrimShopService.entities
 
                     }
                 }
+                con.Close();
 
+                /**
+                 * Get the official cadastre maps price
+                 **/
                 SqlCommand cmd2 = new SqlCommand(queryCad, con);
                 cmd2.Parameters.AddWithValue("@control", controlNumber);
-
+                con.Open();
                 using (SqlDataReader result = cmd2.ExecuteReader())
                 {
                     while (result.Read())
@@ -1098,24 +1106,56 @@ namespace WcfCrimShopService.entities
 
                     }
                 }
+                con.Close();
 
+                /**
+                 * Get the price for the Adjacent list items
+                 **/
                 SqlCommand cmd3 = new SqlCommand(queryList, con);
                 cmd3.Parameters.AddWithValue("@control", controlNumber);
+                List<Objects.OrderItemList> orderList = new List<Objects.OrderItemList>();
 
+                con.Open();
                 using (SqlDataReader result = cmd3.ExecuteReader())
                 {
                     while (result.Read())
                     {
-                        decimal price = Convert.ToDecimal(result["Price"].ToString());
+                        string itemName = result["Parcelas"].ToString();
+                        string qty = result["ItemQty"].ToString();
+                        string item = result["Item"].ToString();
+                        decimal cost = Convert.ToDecimal(result["Price"].ToString());
+                        string created = result["Created"].ToString();
 
-                        prices.Add(price);
+                        
+                        orderList.Add(new Objects.OrderItemList
+                        {
 
+                            itemName = itemName,
+                            itemQty = qty,
+                            item = item,
+                            cost = cost,
+                            created = created
+                        });
                     }
+                   
+                }
+                con.Close();
+
+                JoinListColindante joinList = new JoinListColindante();
+                List<Objects.OrderItemList> finalList = new List<Objects.OrderItemList>();
+                finalList = joinList.JoinMultipleList(orderList);
+
+                foreach (var item in finalList)
+                {
+                    prices.Add(item.cost);
                 }
 
+                /**
+                 * get the price for the extract data items
+                 **/
                 SqlCommand cmd4 = new SqlCommand(queryExtract, con);
                 cmd4.Parameters.AddWithValue("@control", controlNumber);
-
+                con.Open();
                 using (SqlDataReader result = cmd4.ExecuteReader())
                 {
                     while (result.Read())
@@ -1126,6 +1166,7 @@ namespace WcfCrimShopService.entities
 
                     }
                 }
+                con.Close();
 
                 decimal total = 0;
                 foreach (decimal pr in prices)
@@ -1146,7 +1187,7 @@ namespace WcfCrimShopService.entities
             {
                 message = e.Message;
             }
-            con.Close();
+            
             return message;
         }
 

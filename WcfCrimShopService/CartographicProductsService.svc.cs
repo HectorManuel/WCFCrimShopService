@@ -340,6 +340,10 @@ namespace WcfCrimShopService
         public string StarGeoprocess(string cNumber)
         {
             string response = string.Empty;
+            ////recalculate the prices before submitting
+            //string subtotal = responseHandler.PriceSubTotal(cNumber);
+            //string TotalCost = responseHandler.UpdateCost(subtotal, cNumber);
+
 
             if (!string.IsNullOrEmpty(cNumber))
             {
