@@ -187,7 +187,7 @@ namespace WcfCrimShopService.entities
 
         public string AddExtractToBody(Objects.ElementoDeExtraccion elemento)
         {
-            string htmlBody = "<p><strong>Elemento de extraccion</strong>:</p>";
+            string htmlBody = "<p><strong>Elemento de extracci&oacute;n</strong>:</p>";
             htmlBody += "<p style=\"padding-left: 30px;\">Layers_to_Clip : "+ elemento.Layers_to_Clip +"</p>";
             htmlBody += "<p style=\"padding-left: 30px;\">Area_of_Interest : "+ elemento.Area_of_Interest +"</p>";
             htmlBody += "<p style=\"padding-left: 30px;\">Feature_Format : "+ elemento.Feature_Format +"</p>";
@@ -195,7 +195,7 @@ namespace WcfCrimShopService.entities
 
             Objects.bodyHtml += htmlBody;
 
-            Objects.NotCreated += "Elemento Extracción, Formato " + elemento.Feature_Format + " - " + elemento.Qty + " parcelas en elemento";
+            Objects.NotCreated += "Elemento Extracci&oacuten, Formato " + elemento.Feature_Format + " - " + elemento.Qty + " parcelas en elemento";
             return Objects.bodyHtml;
         }
 
