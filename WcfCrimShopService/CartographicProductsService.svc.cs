@@ -714,5 +714,36 @@ namespace WcfCrimShopService
             }
             return nameIp;
         }
+
+        public string PaymentCancelled(string controlNumber)
+        {
+            string cancellation = responseHandler.paymentCancelledHandler(controlNumber);
+            return "";
+        }
+
+
+        public string CancelledPayment(System.IO.Stream response)
+        {
+            StreamReader streamReader = new StreamReader(response);
+
+            string rawString = streamReader.ReadToEnd();
+
+            if (!string.IsNullOrEmpty(rawString))
+            {
+                NameValueCollection queryString = new NameValueCollection();
+                try{
+                    queryString = HttpUtility.ParseQueryString(rawString);
+                    string control = queryString[""];
+                    string cancellation = responseHandler.paymentCancelledHandler(control);
+                }
+                catch
+                {
+
+                }
+                
+                
+            }
+            return "";
+        }
     }
 }

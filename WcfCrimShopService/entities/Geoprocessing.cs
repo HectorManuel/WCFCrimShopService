@@ -663,7 +663,7 @@ namespace WcfCrimShopService.entities
         /// </summary>
         /// <param name="element"></param>
         /// <returns></returns>
-        public async Task<string> ExtractData(Objects.ElementoDeExtraccion element) // Elemento de extraccino
+        public async Task<string> ExtractData(Objects.ElementoDeExtraccion element, int counter) // Elemento de extraccino
         {
             string zipPath = string.Empty;
             DBConnection connection = new DBConnection();
@@ -725,7 +725,7 @@ namespace WcfCrimShopService.entities
                     if (outParam != null && outParam.Uri != null)
                     {
                         //parcelTitle = FileNameValidation(pic.Parcel);
-                        string fileName = @"\ExtraccionParcelasOutput.zip";
+                        string fileName = @"\ExtraccionParcelas("+counter+").zip";
                         try
                         {
                             zipPath = MakeStoreFolder(cNumber, fileName);

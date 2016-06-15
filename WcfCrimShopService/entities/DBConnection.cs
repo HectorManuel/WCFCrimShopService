@@ -141,6 +141,8 @@ namespace WcfCrimShopService.entities
             return Message;
         }
 
+
+
         public async Task<string> PaymentResponseLogHandlerEmployee(string controlNumber)
         {
             string Message = string.Empty;
@@ -874,10 +876,12 @@ namespace WcfCrimShopService.entities
             }
             con.Close();
             try{
+                int counter = 0;
                 foreach(var item in ElementsList){
                     Thread.Sleep(5000);
-                    var createExtractData = await geo.ExtractData(item);
+                    var createExtractData = await geo.ExtractData(item, counter);
                     path = createExtractData.ToString();
+                    counter++;
                 }
 
             }
@@ -1990,6 +1994,31 @@ namespace WcfCrimShopService.entities
             con.Close();
 
             return orderList;
+        }
+
+        public string paymentCancelledHandler(string control)
+        {
+            string msg = string.Empty;
+            SqlConnection con = Connection();
+            string queryString = "UPDATE dbo.Orders SET Confirmation=@confirm" +
+                                " WHERE ControlNumber=@control";
+
+            SqlCommand cmd = new SqlCommand(queryString, con);
+            cmd.Parameters.AddWithValue("@control", control);
+            cmd.Parameters.AddWithValue("@confirm", "Cancelled");
+            con.Open();
+            int result = cmd.ExecuteNonQuery();
+            con.Close();
+            if (result == 1)
+            {
+                msg = "ok";
+            }
+            else
+            {
+                msg = "order not updated";
+            }
+
+            return msg;
         }
     }
 }
