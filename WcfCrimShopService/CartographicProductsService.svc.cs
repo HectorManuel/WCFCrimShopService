@@ -717,7 +717,7 @@ namespace WcfCrimShopService
 
         public string PaymentCancelled(string controlNumber)
         {
-            string cancellation = responseHandler.paymentCancelledHandler(controlNumber);
+            //string cancellation = responseHandler.paymentCancelledHandler(controlNumber);
             return "";
         }
 
@@ -734,7 +734,7 @@ namespace WcfCrimShopService
                 try{
                     queryString = HttpUtility.ParseQueryString(rawString);
                     string control = queryString[""];
-                    string cancellation = responseHandler.paymentCancelledHandler(control);
+                    string cancellation = responseHandler.paymentCancelledHandler(queryString);
                 }
                 catch
                 {

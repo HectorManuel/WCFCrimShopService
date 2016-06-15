@@ -902,7 +902,7 @@ namespace WcfCrimShopService.entities
                     SmtpClient smtpServer = new SmtpClient(config.EmailConfiguration.SMTPClient);
                     mail.From = new MailAddress(config.EmailConfiguration.MailAddress);
                     mail.To.Add(clientEmail);
-                    mail.Subject = "Productos Cartogr&aacute;ficos, orden número: " + control;
+                    mail.Subject = "Productos Cartográficos, orden número: " + control;
                    
                     //como body voy a enviar un url para llamar el zipPath file;
 
@@ -924,9 +924,9 @@ namespace WcfCrimShopService.entities
 
                     if (orderDetails.Confirmation != "Employee")
                     {
-                        htmlBody += "<div> Número de transacción : " + orderDetails.Confirmation + "</div>";
+                        htmlBody += "<div> N&uacute;mero de transacci&oacuten : " + orderDetails.Confirmation + "</div>";
                     }
-                    htmlBody += "<p>Contenido de la orden número " + control + ":</p>";
+                    htmlBody += "<p>Contenido de la orden n&uacute;mero " + control + ":</p>";
                     htmlBody += "<ul>";
 
                     string photos = conForLog.GetPhotoProducts(control);
@@ -960,7 +960,7 @@ namespace WcfCrimShopService.entities
                         htmlBody += "<br/>";
                     }
 
-                    htmlBody += "<div>Para dudas o preguntas favor llamar a la Oficina del Catastro Digital al " + config.crimPhone + "</div>";
+                    htmlBody += "<div>Para dudas, reclamaciones o preguntas favor llamar a la Oficina del Catastro Digital al " + config.crimPhone + "</div>";
 
                     ContentType mimeType = new ContentType("text/html");
 
@@ -972,7 +972,7 @@ namespace WcfCrimShopService.entities
                     smtpServer.Port = config.EmailConfiguration.port;
                     smtpServer.Credentials = new System.Net.NetworkCredential(config.EmailConfiguration.Username, config.EmailConfiguration.Password);
                     smtpServer.EnableSsl = false;
-
+                    Objects.NotCreated = string.Empty;
                     try
                     {
                         smtpServer.Send(mail);

@@ -43,6 +43,7 @@ namespace WcfCrimShopService.entities
                 conForLog.LogTransaction(controlNumber, "Support Email send");
                 message = "Support email send";
                 Debug.WriteLine("MailSend");
+                Objects.bodyHtml = string.Empty;
                 //Directory.Delete(orderFolderPath, true);
             }
             catch (Exception e)

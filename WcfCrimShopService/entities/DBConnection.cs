@@ -261,8 +261,25 @@ namespace WcfCrimShopService.entities
             else
             {
                 cmd.Parameters.AddWithValue("@buffer", buffer.ToLower());
-                parcelList = string.Empty;
-                cmd.Parameters.AddWithValue("@list", parcelList);
+
+                if (!string.IsNullOrEmpty(parcelList))
+                {
+                    if (parcelList == "()")
+                    {
+                        parcelList = string.Empty;
+                        cmd.Parameters.AddWithValue("@list", parcelList);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@list", parcelList);
+                    }
+                    
+                }
+                else
+                {
+                    parcelList = string.Empty;
+                    cmd.Parameters.AddWithValue("@list", parcelList);
+                }
                 bufferDistance = string.Empty;
                 cmd.Parameters.AddWithValue("@bufferDistance", bufferDistance);
             }
@@ -1528,7 +1545,8 @@ namespace WcfCrimShopService.entities
                     decimal cost = Convert.ToDecimal(result["Price"].ToString());
                     string created = result["Created"].ToString();
 
-                    htmlUnorderedList  += "<li>" + title + " - "+ template +" - "+ parcel+"</li>"; 
+                    string fixedTitle = title.Replace("Aérea", "A&eacute;rea");
+                    htmlUnorderedList  += "<li>" + fixedTitle + " - "+ template +" - "+ parcel+"</li>"; 
                 }
             }
             con.Close();
@@ -1661,7 +1679,7 @@ namespace WcfCrimShopService.entities
                     string created = result["Created"].ToString();
                     //decimal price = Convert.ToDecimal(result["Price"].ToString());
 
-                    htmlUnorderedList += "<li>Elemento Extracción, Formato " + feature + " - " + qty + " parcelas en elemento</li>"; 
+                    htmlUnorderedList += "<li>Elemento Extracci&oacute;n, Formato " + feature + " - " + qty + " parcelas en elemento</li>"; 
 
                 }
             }
@@ -1996,26 +2014,41 @@ namespace WcfCrimShopService.entities
             return orderList;
         }
 
-        public string paymentCancelledHandler(string control)
+        public string paymentCancelledHandler(NameValueCollection nvc)
         {
             string msg = string.Empty;
-            SqlConnection con = Connection();
-            string queryString = "UPDATE dbo.Orders SET Confirmation=@confirm" +
-                                " WHERE ControlNumber=@control";
+            try
+            {
+                string transactionId = nvc["VTransactionId"];
+                string accountId = nvc["VAccountId"];
+                string totalAmount = nvc["VTotalAmount"];
+                string paymentMethod = nvc["VPaymentMethod"];
+                string paymentDescription = nvc["VPaymentDescription"];
+                string authorizationNum = nvc["VAuthorizationNum"];
+                string confirmationNum = nvc["VConfirmationNum"];
 
-            SqlCommand cmd = new SqlCommand(queryString, con);
-            cmd.Parameters.AddWithValue("@control", control);
-            cmd.Parameters.AddWithValue("@confirm", "Cancelled");
-            con.Open();
-            int result = cmd.ExecuteNonQuery();
-            con.Close();
-            if (result == 1)
-            {
-                msg = "ok";
+                SqlConnection con = Connection();
+                string queryString = "UPDATE dbo.Orders SET Confirmation=@confirm" +
+                                    " WHERE ControlNumber=@control";
+
+                SqlCommand cmd = new SqlCommand(queryString, con);
+                cmd.Parameters.AddWithValue("@control", accountId);
+                cmd.Parameters.AddWithValue("@confirm", "Cancelled");
+                con.Open();
+                int result = cmd.ExecuteNonQuery();
+                con.Close();
+                if (result == 1)
+                {
+                    msg = "ok";
+                }
+                else
+                {
+                    msg = "order not updated";
+                }
             }
-            else
+            catch(Exception e) 
             {
-                msg = "order not updated";
+                Debug.WriteLine(e.Message);
             }
 
             return msg;

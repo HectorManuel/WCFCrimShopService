@@ -25,7 +25,7 @@ namespace WcfCrimShopService
         string AwaitConfirmation(string order);
 
         [OperationContract]
-        [WebGet(UriTemplate = "PaymentCancelled/{controlNumber}", ResponseFormat = WebMessageFormat.Json]
+        [WebGet(UriTemplate = "PaymentCancelled/{controlNumber}", ResponseFormat = WebMessageFormat.Json)]
         string PaymentCancelled(string controlNumber);
 
         [OperationContract]
