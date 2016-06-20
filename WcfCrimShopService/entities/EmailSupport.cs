@@ -44,6 +44,7 @@ namespace WcfCrimShopService.entities
                 message = "Support email send";
                 Debug.WriteLine("MailSend");
                 Objects.bodyHtml = string.Empty;
+                Objects.NotCreated = string.Empty;
                 //Directory.Delete(orderFolderPath, true);
             }
             catch (Exception e)

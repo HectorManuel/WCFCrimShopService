@@ -745,8 +745,8 @@ namespace WcfCrimShopService.entities
                 }
                 else
                 {
-                    var message = result.JobStatus ;
-                    connection.LogTransaction(cNumber, "Extraccion No Creada"+ message);
+                    var message = result.Messages ;
+                    connection.LogTransaction(cNumber, "Extraccion No Creada: "+ message);
                     connection.UpdateExtractDataStatus(cNumber, layersToClip, areaOfInterest, format, rasterFormat, "false");
                     Debug.WriteLine(message);
                 }
@@ -958,6 +958,7 @@ namespace WcfCrimShopService.entities
                         htmlBody += "<div>Los siguientes productos no pudieron ser descargados:</div>";
                         htmlBody += Objects.NotCreated;
                         htmlBody += "<br/>";
+                        Objects.NotCreated = string.Empty;
                     }
 
                     htmlBody += "<div>Para dudas, reclamaciones o preguntas favor llamar a la Oficina del Catastro Digital al " + config.crimPhone + "</div>";

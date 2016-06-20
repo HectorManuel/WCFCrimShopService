@@ -1,23 +1,22 @@
 ﻿{
     "ServerConnection": {
 
-        "source": "192.168.1.34\\GMTWKS13DB",
-        "catalog": "CRIMShopManagement",
-        "id": "User",
-        "password": "user123"
+        "source": "CRIMSATASCDPR",
+        "catalog": "ProductosCartograficos",
+        "id": "ProductoCartograficoLogin",
+        "password": "cdprws1234"
     },
     "ActiveDirectoryInformation": {
-        "domain": "gmt.domaingis.com",
+        "domain": "CRIMPR",
         "group": [
-            "Developers",
-            "GMTServiciosProfesionales"
+            "CDPR_ProdCart"
         ]
     },
     "EmailConfiguration": {
-        "SMTPClient": "mail.crimpr.net",
-        "MailAddress": "cdprcasosweb@crimpr.net",
-        "Username": "CDPRCASOSWEB",
-        "Password": "Cc123456",
+        "SMTPClient": "crim-cas01.crimpr.net",
+        "MailAddress": "prodcart@crimpr.net",
+        "Username": "prodcart",
+        "Password": "Pc123456",
         "port": 25
     },
     "MerchantInfo": {
@@ -28,17 +27,17 @@
     },
     "PortalAuthentication": {
         "ServiceUri": "https://www.satasgis.crimpr.net/crimgis/rest/services/",
-        "username": "crimpr\\cdprwebediting",
-        "password": "Cw123456"
+        "username": "CRIMPR\\prodcart",
+        "password": "Pc123456"
     },
     "SupportEmail": "hasencio@gmtgis.com",
     "ServiceUrl": "https://www.satasgis.crimpr.net/cdprws/cartographicProductsService.svc/",
-    "OrderDownloadStorage": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
-    "MailDownloadPath": "C:\\Users\\hasencio\\Documents\\Visual Studio 2013\\Projects\\WcfCrimShopService\\WcfCrimShopService\\OrderFolder\\",
+    "OrderDownloadStorage": "H:\\OrdenesProductosCartograficos\\",
+    "MailDownloadPath": "https://www.satasgis.crimpr.net/OrdenesProductosCartograficos/",
     "ExtractDataUrl": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ExtractData/GPServer/Extrae y comprime data",
     "FotoAereaURl": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ProductosCartograficos/GPServer/Mapas de Fotos Aerea",
     "MapasCatastral": "https://www.satasgis.crimpr.net/crimgis/rest/services/ProductosCartograficos/ProductosCartograficos/GPServer/Mapas de Catastro",
-    "crimPhone": "(787) 625-2746 Ext. 2084",
+    "crimPhone": "(787) 625-2746  Ext. 2084",
     "applicationWaitingTimeInSec": 1200
 
 } 
