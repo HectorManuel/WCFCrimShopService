@@ -651,7 +651,8 @@ namespace WcfCrimShopService.entities
             }
             catch (Exception ex)
             {
-                connection.LogTransaction(number, ex.Message + " error con arcgis llamados " + pic.ControlNumber);
+                connection.LogTransaction(pic.ControlNumber, ex.Message + config.FotoAereaUrl);
+                connection.UpdatephotoStatus(pic.ControlNumber, pic.LayoutTemplate, pic.Parcel, pic.subtitle, pic.title, "false");
             }
             
 

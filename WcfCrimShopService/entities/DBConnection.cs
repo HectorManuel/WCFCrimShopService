@@ -807,7 +807,7 @@ namespace WcfCrimShopService.entities
                     string buffer = result["Buffer"].ToString();
                     string parcelList = result["ParcelList"].ToString();
                     string bufferDistance = result["BufferDistance"].ToString();
-                    decimal cost = Convert.ToDecimal(result["Price"].ToString());
+                    
 
                     orderList.Add(new Objects.OrderItemPhoto
                     {
@@ -822,7 +822,7 @@ namespace WcfCrimShopService.entities
                         buffer = buffer,
                         parcelList = parcelList,
                         distance = bufferDistance,
-                        cost = cost,
+                       
                         title = title
                     });
                 }
